@@ -2,13 +2,9 @@
 
 ## Usage
 
-1. Install deps
+1. Install deps with `pnpm install`, and restart your IDE Typescript server.
 
-```
-pnpm install
-```
-
-2. Run your program in `src/main.ts`
+2. Implement your program in `src/main.ts`
 
 3. Package with `pnpm package`
 
