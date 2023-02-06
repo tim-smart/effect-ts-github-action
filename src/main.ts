@@ -1,14 +1,15 @@
 import * as Git from "./Git"
 import * as Github from "./Github"
 import * as Dotenv from "dotenv"
+import { nonEmptyString } from "./utils/config"
 
 // Dotenv for testing in development
 Dotenv.config()
 
 // Setup the Git client layer
 const GitLive = Git.makeLayer({
-  userName: Config.string("github_actor"),
-  userEmail: Config.string("github_actor").map(
+  userName: nonEmptyString("github_actor"),
+  userEmail: nonEmptyString("github_actor").map(
     _ => `${_}@users.noreply.github.com`,
   ),
   simpleGit: Config.succeed({}),
@@ -28,7 +29,7 @@ const program = Do($ => {
   // Extract input variables
   const { name } = $(
     Config.struct({
-      name: Config.string("name"),
+      name: nonEmptyString("name"),
     }).nested("input").config,
   )
 
@@ -37,7 +38,7 @@ const program = Do($ => {
 })
 
 program
-  .catchAllCause(_ =>
+  .tapErrorCause(_ =>
     Effect.sync(() => {
       console.error(_.squash)
     }),
