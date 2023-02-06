@@ -1,0 +1,340 @@
+lockfileVersion: 5.4
+
+specifiers:
+  '@actions/core': ^1.10.0
+  '@actions/github': ^5.1.1
+  '@effect/io': ^0.1.9
+  '@effect/node': https://gist.github.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/2c2d11572b0e9a0f63a001bc6bdf2c36c976c121/effect-node-0.0.7.tgz
+  '@effect/stream': ^0.1.0
+  '@fp-ts/core': ^0.1.1
+  '@fp-ts/data': ^0.1.1
+  '@tsplus-types/effect__io': 0.1.9-4c40460
+  '@tsplus-types/fp-ts__core': 0.1.1-4c40460
+  '@tsplus-types/fp-ts__data': 0.1.1-4c40460
+  '@types/node': ^18.11.19
+  '@vercel/ncc': ^0.36.1
+  dotenv: ^16.0.3
+  prettier: ^2.8.3
+  simple-git: ^3.16.0
+  typescript: https://cdn.jsdelivr.net/npm/@tsplus/installer@0.0.168/compiler/typescript.tgz
+
+dependencies:
+  '@actions/core': 1.10.0
+  '@actions/github': 5.1.1
+  '@effect/io': 0.1.9
+  '@effect/node': '@gist.github.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/2c2d11572b0e9a0f63a001bc6bdf2c36c976c121/effect-node-0.0.7.tgz'
+  '@effect/stream': 0.1.0
+  '@fp-ts/core': 0.1.1
+  '@fp-ts/data': 0.1.1
+  dotenv: 16.0.3
+  simple-git: 3.16.0
+
+devDependencies:
+  '@tsplus-types/effect__io': 0.1.9-4c40460_@effect+io@0.1.9
+  '@tsplus-types/fp-ts__core': 0.1.1-4c40460_@fp-ts+core@0.1.1
+  '@tsplus-types/fp-ts__data': 0.1.1-4c40460_@fp-ts+data@0.1.1
+  '@types/node': 18.11.19
+  '@vercel/ncc': 0.36.1
+  prettier: 2.8.3
+  typescript: '@cdn.jsdelivr.net/npm/@tsplus/installer@0.0.168/compiler/typescript.tgz'
+
+packages:
+
+  /@actions/core/1.10.0:
+    resolution: {integrity: sha512-2aZDDa3zrrZbP5ZYg159sNoLRb61nQ7awl5pSvIq5Qpj81vwDzdMRKzkWJGJuwVvWpvZKx7vspJALyvaaIQyug==}
+    dependencies:
+      '@actions/http-client': 2.0.1
+      uuid: 8.3.2
+    dev: false
+
+  /@actions/github/5.1.1:
+    resolution: {integrity: sha512-Nk59rMDoJaV+mHCOJPXuvB1zIbomlKS0dmSIqPGxd0enAXBnOfn4VWF+CGtRCwXZG9Epa54tZA7VIRlJDS8A6g==}
+    dependencies:
+      '@actions/http-client': 2.0.1
+      '@octokit/core': 3.6.0
+      '@octokit/plugin-paginate-rest': 2.21.3_@octokit+core@3.6.0
+      '@octokit/plugin-rest-endpoint-methods': 5.16.2_@octokit+core@3.6.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /@actions/http-client/2.0.1:
+    resolution: {integrity: sha512-PIXiMVtz6VvyaRsGY268qvj57hXQEpsYogYOu2nrQhlf+XCGmZstmuZBbAybUl1nQGnvS1k1eEsQ69ZoD7xlSw==}
+    dependencies:
+      tunnel: 0.0.6
+    dev: false
+
+  /@effect/io/0.1.9:
+    resolution: {integrity: sha512-EDUvzIEZJM5T9XUIfYqMxC7rQfpyT1+q4WcAwrbqnMoSacaSwar4VMGz8fmODXOS6cCgPs2rdnwl/W29+KjRMg==}
+    dependencies:
+      '@fp-ts/core': 0.1.1
+      '@fp-ts/data': 0.1.1
+
+  /@effect/stream/0.1.0:
+    resolution: {integrity: sha512-GeJNY5WKV6h/aLynZpJTR/xmvTD1JQq8hk9bt+Z2OxHLwyBZ+YSQetA9YsxQsZGLUZl+h1twSdkI0n7d0mx3Lw==}
+    dependencies:
+      '@effect/io': 0.1.9
+      '@fp-ts/core': 0.1.1
+      '@fp-ts/data': 0.1.1
+    dev: false
+
+  /@fp-ts/core/0.1.1:
+    resolution: {integrity: sha512-7vQnrnvJAMrXgIwt0qQNhXkPDtm4l8vwql8EvXeY47v/FwnWpDvt1HISoO9Kq3am5SZ0A8Av+4NqPab2FRdKxw==}
+
+  /@fp-ts/data/0.1.1:
+    resolution: {integrity: sha512-hgsoSDKP01kGY+g/Ino+QX3VEqiPnf0mrhKujMajT4ma0w82i4u0nMEPbBykyMxscQirFemwl7CnWn7G3TadcA==}
+    dependencies:
+      '@fp-ts/core': 0.1.1
+
+  /@kwsites/file-exists/1.1.1:
+    resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
+    dependencies:
+      debug: 4.3.4
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@kwsites/promise-deferred/1.1.1:
+    resolution: {integrity: sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==}
+    dev: false
+
+  /@octokit/auth-token/2.5.0:
+    resolution: {integrity: sha512-r5FVUJCOLl19AxiuZD2VRZ/ORjp/4IN98Of6YJoJOkY75CIBuYfmiNHGrDwXr+aLGG55igl9QrxX3hbiXlLb+g==}
+    dependencies:
+      '@octokit/types': 6.41.0
+    dev: false
+
+  /@octokit/core/3.6.0:
+    resolution: {integrity: sha512-7RKRKuA4xTjMhY+eG3jthb3hlZCsOwg3rztWh75Xc+ShDWOfDDATWbeZpAHBNRpm4Tv9WgBMOy1zEJYXG6NJ7Q==}
+    dependencies:
+      '@octokit/auth-token': 2.5.0
+      '@octokit/graphql': 4.8.0
+      '@octokit/request': 5.6.3
+      '@octokit/request-error': 2.1.0
+      '@octokit/types': 6.41.0
+      before-after-hook: 2.2.3
+      universal-user-agent: 6.0.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /@octokit/endpoint/6.0.12:
+    resolution: {integrity: sha512-lF3puPwkQWGfkMClXb4k/eUT/nZKQfxinRWJrdZaJO85Dqwo/G0yOC434Jr2ojwafWJMYqFGFa5ms4jJUgujdA==}
+    dependencies:
+      '@octokit/types': 6.41.0
+      is-plain-object: 5.0.0
+      universal-user-agent: 6.0.0
+    dev: false
+
+  /@octokit/graphql/4.8.0:
+    resolution: {integrity: sha512-0gv+qLSBLKF0z8TKaSKTsS39scVKF9dbMxJpj3U0vC7wjNWFuIpL/z76Qe2fiuCbDRcJSavkXsVtMS6/dtQQsg==}
+    dependencies:
+      '@octokit/request': 5.6.3
+      '@octokit/types': 6.41.0
+      universal-user-agent: 6.0.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /@octokit/openapi-types/12.11.0:
+    resolution: {integrity: sha512-VsXyi8peyRq9PqIz/tpqiL2w3w80OgVMwBHltTml3LmVvXiphgeqmY9mvBw9Wu7e0QWk/fqD37ux8yP5uVekyQ==}
+    dev: false
+
+  /@octokit/plugin-paginate-rest/2.21.3_@octokit+core@3.6.0:
+    resolution: {integrity: sha512-aCZTEf0y2h3OLbrgKkrfFdjRL6eSOo8komneVQJnYecAxIej7Bafor2xhuDJOIFau4pk0i/P28/XgtbyPF0ZHw==}
+    peerDependencies:
+      '@octokit/core': '>=2'
+    dependencies:
+      '@octokit/core': 3.6.0
+      '@octokit/types': 6.41.0
+    dev: false
+
+  /@octokit/plugin-rest-endpoint-methods/5.16.2_@octokit+core@3.6.0:
+    resolution: {integrity: sha512-8QFz29Fg5jDuTPXVtey05BLm7OB+M8fnvE64RNegzX7U+5NUXcOcnpTIK0YfSHBg8gYd0oxIq3IZTe9SfPZiRw==}
+    peerDependencies:
+      '@octokit/core': '>=3'
+    dependencies:
+      '@octokit/core': 3.6.0
+      '@octokit/types': 6.41.0
+      deprecation: 2.3.1
+    dev: false
+
+  /@octokit/request-error/2.1.0:
+    resolution: {integrity: sha512-1VIvgXxs9WHSjicsRwq8PlR2LR2x6DwsJAaFgzdi0JfJoGSO8mYI/cHJQ+9FbN21aa+DrgNLnwObmyeSC8Rmpg==}
+    dependencies:
+      '@octokit/types': 6.41.0
+      deprecation: 2.3.1
+      once: 1.4.0
+    dev: false
+
+  /@octokit/request/5.6.3:
+    resolution: {integrity: sha512-bFJl0I1KVc9jYTe9tdGGpAMPy32dLBXXo1dS/YwSCTL/2nd9XeHsY616RE3HPXDVk+a+dBuzyz5YdlXwcDTr2A==}
+    dependencies:
+      '@octokit/endpoint': 6.0.12
+      '@octokit/request-error': 2.1.0
+      '@octokit/types': 6.41.0
+      is-plain-object: 5.0.0
+      node-fetch: 2.6.9
+      universal-user-agent: 6.0.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /@octokit/types/6.41.0:
+    resolution: {integrity: sha512-eJ2jbzjdijiL3B4PrSQaSjuF2sPEQPVCPzBvTHJD9Nz+9dw2SGH4K4xeQJ77YfTq5bRQ+bD8wT11JbeDPmxmGg==}
+    dependencies:
+      '@octokit/openapi-types': 12.11.0
+    dev: false
+
+  /@tsplus-types/effect__io/0.1.9-4c40460_@effect+io@0.1.9:
+    resolution: {integrity: sha512-zB+cOIxG5ONY6jxD2u+zdGq0xzZ4F3zb9dWGJwSiOt51HaC3YWkr0Nouxuxo8wFrEefSXs6EFbLHCVk+MgDOLA==}
+    peerDependencies:
+      '@effect/io': 0.1.9
+    dependencies:
+      '@effect/io': 0.1.9
+    dev: true
+
+  /@tsplus-types/fp-ts__core/0.1.1-4c40460_@fp-ts+core@0.1.1:
+    resolution: {integrity: sha512-NMcyIIqyg716zZtKrQwgLJcNjQZOI+T+h6N/OT045MxiGwjpbmETYGaepHU/NzIs+FK7M+FKr1GeMp+0pnUHGQ==}
+    peerDependencies:
+      '@fp-ts/core': 0.1.1
+    dependencies:
+      '@fp-ts/core': 0.1.1
+    dev: true
+
+  /@tsplus-types/fp-ts__data/0.1.1-4c40460_@fp-ts+data@0.1.1:
+    resolution: {integrity: sha512-RShqTYU4z/e4XDMKCGLnlZyvmRGCmEIQmxe4/mpqKBx90ryt38kBtw9+eg7KxlpFVEnJn/wavgKC83us2H1iwQ==}
+    peerDependencies:
+      '@fp-ts/data': 0.1.1
+    dependencies:
+      '@fp-ts/data': 0.1.1
+    dev: true
+
+  /@types/node/18.11.19:
+    resolution: {integrity: sha512-YUgMWAQBWLObABqrvx8qKO1enAvBUdjZOAWQ5grBAkp5LQv45jBvYKZ3oFS9iKRCQyFjqw6iuEa1vmFqtxYLZw==}
+    dev: true
+
+  /@vercel/ncc/0.36.1:
+    resolution: {integrity: sha512-S4cL7Taa9yb5qbv+6wLgiKVZ03Qfkc4jGRuiUQMQ8HGBD5pcNRnHeYM33zBvJE4/zJGjJJ8GScB+WmTsn9mORw==}
+    hasBin: true
+    dev: true
+
+  /before-after-hook/2.2.3:
+    resolution: {integrity: sha512-NzUnlZexiaH/46WDhANlyR2bXRopNg4F/zuSA3OpZnllCUgRaOF2znDioDWrmbNVsuZk6l9pMquQB38cfBZwkQ==}
+    dev: false
+
+  /debug/4.3.4:
+    resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+    dependencies:
+      ms: 2.1.2
+    dev: false
+
+  /deprecation/2.3.1:
+    resolution: {integrity: sha512-xmHIy4F3scKVwMsQ4WnVaS8bHOx0DmVwRywosKhaILI0ywMDWPtBSku2HNxRvF7jtwDRsoEwYQSfbxj8b7RlJQ==}
+    dev: false
+
+  /dotenv/16.0.3:
+    resolution: {integrity: sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==}
+    engines: {node: '>=12'}
+    dev: false
+
+  /is-plain-object/5.0.0:
+    resolution: {integrity: sha512-VRSzKkbMm5jMDoKLbltAkFQ5Qr7VDiTFGXxYFXXowVj387GeGNOCsOH6Msy00SGZ3Fp84b1Naa1psqgcCIEP5Q==}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
+  /ms/2.1.2:
+    resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
+    dev: false
+
+  /node-fetch/2.6.9:
+    resolution: {integrity: sha512-DJm/CJkZkRjKKj4Zi4BsKVZh3ValV5IR5s7LVZnW+6YMh0W1BfNA8XSs6DLMGYlId5F3KnA70uu2qepcR08Qqg==}
+    engines: {node: 4.x || >=6.0.0}
+    peerDependencies:
+      encoding: ^0.1.0
+    peerDependenciesMeta:
+      encoding:
+        optional: true
+    dependencies:
+      whatwg-url: 5.0.0
+    dev: false
+
+  /once/1.4.0:
+    resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
+    dependencies:
+      wrappy: 1.0.2
+    dev: false
+
+  /prettier/2.8.3:
+    resolution: {integrity: sha512-tJ/oJ4amDihPoufT5sM0Z1SKEuKay8LfVAMlbbhnnkvt6BUserZylqo2PN+p9KeljLr0OHa2rXHU1T8reeoTrw==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
+
+  /simple-git/3.16.0:
+    resolution: {integrity: sha512-zuWYsOLEhbJRWVxpjdiXl6eyAyGo/KzVW+KFhhw9MqEEJttcq+32jTWSGyxTdf9e/YCohxRE+9xpWFj9FdiJNw==}
+    dependencies:
+      '@kwsites/file-exists': 1.1.1
+      '@kwsites/promise-deferred': 1.1.1
+      debug: 4.3.4
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /tr46/0.0.3:
+    resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
+    dev: false
+
+  /tunnel/0.0.6:
+    resolution: {integrity: sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg==}
+    engines: {node: '>=0.6.11 <=0.7.0 || >=0.7.3'}
+    dev: false
+
+  /universal-user-agent/6.0.0:
+    resolution: {integrity: sha512-isyNax3wXoKaulPDZWHQqbmIx1k2tb9fb3GGDBRxCscfYV2Ch7WxPArBsFEG8s/safwXTT7H4QGhaIkTp9447w==}
+    dev: false
+
+  /uuid/8.3.2:
+    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
+    dev: false
+
+  /webidl-conversions/3.0.1:
+    resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
+    dev: false
+
+  /whatwg-url/5.0.0:
+    resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
+    dependencies:
+      tr46: 0.0.3
+      webidl-conversions: 3.0.1
+    dev: false
+
+  /wrappy/1.0.2:
+    resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
+    dev: false
+
+  '@cdn.jsdelivr.net/npm/@tsplus/installer@0.0.168/compiler/typescript.tgz':
+    resolution: {tarball: https://cdn.jsdelivr.net/npm/@tsplus/installer@0.0.168/compiler/typescript.tgz}
+    name: typescript
+    version: 5.0.0-tsplus.20230128
+    engines: {node: '>=4.2.0'}
+    hasBin: true
+    dev: true
+
+  '@gist.github.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/2c2d11572b0e9a0f63a001bc6bdf2c36c976c121/effect-node-0.0.7.tgz':
+    resolution: {tarball: https://gist.github.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/2c2d11572b0e9a0f63a001bc6bdf2c36c976c121/effect-node-0.0.7.tgz}
+    name: '@effect/node'
+    version: 0.0.7
+    dependencies:
+      '@effect/io': 0.1.9
+      '@effect/stream': 0.1.0
+      '@fp-ts/core': 0.1.1
+      '@fp-ts/data': 0.1.1
+    dev: false

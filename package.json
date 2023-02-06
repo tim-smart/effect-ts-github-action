@@ -1,0 +1,32 @@
+{
+  "name": "effect-ts-github-action",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "rm -rf dist build *.tsbuildinfo && tsc",
+    "package": "pnpm run build && ncc build build/main.js --source-map --license licences.txt"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "@effect/io": "^0.1.9",
+    "@effect/node": "https://gist.github.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/2c2d11572b0e9a0f63a001bc6bdf2c36c976c121/effect-node-0.0.7.tgz",
+    "@effect/stream": "^0.1.0",
+    "@fp-ts/core": "^0.1.1",
+    "@fp-ts/data": "^0.1.1",
+    "dotenv": "^16.0.3",
+    "simple-git": "^3.16.0"
+  },
+  "devDependencies": {
+    "@tsplus-types/effect__io": "0.1.9-4c40460",
+    "@tsplus-types/fp-ts__core": "0.1.1-4c40460",
+    "@tsplus-types/fp-ts__data": "0.1.1-4c40460",
+    "@types/node": "^18.11.19",
+    "@vercel/ncc": "^0.36.1",
+    "prettier": "^2.8.3",
+    "typescript": "https://cdn.jsdelivr.net/npm/@tsplus/installer@0.0.168/compiler/typescript.tgz"
+  }
+}

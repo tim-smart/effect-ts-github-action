@@ -1,0 +1,16 @@
+name: Change the name
+description: 'description'
+author: ''
+branding:
+  icon: upload
+  color: blue
+inputs:
+  github_token:
+    required: true
+    description: 'token to access Github API'
+  name:
+    required: true
+    description: What is your name?
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "src",
+    "outDir": "build",
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "module": "CommonJS",
+    "lib": ["ESNext", "DOM"],
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2022",
+    "incremental": true,
+    "tsPlusConfig": "./tsplus.config.json",
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
+  },
+  "include": ["src/**/*"]
+}
