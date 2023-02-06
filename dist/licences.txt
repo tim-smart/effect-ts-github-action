@@ -38,6 +38,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @effect/io
 MIT
 
+@effect/node
+MIT
+
+@effect/stream
+MIT
+
 @fp-ts/core
 MIT
 

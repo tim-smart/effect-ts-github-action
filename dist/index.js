@@ -1,128 +1,6 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 4592:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.FsLive = exports.Fs = exports.FsError = void 0;
-const tsplus_module_1 = __nccwpck_require__(1703);
-const tsplus_module_2 = __nccwpck_require__(8364);
-const tsplus_module_3 = __nccwpck_require__(2891);
-const NFS = __nccwpck_require__(7561);
-const Path = __nccwpck_require__(1017);
-class FsError {
-    error;
-    _tag = "FsError";
-    constructor(error) {
-        this.error = error;
-    }
-}
-exports.FsError = FsError;
-const make = () => {
-    const stat = (path) => tsplus_module_1.async((resume) => {
-        NFS.stat(path, (err, stats) => {
-            if (err) {
-                resume(tsplus_module_1.fail(new FsError(err)));
-            }
-            else {
-                resume(tsplus_module_1.succeed(stats));
-            }
-        });
-    });
-    const readdir = (path) => tsplus_module_1.async((resume) => {
-        NFS.readdir(path, { withFileTypes: true }, (err, files) => {
-            if (err) {
-                resume(tsplus_module_1.fail(new FsError(err)));
-            }
-            else {
-                resume(tsplus_module_1.succeed(files));
-            }
-        });
-    });
-    const copyFile = (path, dest) => tsplus_module_1.async((resume) => {
-        NFS.copyFile(path, dest, (err) => {
-            if (err) {
-                resume(tsplus_module_1.fail(new FsError(err)));
-            }
-            else {
-                resume(tsplus_module_1.unit());
-            }
-        });
-    });
-    const copyDir = (path, dest) => tsplus_module_1.flatMap(readdir(path), entries => {
-        const files = entries.filter((_) => !_.isDirectory()).map((_) => _.name);
-        const copies = files.map((_) => copyFile(Path.join(path, _), Path.join(dest, _)));
-        return tsplus_module_1.map(tsplus_module_1.collectAllParDiscard(copies), () => void 0);
-    });
-    const copyFileOrDir = (path, dest) => tsplus_module_1.flatMap(stat(path), pathStat => tsplus_module_1.map(pathStat.isDirectory()
-        ? copyDir(path, dest)
-        : copyFile(path, Path.join(dest, Path.basename(path))), () => void 0));
-    const mkdir = (path) => tsplus_module_1.async((resume) => {
-        NFS.mkdir(path, (err) => {
-            if (err) {
-                resume(tsplus_module_1.fail(new FsError(err)));
-            }
-            else {
-                resume(tsplus_module_1.unit());
-            }
-        });
-    });
-    return {
-        stat,
-        readdir,
-        mkdir,
-        copyFile,
-        copyDir,
-        copyFileOrDir,
-    };
-};
-exports.Fs = tsplus_module_2.Tag();
-exports.FsLive = tsplus_module_3.sync(exports.Fs, make);
-//# sourceMappingURL=Fs.js.map
-
-/***/ }),
-
-/***/ 2792:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GistLive = exports.Gist = void 0;
-const tsplus_module_1 = __nccwpck_require__(1703);
-const tsplus_module_2 = __nccwpck_require__(5369);
-const tsplus_module_3 = __nccwpck_require__(3736);
-const tsplus_module_4 = __nccwpck_require__(8364);
-const tsplus_module_5 = __nccwpck_require__(2891);
-const Fs_js_1 = __nccwpck_require__(4592);
-const Git_js_1 = __nccwpck_require__(5843);
-const Github_js_1 = __nccwpck_require__(8280);
-const Runner_js_1 = __nccwpck_require__(7913);
-const make = tsplus_module_1.flatMap(tsplus_module_1.service(Github_js_1.Github), github => tsplus_module_1.flatMap(tsplus_module_1.service(Git_js_1.Git), git => tsplus_module_1.flatMap(tsplus_module_1.service(Runner_js_1.RunnerEnv), runner => tsplus_module_1.map(tsplus_module_1.service(Fs_js_1.Fs), fs => {
-    const create = github.wrap((_) => _.gists.create);
-    const get = github.wrap((_) => _.gists.get);
-    const createBlank = (name = "ZZZ.txt", isPublic = false) => tsplus_module_1.map(create({
-        files: {
-            [name]: {
-                content: "Nothing here yet",
-            },
-        },
-        public: isPublic,
-    }), (_) => _.data);
-    const clone = (id) => tsplus_module_1.flatMap(runner.mkTmpDir(id), dir => git.clone(`https://${tsplus_module_3.value(github.token)}@gist.github.com/${id}.git`, dir));
-    const cloneAndAdd = (id, path) => tsplus_module_1.flatMap(get({ gist_id: id }), gist => tsplus_module_1.flatMap(clone(gist.data.id), git => tsplus_module_1.flatMap(fs.copyFileOrDir(path, git.path), () => tsplus_module_1.map(git.run((_) => _.add(".").commit(`Add ${path}`).push("origin", "main")), () => gist.data))));
-    const createAndAdd = (path, name) => tsplus_module_1.flatMap(createBlank(tsplus_module_2.getOrUndefined(name)), gist => tsplus_module_1.map(cloneAndAdd(gist.id, path), () => gist));
-    return { create, createBlank, clone, cloneAndAdd, createAndAdd };
-}))));
-exports.Gist = tsplus_module_4.Tag();
-exports.GistLive = tsplus_module_5.provide(tsplus_module_1.toLayer(make, exports.Gist))((tsplus_module_5.merge(Fs_js_1.FsLive)(Runner_js_1.RunnerEnvLive)));
-//# sourceMappingURL=Gist.js.map
-
-/***/ }),
-
 /***/ 5843:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -131,9 +9,14 @@ exports.GistLive = tsplus_module_5.provide(tsplus_module_1.toLayer(make, exports
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.makeLayer = exports.Git = exports.GitRepo = exports.GitError = void 0;
 const tsplus_module_1 = __nccwpck_require__(8364);
-const tsplus_module_2 = __nccwpck_require__(1703);
-const tsplus_module_3 = __nccwpck_require__(2009);
+const tsplus_module_2 = __nccwpck_require__(5618);
+const tsplus_module_3 = __nccwpck_require__(8579);
 const SG = __nccwpck_require__(3646);
+/**
+ * A simple wrapper around simple-git.
+ *
+ * It exposes a `clone` method for working with git repositories.
+ */
 class GitError {
     error;
     _tag = "GitError";
@@ -143,11 +26,11 @@ class GitError {
 }
 exports.GitError = GitError;
 exports.GitRepo = tsplus_module_1.Tag();
-const make = ({ git: opts = {}, userName, userEmail }) => {
-    const clone = (url, dir) => tsplus_module_2.flatMap(tsplus_module_2.tryCatchPromise(() => SG.simpleGit(opts).clone(url, dir), (error) => new GitError(error)), () => {
+const make = ({ simpleGit: opts = {}, userName, userEmail }) => {
+    const clone = (url, dir) => tsplus_module_2.flatMap(tsplus_module_2.tryCatchPromise(() => SG.simpleGit(opts).clone(url, dir), error => new GitError(error)), () => {
         const git = SG.simpleGit(dir, opts);
-        const run = (f) => tsplus_module_2.tryCatchPromise(() => f(git), (error) => new GitError(error));
-        return tsplus_module_2.map(run((_) => _.addConfig("user.name", userName).addConfig("user.email", userEmail)), () => ({ git, run, path: dir }));
+        const run = (f) => tsplus_module_2.tryCatchPromise(() => f(git), error => new GitError(error));
+        return tsplus_module_2.map(run(_ => _.addConfig("user.name", userName).addConfig("user.email", userEmail)), () => ({ git, run, path: dir }));
     });
     return { clone };
 };
@@ -165,10 +48,13 @@ exports.makeLayer = makeLayer;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.makeLayer = exports.Github = exports.GithubError = void 0;
-const tsplus_module_1 = __nccwpck_require__(3736);
-const tsplus_module_2 = __nccwpck_require__(1703);
-const tsplus_module_3 = __nccwpck_require__(8364);
-const tsplus_module_4 = __nccwpck_require__(2009);
+const tsplus_module_1 = __nccwpck_require__(6350);
+const tsplus_module_2 = __nccwpck_require__(5618);
+const tsplus_module_3 = __nccwpck_require__(3205);
+const tsplus_module_4 = __nccwpck_require__(1707);
+const tsplus_module_5 = __nccwpck_require__(8364);
+const tsplus_module_6 = __nccwpck_require__(8579);
+const tsplus_module_7 = __nccwpck_require__(5369);
 const github_1 = __nccwpck_require__(3695);
 class GithubError {
     reason;
@@ -182,42 +68,40 @@ const make = ({ token }) => {
     const api = (0, github_1.getOctokit)(tsplus_module_1.value(token));
     const rest = api.rest;
     const request = (f) => tsplus_module_2.tryCatchPromise(() => f(rest), (reason) => new GithubError(reason));
-    const wrap = (f) => (...args) => tsplus_module_2.tryCatchPromise(() => f(rest)(...args), (reason) => new GithubError(reason));
-    return { api, token, request, wrap };
+    const wrap = (f) => (...args) => tsplus_module_2.map(tsplus_module_2.tryCatchPromise(() => f(rest)(...args), (reason) => new GithubError(reason)), (_) => _.data);
+    const stream = (f) => tsplus_module_4.paginateChunkEffect(0, (page) => tsplus_module_2.map(tsplus_module_2.tryCatchPromise(() => f(rest, page), (reason) => new GithubError(reason)), (_) => [
+        tsplus_module_3.fromIterable(_.data),
+        maybeNextPage(page, _.headers.link),
+    ]));
+    return { api, token, request, wrap, stream };
 };
-exports.Github = tsplus_module_3.Tag();
-const makeLayer = (_) => tsplus_module_2.toLayer(tsplus_module_2.map(tsplus_module_2.config(tsplus_module_4.unwrap(_)), make), exports.Github);
+exports.Github = tsplus_module_5.Tag();
+const makeLayer = (_) => tsplus_module_2.toLayer(tsplus_module_2.map(tsplus_module_2.config(tsplus_module_6.unwrap(_)), make), exports.Github);
 exports.makeLayer = makeLayer;
+const maybeNextPage = (page, linkHeader) => tsplus_module_7.as(page + 1)(tsplus_module_7.filter((_) => _.includes(`rel=\"next\"`))(tsplus_module_7.fromNullable(linkHeader)));
 //# sourceMappingURL=Github.js.map
 
 /***/ }),
 
-/***/ 7913:
+/***/ 6994:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.RunnerEnvLive = exports.RunnerEnv = exports.make = void 0;
-const tsplus_module_1 = __nccwpck_require__(1703);
-const tsplus_module_2 = __nccwpck_require__(5369);
-const tsplus_module_3 = __nccwpck_require__(2009);
-const tsplus_module_4 = __nccwpck_require__(8364);
-const tsplus_module_5 = __nccwpck_require__(2891);
-const OS = __nccwpck_require__(612);
-const Path = __nccwpck_require__(9411);
-const Fs_1 = __nccwpck_require__(4592);
-exports.make = tsplus_module_1.flatMap(tsplus_module_1.service(Fs_1.Fs), fs => tsplus_module_1.map(tsplus_module_1.config(tsplus_module_3.optional(tsplus_module_3.string("RUNNER_TEMP"))), runnerTemp => {
-    const tmpDir = tsplus_module_2.getOrElse(OS.tmpdir)(runnerTemp);
-    const mkTmpDir = (path) => {
-        const dir = Path.join(tmpDir, path);
-        return tsplus_module_1.as(fs.mkdir(dir), dir);
-    };
-    return { tmpDir, mkTmpDir };
-}));
-exports.RunnerEnv = tsplus_module_4.Tag();
-exports.RunnerEnvLive = tsplus_module_5.provide(tsplus_module_1.toLayer(exports.make, exports.RunnerEnv))(Fs_1.FsLive);
-//# sourceMappingURL=Runner.js.map
+exports.nonEmptyString = void 0;
+const tsplus_module_1 = __nccwpck_require__(3869);
+const tsplus_module_2 = __nccwpck_require__(3205);
+const tsplus_module_3 = __nccwpck_require__(8579);
+const Error_1 = __nccwpck_require__(5156);
+const nonEmptyString = (name) => tsplus_module_3.mapOrFail(tsplus_module_3.string(name), (_) => {
+    const trimmed = _.trim();
+    return trimmed !== ""
+        ? tsplus_module_1.right(trimmed)
+        : tsplus_module_1.left((0, Error_1.MissingData)(tsplus_module_2.empty(), "must not be empty"));
+});
+exports.nonEmptyString = nonEmptyString;
+//# sourceMappingURL=config.js.map
 
 /***/ }),
 
@@ -1117,7 +1001,7 @@ exports.checkBypass = checkBypass;
 
 /***/ }),
 
-/***/ 7433:
+/***/ 3391:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -1126,9 +1010,9 @@ exports.checkBypass = checkBypass;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.unannotate = exports.stripSomeDefects = exports.stripFailures = exports.squashWith = exports.squash = exports.size = exports.sequential = exports.reduceWithContext = exports.reduce = exports.pretty = exports.parallel = exports.match = exports.map = exports.linearize = exports.keepDefects = exports.isStackAnnotation = exports.isSequentialType = exports.isRuntimeException = exports.isParallelType = exports.isNoSuchElementException = exports.isInterruptedOnly = exports.isInterruptedException = exports.isInterrupted = exports.isInterruptType = exports.isIllegalArgumentException = exports.isFailure = exports.isFailType = exports.isEmptyType = exports.isEmpty = exports.isDieType = exports.isDie = exports.isCause = exports.isAnnotatedType = exports.interruptors = exports.interruptOption = exports.interrupt = exports.flipCauseOption = exports.flatten = exports.flatMap = exports.find = exports.filter = exports.failures = exports.failureOrCause = exports.failureOption = exports.fail = exports.empty = exports.dieOption = exports.die = exports.defects = exports.contains = exports.as = exports.annotated = exports.StackAnnotationTypeId = exports.RuntimeExceptionTypeId = exports.RuntimeException = exports.NoSuchElementExceptionTypeId = exports.NoSuchElementException = exports.InvalidHubCapacityExceptionTypeId = exports.InterruptedExceptionTypeId = exports.InterruptedException = exports.IllegalArgumentExceptionTypeId = exports.IllegalArgumentException = exports.CauseTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var _pretty_run = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7411));
+exports.unannotate = exports.stripSomeDefects = exports.stripFailures = exports.squashWith = exports.squash = exports.size = exports.sequential = exports.reduceWithContext = exports.reduce = exports.pretty = exports.parallel = exports.match = exports.map = exports.linearize = exports.keepDefects = exports.isStackAnnotation = exports.isSequentialType = exports.isRuntimeException = exports.isParallelType = exports.isNoSuchElementException = exports.isInterruptedOnly = exports.isInterruptedException = exports.isInterrupted = exports.isInterruptType = exports.isIllegalArgumentException = exports.isFailure = exports.isFailType = exports.isEmptyType = exports.isEmpty = exports.isDieType = exports.isDie = exports.isCause = exports.isAnnotatedType = exports.interruptors = exports.interruptOption = exports.interrupt = exports.globalErrorSeq = exports.flipCauseOption = exports.flatten = exports.flatMap = exports.find = exports.filter = exports.failures = exports.failureOrCause = exports.failureOption = exports.fail = exports.empty = exports.dieOption = exports.die = exports.defects = exports.contains = exports.as = exports.annotated = exports.StackAnnotationTypeId = exports.StackAnnotation = exports.RuntimeExceptionTypeId = exports.RuntimeException = exports.NoSuchElementExceptionTypeId = exports.NoSuchElementException = exports.InvalidHubCapacityExceptionTypeId = exports.InterruptedExceptionTypeId = exports.InterruptedException = exports.IllegalArgumentExceptionTypeId = exports.IllegalArgumentException = exports.CauseTypeId = void 0;
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var _pretty_run = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9972));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -1173,12 +1057,24 @@ const InvalidHubCapacityExceptionTypeId = internal.InvalidHubCapacityExceptionTy
 exports.InvalidHubCapacityExceptionTypeId = InvalidHubCapacityExceptionTypeId;
 const StackAnnotationTypeId = internal.StackAnnotationTypeId;
 /**
+ * @since 1.0.0
+ * @category stack
+ */
+exports.StackAnnotationTypeId = StackAnnotationTypeId;
+const StackAnnotation = internal.StackAnnotation;
+/**
+ * @since 1.0.0
+ * @category stack
+ */
+exports.StackAnnotation = StackAnnotation;
+const globalErrorSeq = internal.globalErrorSeq;
+/**
  * Constructs a new `Empty` cause.
  *
  * @since 1.0.0
  * @category constructors
  */
-exports.StackAnnotationTypeId = StackAnnotationTypeId;
+exports.globalErrorSeq = globalErrorSeq;
 const empty = internal.empty;
 /**
  * Constructs a new `Fail` cause from the specified `error`.
@@ -1655,7 +1551,7 @@ exports.unannotate = unannotate;
 
 /***/ }),
 
-/***/ 6181:
+/***/ 3932:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -1665,8 +1561,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.sleep = exports.make = exports.currentTimeMillis = exports.clockWith = exports.Tag = exports.ClockTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4605));
-var defaultServices = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6050));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5861));
+var defaultServices = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9546));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -1709,7 +1605,7 @@ exports.Tag = Tag;
 
 /***/ }),
 
-/***/ 2009:
+/***/ 8579:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -1719,7 +1615,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.zipWith = exports.zip = exports.withDescription = exports.withDefault = exports.validate = exports.unwrap = exports.tuple = exports.table = exports.sync = exports.succeed = exports.struct = exports.string = exports.setOf = exports.secret = exports.repeat = exports.primitive = exports.orElseIf = exports.orElse = exports.optional = exports.nested = exports.mapOrFail = exports.mapAttempt = exports.map = exports.integer = exports.float = exports.fail = exports.defer = exports.date = exports.chunkOf = exports.bool = exports.arrayOf = exports.ConfigTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5407));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8370));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -2006,7 +1902,7 @@ exports.zipWith = zipWith;
 
 /***/ }),
 
-/***/ 1839:
+/***/ 5156:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -2016,7 +1912,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.reduceWithContext = exports.prefixed = exports.isUnsupported = exports.isSourceUnavailable = exports.isOr = exports.isMissingDataOnly = exports.isMissingData = exports.isInvalidData = exports.isConfigError = exports.isAnd = exports.Unsupported = exports.SourceUnavailable = exports.Or = exports.MissingData = exports.InvalidData = exports.ConfigErrorTypeId = exports.And = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7825));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(509));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -2145,7 +2041,7 @@ exports.reduceWithContext = reduceWithContext;
 
 /***/ }),
 
-/***/ 2057:
+/***/ 9854:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -2155,7 +2051,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.within = exports.upperCase = exports.unnested = exports.snakeCase = exports.orElse = exports.nested = exports.makeFlat = exports.make = exports.lowerCase = exports.kebabCase = exports.fromMap = exports.fromFlat = exports.fromEnv = exports.contramapPath = exports.constantCase = exports.Tag = exports.FlatConfigProviderTypeId = exports.ConfigProviderTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2816));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(647));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -2332,7 +2228,7 @@ exports.within = within;
 
 /***/ }),
 
-/***/ 3736:
+/***/ 6350:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -2342,7 +2238,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.value = exports.unsafeWipe = exports.make = exports.isConfigSecret = exports.fromString = exports.fromChunk = exports.ConfigSecretTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1825));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1211));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -2395,7 +2291,7 @@ exports.unsafeWipe = unsafeWipe;
 
 /***/ }),
 
-/***/ 5668:
+/***/ 8888:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -2405,7 +2301,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.untracedMethod = exports.untracedDual = exports.untraced = exports.traced = exports.sourceLocation = exports.runtimeDebug = exports.pipeableWithTrace = exports.methodWithTrace = exports.dualWithTrace = exports.dual = exports.bodyWithTrace = void 0;
-var debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9880));
+var debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5395));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -2642,7 +2538,7 @@ exports.traced = traced;
 
 /***/ }),
 
-/***/ 3885:
+/***/ 3576:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -2652,8 +2548,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.unsafeMake = exports.unsafeDone = exports.sync = exports.succeed = exports.poll = exports.makeAs = exports.make = exports.isDone = exports.interruptWith = exports.interrupt = exports.failSync = exports.failCauseSync = exports.failCause = exports.fail = exports.done = exports.dieSync = exports.die = exports.completeWith = exports.complete = exports["await"] = exports.DeferredTypeId = void 0;
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4267));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9333));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -2838,7 +2734,7 @@ exports.unsafeDone = unsafeDone;
 
 /***/ }),
 
-/***/ 1703:
+/***/ 5618:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -2851,15 +2747,15 @@ exports.find = exports.filterPar = exports.filterOrFail = exports.filterOrElseWi
 exports.onInterrupt = exports.onExit = exports.onError = exports.onDoneCause = exports.onDone = exports.noneOrFailWith = exports.noneOrFail = exports.none = exports.never = exports.negate = exports.mergeAllPar = exports.mergeAll = exports.merge = exports.memoizeFunction = exports.memoize = exports.matchEffect = exports.matchCauseEffect = exports.matchCause = exports.match = exports.mapTryCatch = exports.mapErrorCause = exports.mapError = exports.mapBoth = exports.mapAccum = exports.map = exports.makeSemaphore = exports.loopDiscard = exports.loop = exports.logWarningCauseMessage = exports.logWarningCause = exports.logWarning = exports.logTraceCauseMessage = exports.logTraceCause = exports.logTrace = exports.logSpan = exports.logInfoCauseMessage = exports.logInfoCause = exports.logInfo = exports.logFatalCauseMessage = exports.logFatalCause = exports.logFatal = exports.logErrorCauseMessage = exports.logErrorCause = exports.logError = exports.logDebugCauseMessage = exports.logDebugCause = exports.logDebug = exports.logAnnotations = exports.logAnnotate = exports.log = exports.leftWith = exports.left = exports.iterate = exports.isSuccess = exports.isFailure = exports.isEffect = exports.intoDeferred = exports.interruptibleMask = exports.interruptible = exports.interruptWith = exports.interrupt = exports.inheritFiberRefs = exports.ignoreLogged = exports.ignore = exports.ifEffect = exports.head = exports.getOrFailWith = exports.getOrFailDiscard = exports.getOrFail = exports.getFiberRefs = exports.gen = exports.fromOption = exports.fromFiberEffect = exports.fromFiber = exports.fromEitherCause = exports.fromEither = exports.forkWithErrorHandler = exports.forkScoped = exports.forkIn = exports.forkDaemon = exports.forkAllDiscard = exports.forkAll = exports.fork = exports.forever = exports.forEachWithIndex = exports.forEachParWithIndex = exports.forEachParDiscard = exports.forEachPar = exports.forEachOption = exports.forEachExec = exports.forEachEffect = exports.forEachDiscard = exports.forEach = exports.forAll = exports.flipWith = exports.flip = exports.flattenErrorOption = exports.flatten = exports.flatMap = exports.firstSuccessOf = void 0;
 exports.succeedNone = exports.succeedLeft = exports.succeed = exports.structPar = exports.struct = exports.someWith = exports.someOrFailException = exports.someOrFail = exports.someOrElseEffect = exports.someOrElse = exports.some = exports.sleep = exports.setFiberRefs = exports.setConfigProvider = exports.serviceWithEffect = exports.serviceWith = exports.service = exports.sequentialFinalizers = exports.scoped = exports.scopeWith = exports.scope = exports.scheduleFrom = exports.scheduleForked = exports.schedule = exports.sandbox = exports.runtimeFlags = exports.runtime = exports.runSyncExit = exports.runSyncEither = exports.runSync = exports.runPromiseExit = exports.runPromiseEither = exports.runPromise = exports.runFork = exports.runCallback = exports.rightWith = exports.right = exports.retryWhileEquals = exports.retryWhileEffect = exports.retryWhile = exports.retryUntilEquals = exports.retryUntilEffect = exports.retryUntil = exports.retryOrElseEither = exports.retryOrElse = exports.retryN = exports.retry = exports.resurrect = exports.replicateEffectDiscard = exports.replicateEffect = exports.replicate = exports.repeatWhileEquals = exports.repeatWhileEffect = exports.repeatWhile = exports.repeatUntilEquals = exports.repeatUntilEffect = exports.repeatUntil = exports.repeatOrElseEither = exports.repeatOrElse = exports.repeatN = exports.repeat = exports.rejectEffect = exports.reject = exports.refineOrDieWith = exports.refineOrDie = exports.reduceWhile = exports.reduceRight = exports.reduceAllPar = exports.reduceAll = exports.reduce = exports.randomWith = exports.random = exports.raceWith = exports.raceFirst = exports.raceFibersWith = exports.raceEither = exports.raceAwait = exports.raceAll = exports.race = exports.provideSomeLayer = exports.provideServiceEffect = exports.provideService = exports.provideLayer = exports.provideContext = exports.promiseInterrupt = exports.promise = exports.patchFiberRefs = exports.partitionPar = exports.partition = exports.parallelFinalizers = exports.parallelErrors = exports.orElseSucceed = exports.orElseOptional = exports.orElseFail = exports.orElseEither = exports.orElse = exports.orDieWith = exports.orDie = exports.option = exports.once = void 0;
 exports.zipWithPar = exports.zipWith = exports.zipRight = exports.zipParRight = exports.zipParLeft = exports.zipPar = exports.zipLeft = exports.zip = exports.yieldNow = exports.withRuntimeFlagsScoped = exports.withRuntimeFlags = exports.withParallelismUnbounded = exports.withParallelism = exports.withMetric = exports.withEarlyRelease = exports.withConfigProviderScoped = exports.withConfigProvider = exports.withClockScoped = exports.withClock = exports.whileLoop = exports.whenRef = exports.whenFiberRef = exports.whenEffect = exports.whenCaseEffect = exports.whenCase = exports.when = exports.validateWithPar = exports.validateWith = exports.validatePar = exports.validateFirstPar = exports.validateFirst = exports.validateAllParDiscard = exports.validateAllPar = exports.validateAllDiscard = exports.validateAll = exports.validate = exports.using = exports.updateService = exports.updateRuntimeFlags = exports.updateFiberRefs = exports.unsome = exports.unsandbox = exports.unsafeMakeSemaphore = exports.unright = exports.unrefineWith = exports.unrefine = exports.unlessEffect = exports.unless = exports.unleft = exports.unit = exports.uninterruptibleMask = exports.uninterruptible = exports.unified = exports.unfold = exports.uncause = exports.tuplePar = exports.tuple = exports.tryPromiseInterrupt = exports.tryPromise = exports.tryOrElse = exports.tryCatchPromiseInterrupt = exports.tryCatchPromise = exports.tryCatch = exports.transplant = exports.toLayerScopedDiscard = exports.toLayerScoped = exports.toLayerDiscard = exports.toLayerContext = exports.toLayer = exports.timeoutTo = exports.timeoutFailCause = exports.timeoutFail = exports.timeout = exports.timedWith = exports.timed = exports.tapSome = exports.tapErrorCause = exports.tapError = exports.tapEither = exports.tapDefect = exports.tapBoth = exports.tap = exports.takeWhile = exports.tags = exports.taggedWithLabels = exports.taggedWithLabelSet = exports.taggedScopedWithLabels = exports.taggedScopedWithLabelSet = exports.taggedScoped = exports.tagged = exports.sync = exports.suspendSucceed = exports.suspend = exports.supervised = exports.summarized = exports.succeedSome = exports.succeedRight = void 0;
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var defaultServices = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6050));
-var effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7794));
-var circular = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7499));
-var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7378));
-var layer = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1350));
-var circularLayer = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8974));
-var _runtime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5272));
-var _schedule = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9895));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var defaultServices = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9546));
+var effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(47));
+var circular = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4076));
+var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(484));
+var layer = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(706));
+var circularLayer = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8421));
+var _runtime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2450));
+var _schedule = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6254));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -6566,7 +6462,7 @@ exports.blocking = blocking;
 
 /***/ }),
 
-/***/ 4038:
+/***/ 4786:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -6576,7 +6472,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.sequential = exports.parallelN = exports.parallel = exports.match = exports.isSequential = exports.isParallelN = exports.isParallel = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9463));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(699));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -6647,7 +6543,7 @@ exports.match = match;
 
 /***/ }),
 
-/***/ 2924:
+/***/ 1773:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -6657,7 +6553,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.zipWith = exports.zipRight = exports.zipParRight = exports.zipParLeft = exports.zipPar = exports.zipLeft = exports.zip = exports.unit = exports.unannotate = exports.succeed = exports.matchEffect = exports.match = exports.mapErrorCause = exports.mapError = exports.mapBoth = exports.map = exports.isSuccess = exports.isInterrupted = exports.isFailure = exports.isExit = exports.interrupt = exports.getOrElse = exports.fromOption = exports.fromEither = exports.forEachEffect = exports.flatten = exports.flatMapEffect = exports.flatMap = exports.failCause = exports.fail = exports.exists = exports.die = exports.collectAllPar = exports.collectAll = exports.causeOption = exports.asUnit = exports.as = void 0;
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -6973,7 +6869,7 @@ exports.zipWith = zipWith;
 
 /***/ }),
 
-/***/ 6962:
+/***/ 439:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -6983,10 +6879,10 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.zipWith = exports.zipRight = exports.zipLeft = exports.zip = exports.unsafeRoots = exports.unit = exports.succeed = exports.status = exports.scoped = exports.roots = exports.pretty = exports.poll = exports.orElseEither = exports.orElse = exports.never = exports.match = exports.mapFiber = exports.mapEffect = exports.map = exports.joinAll = exports.join = exports.isRuntimeFiber = exports.isFiber = exports.interrupted = exports.interruptFork = exports.interruptAsFork = exports.interruptAs = exports.interruptAllWith = exports.interruptAll = exports.interrupt = exports.inheritAll = exports.id = exports.getCurrentFiber = exports.fromEffect = exports.failCause = exports.fail = exports.dumpAll = exports.dump = exports.done = exports.collectAll = exports.children = exports.awaitAll = exports["await"] = exports.RuntimeFiberTypeId = exports.Order = exports.FiberTypeId = void 0;
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var circular = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7499));
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3120));
-var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7378));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var circular = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4076));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5434));
+var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(484));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -7373,7 +7269,7 @@ exports.zipWith = zipWith;
 
 /***/ }),
 
-/***/ 8722:
+/***/ 517:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -7383,7 +7279,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.unsafeMake = exports.toSet = exports.toOption = exports.threadName = exports.runtime = exports.none = exports.make = exports.isRuntime = exports.isNone = exports.isFiberId = exports.isComposite = exports.ids = exports.getOrElse = exports.composite = exports.combineAll = exports.combine = exports.FiberIdTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9497));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2307));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -7524,7 +7420,7 @@ exports.unsafeMake = unsafeMake;
 
 /***/ }),
 
-/***/ 5110:
+/***/ 7855:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -7534,8 +7430,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.render = exports.make = exports.isEnabled = exports.isEmpty = exports.isDisabled = exports.isActive = exports.inverse = exports.includes = exports.exclude = exports.enabledSet = exports.enable = exports.empty = exports.either = exports.disabledSet = exports.disable = exports.both = exports.andThen = void 0;
-var runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(295));
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7064));
+var runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2166));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5180));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -7687,7 +7583,7 @@ exports.render = render;
 
 /***/ }),
 
-/***/ 6709:
+/***/ 8175:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -7697,7 +7593,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.suspended = exports.running = exports.isSuspended = exports.isRunning = exports.isFiberStatus = exports.isDone = exports.done = exports.FiberStatusTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(595));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7083));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -7762,7 +7658,7 @@ exports.isSuspended = isSuspended;
 
 /***/ }),
 
-/***/ 745:
+/***/ 2524:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -7772,7 +7668,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.updatedAs = exports.unsafeMake = exports.setAll = exports.joinAs = exports.getOrDefault = exports.get = exports.forkAs = exports.fiberRefs = exports["delete"] = exports.FiberRefsSym = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8122));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1244));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -7857,7 +7753,156 @@ exports.unsafeMake = unsafeMake;
 
 /***/ }),
 
-/***/ 2891:
+/***/ 6230:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.unbounded = exports.subscribe = exports.sliding = exports.size = exports.shutdown = exports.publishAll = exports.publish = exports.isShutdown = exports.isFull = exports.isEmpty = exports.dropping = exports.capacity = exports.bounded = exports.awaitShutdown = void 0;
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3825));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/**
+ * Creates a bounded hub with the back pressure strategy. The hub will retain
+ * messages until they have been taken by all subscribers, applying back
+ * pressure to publishers if the hub is at capacity.
+ *
+ * For best performance use capacities that are powers of two.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+const bounded = internal.bounded;
+/**
+ * Creates a bounded hub with the dropping strategy. The hub will drop new
+ * messages if the hub is at capacity.
+ *
+ * For best performance use capacities that are powers of two.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.bounded = bounded;
+const dropping = internal.dropping;
+/**
+ * Creates a bounded hub with the sliding strategy. The hub will add new
+ * messages and drop old messages if the hub is at capacity.
+ *
+ * For best performance use capacities that are powers of two.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.dropping = dropping;
+const sliding = internal.sliding;
+/**
+ * Creates an unbounded hub.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.sliding = sliding;
+const unbounded = internal.unbounded;
+/**
+ *  Returns the number of elements the queue can hold.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.unbounded = unbounded;
+const capacity = internal.capacity;
+/**
+ * Retrieves the size of the queue, which is equal to the number of elements
+ * in the queue. This may be negative if fibers are suspended waiting for
+ * elements to be added to the queue.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.capacity = capacity;
+const size = internal.size;
+/**
+ * Returns `true` if the `Queue` contains at least one element, `false`
+ * otherwise.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.size = size;
+const isFull = internal.isFull;
+/**
+ * Returns `true` if the `Queue` contains zero elements, `false` otherwise.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.isFull = isFull;
+const isEmpty = internal.isEmpty;
+/**
+ * Interrupts any fibers that are suspended on `offer` or `take`. Future calls
+ * to `offer*` and `take*` will be interrupted immediately.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.isEmpty = isEmpty;
+const shutdown = internal.shutdown;
+/**
+ * Returns `true` if `shutdown` has been called, otherwise returns `false`.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.shutdown = shutdown;
+const isShutdown = internal.isShutdown;
+/**
+ * Waits until the queue is shutdown. The `Effect` returned by this method will
+ * not resume until the queue has been shutdown. If the queue is already
+ * shutdown, the `Effect` will resume right away.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.isShutdown = isShutdown;
+const awaitShutdown = internal.awaitShutdown;
+/**
+ * Publishes a message to the hub, returning whether the message was published
+ * to the hub.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.awaitShutdown = awaitShutdown;
+const publish = internal.publish;
+/**
+ * Publishes all of the specified messages to the hub, returning whether they
+ * were published to the hub.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.publish = publish;
+const publishAll = internal.publishAll;
+/**
+ * Subscribes to receive messages from the hub. The resulting subscription can
+ * be evaluated multiple times within the scope to take a message from the hub
+ * each time.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.publishAll = publishAll;
+const subscribe = internal.subscribe;
+exports.subscribe = subscribe;
+//# sourceMappingURL=Hub.js.map
+
+/***/ }),
+
+/***/ 8983:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -7867,7 +7912,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.zipWithPar = exports.useMerge = exports.use = exports.toRuntime = exports.tapErrorCause = exports.tapError = exports.tap = exports.syncContext = exports.sync = exports.suspend = exports.succeedContext = exports.succeed = exports.service = exports.scopedDiscard = exports.scopedContext = exports.scoped = exports.scope = exports.retry = exports.provideMerge = exports.provide = exports.project = exports.passthrough = exports.orElse = exports.orDie = exports.mergeAll = exports.merge = exports.memoize = exports.matchLayer = exports.matchCauseLayer = exports.mapError = exports.map = exports.launch = exports.isLayer = exports.isFresh = exports["function"] = exports.fresh = exports.flatten = exports.flatMap = exports.failSync = exports.failCauseSync = exports.failCause = exports.fail = exports.extendScope = exports.effectDiscard = exports.effectContext = exports.effect = exports.discard = exports.dieSync = exports.die = exports.context = exports.catchAllCause = exports.catchAll = exports.buildWithScope = exports.build = exports.LayerTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1350));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(706));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -8347,7 +8392,7 @@ exports.zipWithPar = zipWithPar;
 
 /***/ }),
 
-/***/ 8440:
+/***/ 3658:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -8357,7 +8402,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.locally = exports.lessThanEqual = exports.lessThan = exports.greaterThanEqual = exports.greaterThan = exports.fromLiteral = exports.Warning = exports.Trace = exports.Order = exports.None = exports.Info = exports.Fatal = exports.Error = exports.Debug = exports.All = void 0;
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
 var number = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7639));
 var order = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8041));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
@@ -8494,7 +8539,7 @@ exports.fromLiteral = fromLiteral;
 
 /***/ }),
 
-/***/ 8111:
+/***/ 9306:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -8504,7 +8549,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.render = exports.make = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7978));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4234));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -8527,7 +8572,281 @@ exports.render = render;
 
 /***/ }),
 
-/***/ 6493:
+/***/ 9925:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.unbounded = exports.takeUpTo = exports.takeN = exports.takeBetween = exports.takeAll = exports.take = exports.slidingStrategy = exports.sliding = exports.size = exports.shutdown = exports.poll = exports.offerAll = exports.offer = exports.isShutdown = exports.isQueue = exports.isFull = exports.isEnqueue = exports.isEmpty = exports.isDequeue = exports.droppingStrategy = exports.dropping = exports.capacity = exports.bounded = exports.backPressureStrategy = exports.awaitShutdown = exports.QueueStrategyTypeId = exports.EnqueueTypeId = exports.DequeueTypeId = void 0;
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6340));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/**
+ * @since 1.0.0
+ * @category symbols
+ */
+const EnqueueTypeId = internal.EnqueueTypeId;
+/**
+ * @since 1.0.0
+ * @category symbols
+ */
+exports.EnqueueTypeId = EnqueueTypeId;
+const DequeueTypeId = internal.DequeueTypeId;
+/**
+ * @since 1.0.0
+ * @category symbols
+ */
+exports.DequeueTypeId = DequeueTypeId;
+const QueueStrategyTypeId = internal.QueueStrategyTypeId;
+/**
+ * Returns `true` if the specified value is a `Queue`, `false` otherwise.
+ *
+ * @since 1.0.0
+ * @category refinements
+ */
+exports.QueueStrategyTypeId = QueueStrategyTypeId;
+const isQueue = internal.isQueue;
+/**
+ * Returns `true` if the specified value is a `Dequeue`, `false` otherwise.
+ *
+ * @since 1.0.0
+ * @category refinements
+ */
+exports.isQueue = isQueue;
+const isDequeue = internal.isDequeue;
+/**
+ * Returns `true` if the specified value is a `Enqueue`, `false` otherwise.
+ *
+ * @since 1.0.0
+ * @category refinements
+ */
+exports.isDequeue = isDequeue;
+const isEnqueue = internal.isEnqueue;
+/**
+ * @since 1.0.0
+ * @category strategies
+ */
+exports.isEnqueue = isEnqueue;
+const backPressureStrategy = internal.backPressureStrategy;
+/**
+ * @since 1.0.0
+ * @category strategies
+ */
+exports.backPressureStrategy = backPressureStrategy;
+const droppingStrategy = internal.droppingStrategy;
+/**
+ * @since 1.0.0
+ * @category strategies
+ */
+exports.droppingStrategy = droppingStrategy;
+const slidingStrategy = internal.slidingStrategy;
+/**
+ * Makes a new bounded `Queue`. When the capacity of the queue is reached, any
+ * additional calls to `offer` will be suspended until there is more room in
+ * the queue.
+ *
+ * **Note**: When possible use only power of 2 capacities; this will provide
+ * better performance by utilising an optimised version of the underlying
+ * `RingBuffer`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.slidingStrategy = slidingStrategy;
+const bounded = internal.bounded;
+/**
+ * Makes a new bounded `Queue` with the dropping strategy.
+ *
+ * When the capacity of the queue is reached, new elements will be added and the
+ * old elements will be dropped.
+ *
+ * **Note**: When possible use only power of 2 capacities; this will provide
+ * better performance by utilising an optimised version of the underlying
+ * `RingBuffer`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.bounded = bounded;
+const dropping = internal.dropping;
+/**
+ * Makes a new bounded `Queue` with the sliding strategy.
+ *
+ * When the capacity of the queue is reached, new elements will be added and the
+ * old elements will be dropped.
+ *
+ * **Note**: When possible use only power of 2 capacities; this will provide
+ * better performance by utilising an optimised version of the underlying
+ * `RingBuffer`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.dropping = dropping;
+const sliding = internal.sliding;
+/**
+ * Creates a new unbounded `Queue`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.sliding = sliding;
+const unbounded = internal.unbounded;
+/**
+ * Returns the number of elements the queue can hold.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.unbounded = unbounded;
+const capacity = internal.capacity;
+/**
+ * Retrieves the size of the queue, which is equal to the number of elements
+ * in the queue. This may be negative if fibers are suspended waiting for
+ * elements to be added to the queue.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.capacity = capacity;
+const size = internal.size;
+/**
+ * Returns `true` if the `Queue` contains zero elements, `false` otherwise.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.size = size;
+const isEmpty = internal.isEmpty;
+/**
+ * Returns `true` if the `Queue` contains at least one element, `false`
+ * otherwise.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.isEmpty = isEmpty;
+const isFull = internal.isFull;
+/**
+ * Returns `true` if `shutdown` has been called, otherwise returns `false`.
+ *
+ * @since 1.0.0
+ * @category getters
+ */
+exports.isFull = isFull;
+const isShutdown = internal.isShutdown;
+/**
+ * Waits until the queue is shutdown. The `Effect` returned by this method will
+ * not resume until the queue has been shutdown. If the queue is already
+ * shutdown, the `Effect` will resume right away.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.isShutdown = isShutdown;
+const awaitShutdown = internal.awaitShutdown;
+/**
+ * Interrupts any fibers that are suspended on `offer` or `take`. Future calls
+ * to `offer*` and `take*` will be interrupted immediately.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.awaitShutdown = awaitShutdown;
+const shutdown = internal.shutdown;
+/**
+ * Places one value in the queue.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.shutdown = shutdown;
+const offer = internal.offer;
+/**
+ * For Bounded Queue: uses the `BackPressure` Strategy, places the values in
+ * the queue and always returns true. If the queue has reached capacity, then
+ * the fiber performing the `offerAll` will be suspended until there is room
+ * in the queue.
+ *
+ * For Unbounded Queue: Places all values in the queue and returns true.
+ *
+ * For Sliding Queue: uses `Sliding` Strategy If there is room in the queue,
+ * it places the values otherwise it removes the old elements and enqueues the
+ * new ones. Always returns true.
+ *
+ * For Dropping Queue: uses `Dropping` Strategy, It places the values in the
+ * queue but if there is no room it will not enqueue them and return false.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.offer = offer;
+const offerAll = internal.offerAll;
+/**
+ * Returns the first value in the `Queue` as a `Some<A>`, or `None` if the queue
+ * is empty.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.offerAll = offerAll;
+const poll = internal.poll;
+/**
+ * Takes the oldest value in the queue. If the queue is empty, this will return
+ * a computation that resumes when an item has been added to the queue.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.poll = poll;
+const take = internal.take;
+/**
+ * Takes all the values in the queue and returns the values. If the queue is
+ * empty returns an empty collection.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.take = take;
+const takeAll = internal.takeAll;
+/**
+ * Takes up to max number of values from the queue.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.takeAll = takeAll;
+const takeUpTo = internal.takeUpTo;
+/**
+ * Takes a number of elements from the queue between the specified minimum and
+ * maximum. If there are fewer than the minimum number of elements available,
+ * suspends until at least the minimum number of elements have been collected.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.takeUpTo = takeUpTo;
+const takeBetween = internal.takeBetween;
+/**
+ * Takes the specified number of elements from the queue. If there are fewer
+ * than the specified number of elements available, it suspends until they
+ * become available.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.takeBetween = takeBetween;
+const takeN = internal.takeN;
+exports.takeN = takeN;
+//# sourceMappingURL=Queue.js.map
+
+/***/ }),
+
+/***/ 8818:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -8537,8 +8856,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.shuffle = exports.randomWith = exports.nextRange = exports.nextIntBetween = exports.nextInt = exports.nextBoolean = exports.next = exports.RandomTypeId = void 0;
-var defaultServices = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6050));
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9539));
+var defaultServices = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9546));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7115));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -8610,7 +8929,7 @@ exports.randomWith = randomWith;
 
 /***/ }),
 
-/***/ 8740:
+/***/ 6607:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -8620,7 +8939,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.updateSomeAndGet = exports.updateSome = exports.updateAndGet = exports.update = exports.unsafeMake = exports.setAndGet = exports.set = exports.modifySome = exports.modify = exports.make = exports.getAndUpdateSome = exports.getAndUpdate = exports.getAndSet = exports.get = exports.RefTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3177));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4397));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -8717,7 +9036,1133 @@ exports.unsafeMake = unsafeMake;
 
 /***/ }),
 
-/***/ 2678:
+/***/ 1210:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.runSyncExit = exports.runSyncEither = exports.runSync = exports.runPromiseExit = exports.runPromiseEither = exports.runPromise = exports.runFork = exports.runCallback = exports.make = exports.defaultRuntimeFlags = exports.defaultRuntime = void 0;
+var _logger = /*#__PURE__*/__nccwpck_require__(1502);
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2450));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/**
+ * Executes the effect using the provided Scheduler or using the global
+ * Scheduler if not provided
+ *
+ * @since 1.0.0
+ * @category execution
+ */
+const runFork = internal.unsafeFork;
+/**
+ * Executes the effect synchronously returning the exit.
+ *
+ * This method is effectful and should only be invoked at the edges of your
+ * program.
+ *
+ * @since 1.0.0
+ * @category execution
+ */
+exports.runFork = runFork;
+const runSyncExit = _logger.unsafeRunSyncExit;
+/**
+ * Executes the effect synchronously throwing in case of errors or async boundaries.
+ *
+ * This method is effectful and should only be invoked at the edges of your
+ * program.
+ *
+ * @since 1.0.0
+ * @category execution
+ */
+exports.runSyncExit = runSyncExit;
+const runSync = _logger.unsafeRunSync;
+/**
+ * Executes the effect asynchronously, eventually passing the exit value to
+ * the specified callback.
+ *
+ * This method is effectful and should only be invoked at the edges of your
+ * program.
+ *
+ * @since 1.0.0
+ * @category execution
+ */
+exports.runSync = runSync;
+const runCallback = internal.unsafeRunCallback;
+/**
+ * Executes the effect synchronously returning either the result or a failure.
+ *
+ * Throwing in case of defects and interruptions.
+ *
+ * This method is effectful and should only be invoked at the edges of your
+ * program.
+ *
+ * @since 1.0.0
+ * @category execution
+ */
+exports.runCallback = runCallback;
+const runSyncEither = internal.unsafeRunSyncEither;
+/**
+ * Runs the `Effect`, returning a JavaScript `Promise` that will be resolved
+ * with the value of the effect once the effect has been executed, or will be
+ * rejected with the first error or exception throw by the effect.
+ *
+ * This method is effectful and should only be used at the edges of your
+ * program.
+ *
+ * @since 1.0.0
+ * @category execution
+ */
+exports.runSyncEither = runSyncEither;
+const runPromise = internal.unsafeRunPromise;
+/**
+ * Runs the `Effect`, returning a JavaScript `Promise` that will be resolved
+ * with the `Exit` state of the effect once the effect has been executed.
+ *
+ * This method is effectful and should only be used at the edges of your
+ * program.
+ *
+ * @since 1.0.0
+ * @category execution
+ */
+exports.runPromise = runPromise;
+const runPromiseExit = internal.unsafeRunPromiseExit;
+/**
+ * Runs the `Effect`, returning a JavaScript `Promise` that will be resolved
+ * with the either a success or a failure. The promise will be rejected in case
+ * of defects and interruption.
+ *
+ * This method is effectful and should only be used at the edges of your
+ * program.
+ *
+ * @since 1.0.0
+ * @category execution
+ */
+exports.runPromiseExit = runPromiseExit;
+const runPromiseEither = internal.unsafeRunPromiseEither;
+/**
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.runPromiseEither = runPromiseEither;
+const defaultRuntime = internal.defaultRuntime;
+/**
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.defaultRuntime = defaultRuntime;
+const defaultRuntimeFlags = internal.defaultRuntimeFlags;
+/**
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.defaultRuntimeFlags = defaultRuntimeFlags;
+const make = internal.make;
+exports.make = make;
+//# sourceMappingURL=Runtime.js.map
+
+/***/ }),
+
+/***/ 5131:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.whileInputEffect = exports.whileInput = exports.upTo = exports.untilOutputEffect = exports.untilOutput = exports.untilInputEffect = exports.untilInput = exports.unionWith = exports.union = exports.unfold = exports.tapOutput = exports.tapInput = exports.sync = exports.succeed = exports.stop = exports.spaced = exports.secondOfMinute = exports.run = exports.right = exports.resetWhen = exports.resetAfter = exports.repetitions = exports.repeatForever = exports.reduceEffect = exports.reduce = exports.recurs = exports.recurWhileEquals = exports.recurWhileEffect = exports.recurWhile = exports.recurUpTo = exports.recurUntilOption = exports.recurUntilEquals = exports.recurUntilEffect = exports.recurUntil = exports.reconsiderEffect = exports.reconsider = exports.provideService = exports.provideContext = exports.passthrough = exports.once = exports.onDecision = exports.modifyDelayEffect = exports.modifyDelay = exports.minuteOfHour = exports.mapEffect = exports.map = exports.makeWithState = exports.linear = exports.left = exports.jitteredWith = exports.jittered = exports.intersectWith = exports.intersect = exports.identity = exports.hourOfDay = exports.fromFunction = exports.fromDelays = exports.fromDelay = exports.forever = exports.fixed = exports.fibonacci = exports.exponential = exports.ensuring = exports.elapsed = exports.eitherWith = exports.either = exports.duration = exports.driver = exports.dimapEffect = exports.dimap = exports.delays = exports.delayedSchedule = exports.delayedEffect = exports.delayed = exports.dayOfWeek = exports.dayOfMonth = exports.count = exports.contramapEffect = exports.contramapContext = exports.contramap = exports.compose = exports.collectWhileEffect = exports.collectWhile = exports.collectUntilEffect = exports.collectUntil = exports.collectAllOutputs = exports.collectAllInputs = exports.chooseMerge = exports.choose = exports.checkEffect = exports.check = exports.bothInOut = exports.asUnit = exports.as = exports.andThenEither = exports.andThen = exports.addDelayEffect = exports.addDelay = exports.ScheduleTypeId = exports.ScheduleDriverTypeId = void 0;
+exports.zipWith = exports.zipRight = exports.zipLeft = exports.windowed = exports.whileOutputEffect = exports.whileOutput = void 0;
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6254));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/**
+ * @since 1.0.0
+ * @category symbols
+ */
+const ScheduleTypeId = internal.ScheduleTypeId;
+/**
+ * @since 1.0.0
+ * @category symbols
+ */
+exports.ScheduleTypeId = ScheduleTypeId;
+const ScheduleDriverTypeId = internal.ScheduleDriverTypeId;
+/**
+ * Constructs a new `Schedule` with the specified `initial` state and the
+ * specified `step` function.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.ScheduleDriverTypeId = ScheduleDriverTypeId;
+const makeWithState = internal.makeWithState;
+/**
+ * Returns a new schedule with the given delay added to every interval defined
+ * by this schedule.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.makeWithState = makeWithState;
+const addDelay = internal.addDelay;
+/**
+ * Returns a new schedule with the given effectfully computed delay added to
+ * every interval defined by this schedule.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.addDelay = addDelay;
+const addDelayEffect = internal.addDelayEffect;
+/**
+ * The same as `andThenEither`, but merges the output.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.addDelayEffect = addDelayEffect;
+const andThen = internal.andThen;
+/**
+ * Returns a new schedule that first executes this schedule to completion, and
+ * then executes the specified schedule to completion.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.andThen = andThen;
+const andThenEither = internal.andThenEither;
+/**
+ * Returns a new schedule that maps this schedule to a constant output.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.andThenEither = andThenEither;
+const as = internal.as;
+/**
+ * Returns a new schedule that maps the output of this schedule to unit.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.as = as;
+const asUnit = internal.asUnit;
+/**
+ * Returns a new schedule that has both the inputs and outputs of this and the
+ * specified schedule.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.asUnit = asUnit;
+const bothInOut = internal.bothInOut;
+/**
+ * Returns a new schedule that passes each input and output of this schedule
+ * to the specified function, and then determines whether or not to continue
+ * based on the return value of the function.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.bothInOut = bothInOut;
+const check = internal.check;
+/**
+ * Returns a new schedule that passes each input and output of this schedule
+ * to the specified function, and then determines whether or not to continue
+ * based on the return value of the function.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.check = check;
+const checkEffect = internal.checkEffect;
+/**
+ * Returns a new schedule that allows choosing between feeding inputs to this
+ * schedule, or feeding inputs to the specified schedule.
+ *
+ * @since 1.0.0
+ * @category alternatives
+ */
+exports.checkEffect = checkEffect;
+const choose = internal.choose;
+/**
+ * Returns a new schedule that chooses between two schedules with a common
+ * output.
+ *
+ * @since 1.0.0
+ * @category alternatives
+ */
+exports.choose = choose;
+const chooseMerge = internal.chooseMerge;
+/**
+ * A schedule that recurs anywhere, collecting all inputs into a `Chunk`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.chooseMerge = chooseMerge;
+const collectAllInputs = internal.collectAllInputs;
+/**
+ * Returns a new schedule that collects the outputs of this one into a chunk.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.collectAllInputs = collectAllInputs;
+const collectAllOutputs = internal.collectAllOutputs;
+/**
+ * A schedule that recurs until the condition f fails, collecting all inputs
+ * into a list.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.collectAllOutputs = collectAllOutputs;
+const collectUntil = internal.collectUntil;
+/**
+ * A schedule that recurs until the effectful condition f fails, collecting
+ * all inputs into a list.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.collectUntil = collectUntil;
+const collectUntilEffect = internal.collectUntilEffect;
+/**
+ * A schedule that recurs as long as the condition f holds, collecting all
+ * inputs into a list.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.collectUntilEffect = collectUntilEffect;
+const collectWhile = internal.collectWhile;
+/**
+ * A schedule that recurs as long as the effectful condition holds, collecting
+ * all inputs into a list.
+ *
+ * @category mutations
+ * @since 1.0.0
+ */
+exports.collectWhile = collectWhile;
+const collectWhileEffect = internal.collectWhileEffect;
+/**
+ * Returns the composition of this schedule and the specified schedule, by
+ * piping the output of this one into the input of the other. Effects
+ * described by this schedule will always be executed before the effects
+ * described by the second schedule.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.collectWhileEffect = collectWhileEffect;
+const compose = internal.compose;
+/**
+ * Returns a new schedule that deals with a narrower class of inputs than this
+ * schedule.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.compose = compose;
+const contramap = internal.contramap;
+/**
+ * Transforms the context being provided to this schedule with the
+ * specified function.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.contramap = contramap;
+const contramapContext = internal.contramapContext;
+/**
+ * Returns a new schedule that deals with a narrower class of inputs than this
+ * schedule.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.contramapContext = contramapContext;
+const contramapEffect = internal.contramapEffect;
+/**
+ * A schedule that always recurs, which counts the number of recurrences.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.contramapEffect = contramapEffect;
+const count = internal.count;
+/**
+ * Cron-like schedule that recurs every specified `day` of month. Won't recur
+ * on months containing less days than specified in `day` param.
+ *
+ * It triggers at zero hour of the day. Producing a count of repeats: 0, 1, 2.
+ *
+ * NOTE: `day` parameter is validated lazily. Must be in range 1...31.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.count = count;
+const dayOfMonth = internal.dayOfMonth;
+/**
+ * Cron-like schedule that recurs every specified `day` of each week. It
+ * triggers at zero hour of the week. Producing a count of repeats: 0, 1, 2.
+ *
+ * NOTE: `day` parameter is validated lazily. Must be in range 1 (Monday)...7
+ * (Sunday).
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.dayOfMonth = dayOfMonth;
+const dayOfWeek = internal.dayOfWeek;
+/**
+ * Returns a new schedule with the specified effectfully computed delay added
+ * before the start of each interval produced by this schedule.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.dayOfWeek = dayOfWeek;
+const delayed = internal.delayed;
+/**
+ * Returns a new schedule with the specified effectfully computed delay added
+ * before the start of each interval produced by this schedule.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.delayed = delayed;
+const delayedEffect = internal.delayedEffect;
+/**
+ * Takes a schedule that produces a delay, and returns a new schedule that
+ * uses this delay to further delay intervals in the resulting schedule.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.delayedEffect = delayedEffect;
+const delayedSchedule = internal.delayedSchedule;
+/**
+ * Returns a new schedule that outputs the delay between each occurence.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.delayedSchedule = delayedSchedule;
+const delays = internal.delays;
+/**
+ * Returns a new schedule that contramaps the input and maps the output.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.delays = delays;
+const dimap = internal.dimap;
+/**
+ * Returns a new schedule that contramaps the input and maps the output.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.dimap = dimap;
+const dimapEffect = internal.dimapEffect;
+/**
+ * Returns a driver that can be used to step the schedule, appropriately
+ * handling sleeping.
+ *
+ * @since 1.0.0
+ * @category getter
+ */
+exports.dimapEffect = dimapEffect;
+const driver = internal.driver;
+/**
+ * A schedule that can recur one time, the specified amount of time into the
+ * future.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.driver = driver;
+const duration = internal.duration;
+/**
+ * Returns a new schedule that performs a geometric union on the intervals
+ * defined by both schedules.
+ *
+ * @since 1.0.0
+ * @category alternatives
+ */
+exports.duration = duration;
+const either = internal.either;
+/**
+ * The same as `either` followed by `map`.
+ *
+ * @since 1.0.0
+ * @category alternatives
+ */
+exports.either = either;
+const eitherWith = internal.eitherWith;
+/**
+ * A schedule that occurs everywhere, which returns the total elapsed duration
+ * since the first step.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.eitherWith = eitherWith;
+const elapsed = internal.elapsed;
+/**
+ * Returns a new schedule that will run the specified finalizer as soon as the
+ * schedule is complete. Note that unlike `Effect.ensuring`, this method does not
+ * guarantee the finalizer will be run. The `Schedule` may not initialize or
+ * the driver of the schedule may not run to completion. However, if the
+ * `Schedule` ever decides not to continue, then the finalizer will be run.
+ *
+ * @since 1.0.0
+ * @category finalization
+ */
+exports.elapsed = elapsed;
+const ensuring = internal.ensuring;
+/**
+ * A schedule that always recurs, but will wait a certain amount between
+ * repetitions, given by `base * factor.pow(n)`, where `n` is the number of
+ * repetitions so far. Returns the current duration between recurrences.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.ensuring = ensuring;
+const exponential = internal.exponential;
+/**
+ * A schedule that always recurs, increasing delays by summing the preceding
+ * two delays (similar to the fibonacci sequence). Returns the current
+ * duration between recurrences.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.exponential = exponential;
+const fibonacci = internal.fibonacci;
+/**
+ * A schedule that recurs on a fixed interval. Returns the number of
+ * repetitions of the schedule so far.
+ *
+ * If the action run between updates takes longer than the interval, then the
+ * action will be run immediately, but re-runs will not "pile up".
+ *
+ * ```
+ * |-----interval-----|-----interval-----|-----interval-----|
+ * |---------action--------||action|-----|action|-----------|
+ * ```
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fibonacci = fibonacci;
+const fixed = internal.fixed;
+/**
+ * A schedule that always recurs, producing a count of repeats: 0, 1, 2.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fixed = fixed;
+const forever = internal.forever;
+/**
+ * A schedule that recurs once with the specified delay.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.forever = forever;
+const fromDelay = internal.fromDelay;
+/**
+ * A schedule that recurs once for each of the specified durations, delaying
+ * each time for the length of the specified duration. Returns the length of
+ * the current duration between recurrences.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromDelay = fromDelay;
+const fromDelays = internal.fromDelays;
+/**
+ * A schedule that always recurs, mapping input values through the specified
+ * function.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromDelays = fromDelays;
+const fromFunction = internal.fromFunction;
+/**
+ * Cron-like schedule that recurs every specified `hour` of each day. It
+ * triggers at zero minute of the hour. Producing a count of repeats: 0, 1, 2.
+ *
+ * NOTE: `hour` parameter is validated lazily. Must be in range 0...23.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromFunction = fromFunction;
+const hourOfDay = internal.hourOfDay;
+/**
+ * A schedule that always recurs, which returns inputs as outputs.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.hourOfDay = hourOfDay;
+const identity = internal.identity;
+/**
+ * Returns a new schedule that performs a geometric intersection on the
+ * intervals defined by both schedules.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.identity = identity;
+const intersect = internal.intersect;
+/**
+ * Returns a new schedule that combines this schedule with the specified
+ * schedule, continuing as long as both schedules want to continue and merging
+ * the next intervals according to the specified merge function.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.intersect = intersect;
+const intersectWith = internal.intersectWith;
+/**
+ * Returns a new schedule that randomly modifies the size of the intervals of
+ * this schedule.
+ *
+ * Defaults `min` to `0.8` and `max` to `1.2`.
+ *
+ * The new interval size is between `min * old interval size` and `max * old
+ * interval size`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.intersectWith = intersectWith;
+const jittered = internal.jittered;
+/**
+ * Returns a new schedule that randomly modifies the size of the intervals of
+ * this schedule.
+ *
+ * The new interval size is between `min * old interval size` and `max * old
+ * interval size`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.jittered = jittered;
+const jitteredWith = internal.jitteredWith;
+/**
+ * Returns a new schedule that makes this schedule available on the `Left`
+ * side of an `Either` input, allowing propagating some type `X` through this
+ * channel on demand.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.jitteredWith = jitteredWith;
+const left = internal.left;
+/**
+ * A schedule that always recurs, but will repeat on a linear time interval,
+ * given by `base * n` where `n` is the number of repetitions so far. Returns
+ * the current duration between recurrences.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.left = left;
+const linear = internal.linear;
+/**
+ * Returns a new schedule that maps the output of this schedule through the
+ * specified function.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.linear = linear;
+const map = internal.map;
+/**
+ * Returns a new schedule that maps the output of this schedule through the
+ * specified effectful function.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.map = map;
+const mapEffect = internal.mapEffect;
+/**
+ * Cron-like schedule that recurs every specified `minute` of each hour. It
+ * triggers at zero second of the minute. Producing a count of repeats: 0, 1,
+ * 2.
+ *
+ * NOTE: `minute` parameter is validated lazily. Must be in range 0...59.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.mapEffect = mapEffect;
+const minuteOfHour = internal.minuteOfHour;
+/**
+ * Returns a new schedule that modifies the delay using the specified
+ * function.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.minuteOfHour = minuteOfHour;
+const modifyDelay = internal.modifyDelay;
+/**
+ * Returns a new schedule that modifies the delay using the specified
+ * effectual function.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.modifyDelay = modifyDelay;
+const modifyDelayEffect = internal.modifyDelayEffect;
+/**
+ * Returns a new schedule that applies the current one but runs the specified
+ * effect for every decision of this schedule. This can be used to create
+ * schedules that log failures, decisions, or computed values.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.modifyDelayEffect = modifyDelayEffect;
+const onDecision = internal.onDecision;
+/**
+ * A schedule that recurs one time.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.onDecision = onDecision;
+const once = internal.once;
+/**
+ * Returns a new schedule that passes through the inputs of this schedule.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.once = once;
+const passthrough = internal.passthrough;
+/**
+ * Returns a new schedule with its context provided to it, so the
+ * resulting schedule does not require any context.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.passthrough = passthrough;
+const provideContext = internal.provideContext;
+/**
+ * Returns a new schedule with the single service it requires provided to it.
+ * If the schedule requires multiple services use `provideContext`
+ * instead.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.provideContext = provideContext;
+const provideService = internal.provideService;
+/**
+ * Returns a new schedule that reconsiders every decision made by this
+ * schedule, possibly modifying the next interval and the output type in the
+ * process.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.provideService = provideService;
+const reconsider = internal.reconsider;
+/**
+ * Returns a new schedule that effectfully reconsiders every decision made by
+ * this schedule, possibly modifying the next interval and the output type in
+ * the process.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.reconsider = reconsider;
+const reconsiderEffect = internal.reconsiderEffect;
+/**
+ * A schedule that recurs for until the predicate evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.reconsiderEffect = reconsiderEffect;
+const recurUntil = internal.recurUntil;
+/**
+ * A schedule that recurs for until the predicate evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.recurUntil = recurUntil;
+const recurUntilEffect = internal.recurUntilEffect;
+/**
+ * A schedule that recurs for until the predicate is equal.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.recurUntilEffect = recurUntilEffect;
+const recurUntilEquals = internal.recurUntilEquals;
+/**
+ * A schedule that recurs for until the input value becomes applicable to
+ * partial function and then map that value with given function.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.recurUntilEquals = recurUntilEquals;
+const recurUntilOption = internal.recurUntilOption;
+/**
+ * A schedule that recurs during the given duration.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.recurUntilOption = recurUntilOption;
+const recurUpTo = internal.recurUpTo;
+/**
+ * A schedule that recurs for as long as the predicate evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.recurUpTo = recurUpTo;
+const recurWhile = internal.recurWhile;
+/**
+ * A schedule that recurs for as long as the effectful predicate evaluates to
+ * true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.recurWhile = recurWhile;
+const recurWhileEffect = internal.recurWhileEffect;
+/**
+ * A schedule that recurs for as long as the predicate is equal to the
+ * specified value.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.recurWhileEffect = recurWhileEffect;
+const recurWhileEquals = internal.recurWhileEquals;
+/**
+ * A schedule spanning all time, which can be stepped only the specified
+ * number of times before it terminates.
+ *
+ * @category constructors
+ * @since 1.0.0
+ */
+exports.recurWhileEquals = recurWhileEquals;
+const recurs = internal.recurs;
+/**
+ * Returns a new schedule that folds over the outputs of this one.
+ *
+ * @since 1.0.0
+ * @category folding
+ */
+exports.recurs = recurs;
+const reduce = internal.reduce;
+/**
+ * Returns a new schedule that effectfully folds over the outputs of this one.
+ *
+ * @since 1.0.0
+ * @category folding
+ */
+exports.reduce = reduce;
+const reduceEffect = internal.reduceEffect;
+/**
+ * Returns a new schedule that loops this one continuously, resetting the
+ * state when this schedule is done.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.reduceEffect = reduceEffect;
+const repeatForever = internal.forever;
+/**
+ * Returns a new schedule that outputs the number of repetitions of this one.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.repeatForever = repeatForever;
+const repetitions = internal.repetitions;
+/**
+ * Return a new schedule that automatically resets the schedule to its initial
+ * state after some time of inactivity defined by `duration`.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.repetitions = repetitions;
+const resetAfter = internal.resetAfter;
+/**
+ * Resets the schedule when the specified predicate on the schedule output
+ * evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.resetAfter = resetAfter;
+const resetWhen = internal.resetWhen;
+/**
+ * Returns a new schedule that makes this schedule available on the `Right`
+ * side of an `Either` input, allowing propagating some type `X` through this
+ * channel on demand.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.resetWhen = resetWhen;
+const right = internal.right;
+/**
+ * Runs a schedule using the provided inputs, and collects all outputs.
+ *
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.right = right;
+const run = internal.run;
+/**
+ * Cron-like schedule that recurs every specified `second` of each minute. It
+ * triggers at zero nanosecond of the second. Producing a count of repeats: 0,
+ * 1, 2.
+ *
+ * NOTE: `second` parameter is validated lazily. Must be in range 0...59.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.run = run;
+const secondOfMinute = internal.secondOfMinute;
+/**
+ * Returns a schedule that recurs continuously, each repetition spaced the
+ * specified duration from the last run.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.secondOfMinute = secondOfMinute;
+const spaced = internal.spaced;
+/**
+ * A schedule that does not recur, it just stops.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.spaced = spaced;
+const stop = internal.stop;
+/**
+ * Returns a schedule that repeats one time, producing the specified constant
+ * value.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.stop = stop;
+const succeed = internal.succeed;
+/**
+ * Returns a schedule that repeats one time, producing the specified constant
+ * value.
+ *
+ * @category constructors
+ * @since 1.0.0
+ */
+exports.succeed = succeed;
+const sync = internal.sync;
+/**
+ * Returns a new schedule that effectfully processes every input to this
+ * schedule.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.sync = sync;
+const tapInput = internal.tapInput;
+/**
+ * Returns a new schedule that effectfully processes every output from this
+ * schedule.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.tapInput = tapInput;
+const tapOutput = internal.tapOutput;
+/**
+ * Unfolds a schedule that repeats one time from the specified state and
+ * iterator.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.tapOutput = tapOutput;
+const unfold = internal.unfold;
+/**
+ * Returns a new schedule that performs a geometric union on the intervals
+ * defined by both schedules.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.unfold = unfold;
+const union = internal.union;
+/**
+ * Returns a new schedule that combines this schedule with the specified
+ * schedule, continuing as long as either schedule wants to continue and
+ * merging the next intervals according to the specified merge function.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.union = union;
+const unionWith = internal.unionWith;
+/**
+ * Returns a new schedule that continues until the specified predicate on the
+ * input evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.unionWith = unionWith;
+const untilInput = internal.untilInput;
+/**
+ * Returns a new schedule that continues until the specified effectful
+ * predicate on the input evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.untilInput = untilInput;
+const untilInputEffect = internal.untilInputEffect;
+/**
+ * Returns a new schedule that continues until the specified predicate on the
+ * output evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.untilInputEffect = untilInputEffect;
+const untilOutput = internal.untilOutput;
+/**
+ * Returns a new schedule that continues until the specified effectful
+ * predicate on the output evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.untilOutput = untilOutput;
+const untilOutputEffect = internal.untilOutputEffect;
+/**
+ * A schedule that recurs during the given duration.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.untilOutputEffect = untilOutputEffect;
+const upTo = internal.upTo;
+/**
+ * Returns a new schedule that continues for as long the specified predicate
+ * on the input evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.upTo = upTo;
+const whileInput = internal.whileInput;
+/**
+ * Returns a new schedule that continues for as long the specified effectful
+ * predicate on the input evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.whileInput = whileInput;
+const whileInputEffect = internal.whileInputEffect;
+/**
+ * Returns a new schedule that continues for as long the specified predicate
+ * on the output evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.whileInputEffect = whileInputEffect;
+const whileOutput = internal.whileOutput;
+/**
+ * Returns a new schedule that continues for as long the specified effectful
+ * predicate on the output evaluates to true.
+ *
+ * @since 1.0.0
+ * @category mutations
+ */
+exports.whileOutput = whileOutput;
+const whileOutputEffect = internal.whileOutputEffect;
+/**
+ * A schedule that divides the timeline to `interval`-long windows, and sleeps
+ * until the nearest window boundary every time it recurs.
+ *
+ * For example, `windowed(Duration.seconds(10))` would produce a schedule as
+ * follows:
+ *
+ * ```
+ *      10s        10s        10s       10s
+ * |----------|----------|----------|----------|
+ * |action------|sleep---|act|-sleep|action----|
+ * ```
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.whileOutputEffect = whileOutputEffect;
+const windowed = internal.windowed;
+/**
+ * The same as `intersect` but ignores the right output.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.windowed = windowed;
+const zipLeft = internal.zipLeft;
+/**
+ * The same as `intersect` but ignores the left output.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipLeft = zipLeft;
+const zipRight = internal.zipRight;
+/**
+ * Equivalent to `intersect` followed by `map`.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipRight = zipRight;
+const zipWith = internal.zipWith;
+exports.zipWith = zipWith;
+//# sourceMappingURL=Schedule.js.map
+
+/***/ }),
+
+/***/ 7016:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -8727,7 +10172,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.isDone = exports.isContinue = exports.done = exports.continueWith = exports["continue"] = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5305));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3782));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -8764,7 +10209,7 @@ exports.isDone = isDone;
 
 /***/ }),
 
-/***/ 6226:
+/***/ 9552:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -8774,7 +10219,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.union = exports.size = exports.min = exports.max = exports.make = exports.lessThan = exports.isNonEmpty = exports.isEmpty = exports.intersect = exports.empty = exports.before = exports.after = exports.IntervalTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(604));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7003));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -8896,7 +10341,7 @@ exports.before = before;
 
 /***/ }),
 
-/***/ 2054:
+/***/ 3342:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -8906,7 +10351,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.union = exports.start = exports.max = exports.make = exports.lessThan = exports.isNonEmpty = exports.intersect = exports.fromIterable = exports.end = exports.empty = exports.IntervalsTypeId = void 0;
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7668));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4528));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -9004,7 +10449,7 @@ exports.max = max;
 
 /***/ }),
 
-/***/ 2322:
+/***/ 6627:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -9014,8 +10459,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.use = exports.make = exports.fork = exports.extend = exports.close = exports.addFinalizerExit = exports.addFinalizer = exports.Tag = exports.ScopeTypeId = exports.CloseableScopeTypeId = void 0;
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7378));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(484));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -9112,7 +10557,7 @@ exports.make = make;
 
 /***/ }),
 
-/***/ 7411:
+/***/ 9972:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -9122,8 +10567,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.pretty = void 0;
-var _causePretty = /*#__PURE__*/__nccwpck_require__(4208);
-var _runtime = /*#__PURE__*/__nccwpck_require__(5272);
+var _causePretty = /*#__PURE__*/__nccwpck_require__(7332);
+var _runtime = /*#__PURE__*/__nccwpck_require__(2450);
 /** @internal */
 const pretty = cause => (0, _runtime.unsafeRunSyncEffect)((0, _causePretty.prettySafe)(cause));
 exports.pretty = pretty;
@@ -9131,7 +10576,7 @@ exports.pretty = pretty;
 
 /***/ }),
 
-/***/ 4208:
+/***/ 7332:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -9141,10 +10586,10 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.prettySafe = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3278));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9031));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
@@ -9305,7 +10750,7 @@ function renderFrame(r) {
 
 /***/ }),
 
-/***/ 4430:
+/***/ 9473:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -9314,10 +10759,10 @@ function renderFrame(r) {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.unannotate = exports.stripSomeDefects = exports.stripFailures = exports.squashWith = exports.squash = exports.size = exports.sequential = exports.reduceWithContext = exports.reduce = exports.parallel = exports.match = exports.map = exports.linearize = exports.keepDefects = exports.isStackAnnotation = exports.isSequentialType = exports.isRuntimeException = exports.isParallelType = exports.isNoSuchElementException = exports.isInvalidCapacityError = exports.isInterruptedOnly = exports.isInterruptedException = exports.isInterrupted = exports.isInterruptType = exports.isIllegalArgumentException = exports.isFailure = exports.isFailType = exports.isEmptyType = exports.isEmpty = exports.isDieType = exports.isDie = exports.isCause = exports.isAnnotatedType = exports.interruptors = exports.interruptOption = exports.interrupt = exports.flipCauseOption = exports.flatten = exports.flatMap = exports.find = exports.filter = exports.failures = exports.failureOrCause = exports.failureOption = exports.fail = exports.empty = exports.dieOption = exports.die = exports.defects = exports.contains = exports.as = exports.annotated = exports.StackAnnotationTypeId = exports.StackAnnotation = exports.RuntimeExceptionTypeId = exports.RuntimeException = exports.NoSuchElementExceptionTypeId = exports.NoSuchElementException = exports.InvalidHubCapacityExceptionTypeId = exports.InvalidHubCapacityException = exports.InterruptedExceptionTypeId = exports.InterruptedException = exports.IllegalArgumentExceptionTypeId = exports.IllegalArgumentException = exports.CauseTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8722));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3278));
+exports.unannotate = exports.stripSomeDefects = exports.stripFailures = exports.squashWith = exports.squash = exports.size = exports.sequential = exports.reduceWithContext = exports.reduce = exports.parallel = exports.match = exports.map = exports.linearize = exports.keepDefects = exports.isStackAnnotation = exports.isSequentialType = exports.isRuntimeException = exports.isParallelType = exports.isNoSuchElementException = exports.isInvalidCapacityError = exports.isInterruptedOnly = exports.isInterruptedException = exports.isInterrupted = exports.isInterruptType = exports.isIllegalArgumentException = exports.isFailure = exports.isFailType = exports.isEmptyType = exports.isEmpty = exports.isDieType = exports.isDie = exports.isCause = exports.isAnnotatedType = exports.interruptors = exports.interruptOption = exports.interrupt = exports.globalErrorSeq = exports.flipCauseOption = exports.flatten = exports.flatMap = exports.find = exports.filter = exports.failures = exports.failureOrCause = exports.failureOption = exports.fail = exports.empty = exports.dieOption = exports.die = exports.defects = exports.contains = exports.as = exports.annotated = exports.StackAnnotationTypeId = exports.StackAnnotation = exports.RuntimeExceptionTypeId = exports.RuntimeException = exports.NoSuchElementExceptionTypeId = exports.NoSuchElementException = exports.InvalidHubCapacityExceptionTypeId = exports.InvalidHubCapacityException = exports.InterruptedExceptionTypeId = exports.InterruptedException = exports.IllegalArgumentExceptionTypeId = exports.IllegalArgumentException = exports.CauseTypeId = void 0;
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(517));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9031));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
@@ -9325,6 +10770,7 @@ var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require
 var Equal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8826));
 var Hash = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(441));
 var HashSet = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1470));
+var MRef = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4210));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 var _a;
@@ -10169,6 +11615,9 @@ class StackAnnotation {
 exports.StackAnnotation = StackAnnotation;
 _a = StackAnnotationTypeId;
 /** @internal */
+const globalErrorSeq = /*#__PURE__*/MRef.make(0);
+/** @internal */
+exports.globalErrorSeq = globalErrorSeq;
 const isStackAnnotation = u => {
   return typeof u === "object" && u != null && StackAnnotationTypeId in u;
 };
@@ -10190,7 +11639,7 @@ exports.unannotate = unannotate;
 
 /***/ }),
 
-/***/ 4605:
+/***/ 5861:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -10200,8 +11649,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.make = exports.globalClockScheduler = exports.clockTag = exports.MAX_TIMER_MILLIS = exports.ClockTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Context = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8364));
@@ -10268,7 +11717,7 @@ exports.make = make;
 
 /***/ }),
 
-/***/ 5407:
+/***/ 8370:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -10278,11 +11727,11 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.zipWith = exports.zip = exports.withDescription = exports.withDefault = exports.validate = exports.unwrap = exports.tuple = exports.table = exports.sync = exports.succeed = exports.struct = exports.string = exports.setOf = exports.secret = exports.repeat = exports.primitive = exports.orElseIf = exports.orElse = exports.optional = exports.nested = exports.missingError = exports.mapOrFail = exports.mapAttempt = exports.map = exports.integer = exports.float = exports.fail = exports.defer = exports.date = exports.chunkOf = exports.bool = exports.arrayOf = exports.ConfigTypeId = void 0;
-var ConfigError = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1839));
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var configError = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7825));
-var configSecret = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1825));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9670));
+var ConfigError = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5156));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var configError = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(509));
+var configSecret = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1211));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4408));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
@@ -10592,7 +12041,7 @@ exports.zipWith = zipWith;
 
 /***/ }),
 
-/***/ 7825:
+/***/ 509:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -10602,8 +12051,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.reduceWithContext = exports.proto = exports.prefixed = exports.isUnsupported = exports.isSourceUnavailable = exports.isOr = exports.isMissingDataOnly = exports.isMissingData = exports.isInvalidData = exports.isConfigError = exports.isAnd = exports.Unsupported = exports.SourceUnavailable = exports.Or = exports.MissingData = exports.InvalidData = exports.ConfigErrorTypeId = exports.And = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8924));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1499));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
@@ -10867,7 +12316,7 @@ exports.isMissingDataOnly = isMissingDataOnly;
 
 /***/ }),
 
-/***/ 2816:
+/***/ 647:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -10877,13 +12326,13 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.within = exports.upperCase = exports.unnested = exports.snakeCase = exports.orElse = exports.nested = exports.makeFlat = exports.make = exports.lowerCase = exports.kebabCase = exports.fromMap = exports.fromFlat = exports.fromEnv = exports.contramapPath = exports.constantCase = exports.configProviderTag = exports.FlatConfigProviderTypeId = exports.ConfigProviderTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var _config = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5407));
-var configError = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7825));
-var pathPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3597));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9670));
-var StringUtils = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1709));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var _config = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8370));
+var configError = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(509));
+var pathPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5615));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4408));
+var StringUtils = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9390));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
@@ -11156,7 +12605,7 @@ const escapeRegex = string => {
 
 /***/ }),
 
-/***/ 3597:
+/***/ 5615:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -11166,8 +12615,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.unnested = exports.patch = exports.nested = exports.mapName = exports.empty = exports.andThen = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var configError = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7825));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var configError = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(509));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var String = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2395));
@@ -11254,7 +12703,7 @@ exports.patch = patch;
 
 /***/ }),
 
-/***/ 1825:
+/***/ 1211:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -11332,7 +12781,7 @@ exports.unsafeWipe = unsafeWipe;
 
 /***/ }),
 
-/***/ 2873:
+/***/ 3211:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -11343,15 +12792,15 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.fiberRefGetWith = exports.fiberRefGetAndUpdateSome = exports.fiberRefGetAndUpdate = exports.fiberRefGetAndSet = exports.fiberRefGet = exports.fiberRefDelete = exports.fiberIdWith = exports.fiberId = exports.failSync = exports.failCauseSync = exports.failCause = exports.fail = exports.exitZipWith = exports.exitZipRight = exports.exitZipParRight = exports.exitZipParLeft = exports.exitZipPar = exports.exitZipLeft = exports.exitZip = exports.exitUnit = exports.exitUnannotate = exports.exitSucceed = exports.exitMatchEffect = exports.exitMatch = exports.exitMapErrorCause = exports.exitMapError = exports.exitMapBoth = exports.exitMap = exports.exitIsSuccess = exports.exitIsInterrupted = exports.exitIsFailure = exports.exitIsExit = exports.exitInterrupt = exports.exitGetOrElse = exports.exitFromOption = exports.exitFromEither = exports.exitForEachEffect = exports.exitFlatten = exports.exitFlatMapEffect = exports.exitFlatMap = exports.exitFailCause = exports.exitFail = exports.exitExists = exports.exitDie = exports.exitCollectAllPar = exports.exitCollectAll = exports.exitCauseOption = exports.exitAsUnit = exports.exitAs = exports.exit = exports.either = exports.done = exports.dieSync = exports.die = exports.deferredUnsafeMake = exports.deferredUnsafeDone = exports.deferredSync = exports.deferredSucceed = exports.deferredPoll = exports.deferredMakeAs = exports.deferredMake = exports.deferredIsDone = exports.deferredInterruptWith = exports.deferredInterrupt = exports.deferredFailSync = exports.deferredFailCauseSync = exports.deferredFailCause = exports.deferredFail = exports.deferredDone = exports.deferredDieSync = exports.deferredDie = exports.deferredCompleteWith = exports.deferredComplete = exports.deferredAwait = exports.currentTags = exports.currentScheduler = exports.currentParallelism = exports.currentLogSpan = exports.currentLogLevel = exports.currentLogAnnotations = exports.currentContext = exports.contramapContext = exports.contextWithEffect = exports.context = exports.checkInterruptible = exports.catchSome = exports.catchAllCause = exports.catchAll = exports.asyncInterruptEither = exports.asyncInterrupt = exports.async = exports.asUnit = exports.as = exports.acquireUseRelease = exports.ScopeTypeId = exports.RevertFlags = exports.FiberRefTypeId = exports.EffectTypeId = exports.EffectErrorTypeId = exports.CloseableScopeTypeId = void 0;
 exports.zipWith = exports.zipRight = exports.zipLeft = exports.zipFlatten = exports.zip = exports.yieldNow = exports.withRuntimeFlags = exports.withParallelismUnbounded = exports.withParallelism = exports.withFiberRuntime = exports.whileLoop = exports.whenEffect = exports.updateRuntimeFlags = exports.unit = exports.uninterruptibleMask = exports.uninterruptible = exports.unified = exports.tryOrElse = exports.transplant = exports.tap = exports.tags = exports.sync = exports.suspendSucceed = exports.succeed = exports.serviceWithEffect = exports.serviceWith = exports.service = exports.scopeFork = exports.scopeClose = exports.scopeAddFinalizerExit = exports.scopeAddFinalizer = exports.runtimeFlags = exports.releaseMapReplace = exports.releaseMapRemove = exports.releaseMapRelease = exports.releaseMapMake = exports.releaseMapGet = exports.releaseMapAddIfOpen = exports.releaseMapAdd = exports.provideContext = exports.proto = exports.partitionMap = exports.orElse = exports.orDieWith = exports.orDie = exports.onInterrupt = exports.onExit = exports.onError = exports.never = exports.matchEffect = exports.matchCauseEffect = exports.matchCause = exports.mapError = exports.map = exports.makeEffectError = exports.logLevelWarning = exports.logLevelTrace = exports.logLevelNone = exports.logLevelInfo = exports.logLevelFatal = exports.logLevelError = exports.logLevelDebug = exports.logLevelAll = exports.isEffectError = exports.isEffect = exports.intoDeferred = exports.interruptibleMask = exports.interruptible = exports.interruptedCause = exports.interruptWith = exports.interruptFiber = exports.interruptAsFiber = exports.interrupt = exports.ifEffect = exports.fromOption = exports.fromEither = exports.forkScopeOverride = exports.forEachDiscard = exports.forEach = exports.flip = exports.flatten = exports.flatMap = exports.fiberRefUpdateSomeAndGet = exports.fiberRefUpdateSome = exports.fiberRefUpdateAndGet = exports.fiberRefUpdate = exports.fiberRefUnsafeMakeRuntimeFlags = exports.fiberRefUnsafeMakePatch = exports.fiberRefUnsafeMakeHashSet = exports.fiberRefUnsafeMakeContext = exports.fiberRefUnsafeMake = exports.fiberRefSet = exports.fiberRefReset = exports.fiberRefModifySome = exports.fiberRefModify = exports.fiberRefLocallyWith = exports.fiberRefLocally = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8722));
-var RuntimeFlagsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5110));
-var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var deferred = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4267));
-var DeferredOpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6938));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(195));
-var _runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(295));
-var scheduler = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(350));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(517));
+var RuntimeFlagsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7855));
+var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var deferred = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9333));
+var DeferredOpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(846));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4016));
+var _runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2166));
+var scheduler = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5085));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
@@ -12729,7 +14178,7 @@ const deferredInterruptJoiner = (self, joiner) => sync(() => {
 
 /***/ }),
 
-/***/ 9880:
+/***/ 5395:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -12819,7 +14268,7 @@ exports.runtimeDebug = runtimeDebug;
 
 /***/ }),
 
-/***/ 6050:
+/***/ 9546:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -12829,11 +14278,11 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.withConfigProvider = exports.withClock = exports.sleep = exports.shuffle = exports.randomWith = exports.nextRange = exports.nextIntBetween = exports.nextInt = exports.nextBoolean = exports.next = exports.liveServices = exports.currentTimeMillis = exports.currentServices = exports.configProviderWith = exports.configOrDie = exports.config = exports.clockWith = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4605));
-var configProvider = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2816));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var random = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9539));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5861));
+var configProvider = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(647));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var random = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7115));
 var Context = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8364));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -12900,7 +14349,7 @@ exports.shuffle = shuffle;
 
 /***/ }),
 
-/***/ 4267:
+/***/ 9333:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -12910,7 +14359,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.pending = exports.done = exports.deferredVariance = exports.DeferredTypeId = void 0;
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6938));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(846));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /** @internal */
@@ -12944,7 +14393,7 @@ exports.done = done;
 
 /***/ }),
 
-/***/ 7794:
+/***/ 47:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -12955,20 +14404,20 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.mapAccum = exports.loopDiscard = exports.loop = exports.logWarningCauseMessage = exports.logWarningCause = exports.logWarning = exports.logTraceCauseMessage = exports.logTraceCause = exports.logTrace = exports.logSpan = exports.logInfoCauseMessage = exports.logInfoCause = exports.logInfo = exports.logFatalCauseMessage = exports.logFatalCause = exports.logFatal = exports.logErrorCauseMessage = exports.logErrorCause = exports.logError = exports.logDebugCauseMessage = exports.logDebugCause = exports.logDebug = exports.logAnnotations = exports.logAnnotate = exports.log = exports.leftWith = exports.left = exports.iterate = exports.isSuccess = exports.isFailure = exports.inheritFiberRefs = exports.ignoreLogged = exports.ignore = exports.head = exports.getOrFailWith = exports.getOrFailDiscard = exports.getOrFail = exports.getFiberRefs = exports.gen = exports.fromEitherCause = exports.forever = exports.forEachWithIndex = exports.forEachOption = exports.forEachEffect = exports.forAll = exports.flipWith = exports.flattenErrorOption = exports.firstSuccessOf = exports.find = exports.filterOrFail = exports.filterOrElseWith = exports.filterOrElse = exports.filterOrDieMessage = exports.filterOrDie = exports.filterNot = exports.filter = exports.exists = exports.eventually = exports.dropWhile = exports.dropUntil = exports.diffFiberRefs = exports.dieMessage = exports.descriptorWith = exports.descriptor = exports.delay = exports.continueOrFailEffect = exports.continueOrFail = exports.contextWith = exports.cond = exports.collectWhile = exports.collectFirst = exports.collectAllWithEffect = exports.collectAllWith = exports.collectAllSuccesses = exports.collectAllDiscard = exports.collectAll = exports.clockWith = exports.clock = exports.cause = exports.catchTag = exports.catchSomeDefect = exports.catchSomeCause = exports.catchAllDefect = exports.blocking = exports.bindValue = exports.bind = exports.attempt = exports.asyncOption = exports.asSomeError = exports.asSome = exports.asRightError = exports.asRight = exports.asLeftError = exports.asLeft = exports.allowInterrupt = exports.absorbWith = exports.absorb = exports.absolve = exports._catch = exports.Do = void 0;
 exports.withMetric = exports.whenRef = exports.whenFiberRef = exports.whenCaseEffect = exports.whenCase = exports.when = exports.validateWith = exports.validateFirst = exports.validateAllDiscard = exports.validateAll = exports.validate = exports.updateService = exports.updateFiberRefs = exports.unsandbox = exports.unright = exports.unrefineWith = exports.unrefine = exports.unlessEffect = exports.unless = exports.unleft = exports.unfold = exports.uncause = exports.tuple = exports.tryPromiseInterrupt = exports.tryPromise = exports.tryCatchPromiseInterrupt = exports.tryCatchPromise = exports.tryCatch = exports.timedWith = exports.timed = exports.tapSome = exports.tapErrorCause = exports.tapError = exports.tapEither = exports.tapDefect = exports.tapBoth = exports.takeWhile = exports.taggedWithLabels = exports.taggedWithLabelSet = exports.tagged = exports.suspend = exports.summarized = exports.succeedSome = exports.succeedRight = exports.succeedNone = exports.succeedLeft = exports.struct = exports.someOrFailException = exports.someOrFail = exports.someOrElseEffect = exports.someOrElse = exports.sleep = exports.setFiberRefs = exports.sandbox = exports.rightWith = exports.right = exports.resurrect = exports.replicateEffectDiscard = exports.replicateEffect = exports.replicate = exports.repeatN = exports.rejectEffect = exports.reject = exports.refineOrDieWith = exports.refineOrDie = exports.reduceWhile = exports.reduceRight = exports.reduceAll = exports.reduce = exports.randomWith = exports.random = exports.provideServiceEffect = exports.provideService = exports.promiseInterrupt = exports.promise = exports.patchFiberRefs = exports.partition = exports.parallelErrors = exports.orElseSucceed = exports.orElseOptional = exports.orElseFail = exports.orElseEither = exports.option = exports.once = exports.noneOrFailWith = exports.noneOrFail = exports.none = exports.negate = exports.mergeAll = exports.merge = exports.memoize = exports.match = exports.mapTryCatch = exports.mapErrorCause = exports.mapBoth = void 0;
-var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6181));
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2924));
-var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8722));
-var FiberRefs = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(745));
-var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var fiberRefsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2218));
-var metricLabel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7663));
-var SingleShotGen = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(672));
-var LogLevel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8440));
-var LogSpan = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8111));
-var Random = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6493));
-var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8740));
+var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3932));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(517));
+var FiberRefs = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2524));
+var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var fiberRefsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6426));
+var metricLabel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5077));
+var SingleShotGen = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8170));
+var LogLevel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3658));
+var LogSpan = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9306));
+var Random = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8818));
+var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6607));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
@@ -14163,7 +15612,7 @@ exports.withMetric = withMetric;
 
 /***/ }),
 
-/***/ 7499:
+/***/ 4076:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -14173,19 +15622,19 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.zipWithPar = exports.zipWithFiber = exports.zipRightFiber = exports.zipParRight = exports.zipParLeft = exports.zipPar = exports.zipLeftFiber = exports.zipFiber = exports.validateWithPar = exports.validatePar = exports.updateSomeAndGetEffectSynchronized = exports.unsafeMakeSynchronized = exports.unsafeMakeSemaphore = exports.timeoutTo = exports.timeoutFailCause = exports.timeoutFail = exports.timeout = exports.synchronizedVariance = exports.supervised = exports.scheduleForked = exports.raceWith = exports.raceFirst = exports.raceFibersWith = exports.raceEither = exports.raceAwait = exports.race = exports.memoizeFunction = exports.makeSynchronized = exports.makeSemaphore = exports.fromFiberEffect = exports.fromFiber = exports.forkScoped = exports.forkIn = exports.forkAll = exports.ensuringChildren = exports.ensuringChild = exports.ensuring = exports.disconnect = exports.cachedInvalidate = exports.cached = exports.awaitAllChildren = exports.acquireReleaseInterruptible = exports.SynchronizedTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var ExecutionStrategy = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4038));
-var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2924));
-var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8722));
-var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7794));
-var internalFiber = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3120));
-var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7378));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(195));
-var internalRef = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3177));
-var _schedule = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9895));
-var supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8799));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var ExecutionStrategy = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4786));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(517));
+var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(47));
+var internalFiber = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5434));
+var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(484));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4016));
+var internalRef = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4397));
+var _schedule = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6254));
+var supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6937));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Equal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8826));
@@ -14503,7 +15952,7 @@ exports.zipWithFiber = zipWithFiber;
 
 /***/ }),
 
-/***/ 9463:
+/***/ 699:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -14513,7 +15962,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.sequential = exports.parallelN = exports.parallel = exports.match = exports.isSequential = exports.isParallelN = exports.isParallel = exports.OP_SEQUENTIAL = exports.OP_PARALLEL_N = exports.OP_PARALLEL = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /** @internal */
@@ -14580,7 +16029,7 @@ exports.match = match;
 
 /***/ }),
 
-/***/ 3120:
+/***/ 5434:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -14590,14 +16039,14 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.unsafeRoots = exports.unit = exports.succeed = exports.status = exports.roots = exports.pretty = exports.poll = exports.orElseEither = exports.orElse = exports.never = exports.match = exports.mapFiber = exports.mapEffect = exports.map = exports.join = exports.isRuntimeFiber = exports.isFiber = exports.interrupted = exports.interruptAsFork = exports.interruptAllWith = exports.interruptAll = exports.inheritAll = exports.id = exports.getCurrentFiber = exports.fromEffect = exports.fiberVariance = exports.failCause = exports.fail = exports.dumpAll = exports.dump = exports.done = exports.currentFiberURI = exports.children = exports._await = exports.RuntimeFiberTypeId = exports.Order = exports.FiberTypeId = void 0;
-var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6181));
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2924));
-var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8722));
-var FiberStatus = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6709));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var fiberScope = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7700));
-var runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(295));
+var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3932));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(517));
+var FiberStatus = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8175));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var fiberScope = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4955));
+var runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2166));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var number = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7639));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
@@ -14845,7 +16294,7 @@ exports.getCurrentFiber = getCurrentFiber;
 
 /***/ }),
 
-/***/ 9497:
+/***/ 2307:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -14855,7 +16304,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.unsafeMake = exports.toSet = exports.toOption = exports.threadName = exports.runtime = exports.none = exports.make = exports.isRuntime = exports.isNone = exports.isFiberId = exports.isComposite = exports.ids = exports.getOrElse = exports.composite = exports.combineAll = exports.combine = exports.FiberIdTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Equal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8826));
 var Hash = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(441));
@@ -15050,7 +16499,7 @@ exports.unsafeMake = unsafeMake;
 
 /***/ }),
 
-/***/ 639:
+/***/ 678:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -15100,7 +16549,7 @@ exports.yieldNow = yieldNow;
 
 /***/ }),
 
-/***/ 8122:
+/***/ 1244:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -15112,8 +16561,8 @@ Object.defineProperty(exports, "__esModule", ({
 exports.setAll = exports.joinAs = exports.getOrDefault = exports.get = exports.forkAs = exports.fiberRefs = exports.delete_ = exports.FiberRefsSym = exports.FiberRefsImpl = void 0;
 exports.unsafeMake = unsafeMake;
 exports.updatedAs = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Arr = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2483));
 var Equal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8826));
@@ -15272,7 +16721,7 @@ exports.updatedAs = updatedAs;
 
 /***/ }),
 
-/***/ 2218:
+/***/ 6426:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -15282,8 +16731,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.patch = exports.empty = exports.diff = exports.combine = exports.OP_UPDATE = exports.OP_REMOVE = exports.OP_EMPTY = exports.OP_AND_THEN = exports.OP_ADD = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var _fiberRefs = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8122));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var _fiberRefs = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1244));
 var Arr = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2483));
 var _Equal = /*#__PURE__*/__nccwpck_require__(8826);
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
@@ -15395,7 +16844,7 @@ exports.patch = patch;
 
 /***/ }),
 
-/***/ 7378:
+/***/ 484:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -15405,38 +16854,39 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.withRuntimeFlagsScoped = exports.withEarlyRelease = exports.withConfigProviderScoped = exports.withClockScoped = exports.validateFirstPar = exports.validateAllParDiscard = exports.validateAllPar = exports.using = exports.unsome = exports.unsafeMakeChildFiber = exports.unsafeFork = exports.tuplePar = exports.taggedScopedWithLabels = exports.taggedScopedWithLabelSet = exports.taggedScoped = exports.structPar = exports.someWith = exports.some = exports.sequentialFinalizers = exports.scopedEffect = exports.scopeWith = exports.scopeUse = exports.scopeTag = exports.scopeMake = exports.scopeExtend = exports.scope = exports.runtimeFiberVariance = exports.releaseMapReleaseAll = exports.reduceAllPar = exports.raceAll = exports.partitionPar = exports.parallelFinalizers = exports.onDoneCause = exports.onDone = exports.mergeAllPar = exports.logFmtLogger = exports.forkWithErrorHandler = exports.forkDaemon = exports.forkAllDiscard = exports.fork = exports.forEachParWithIndex = exports.forEachParDiscard = exports.forEachPar = exports.forEachExec = exports.filterPar = exports.filterNotPar = exports.fiberScoped = exports.fiberRefUnsafeMakeSupervisor = exports.fiberRefMakeWith = exports.fiberRefMakeRuntimeFlags = exports.fiberRefMakeContext = exports.fiberRefMake = exports.fiberRefLocallyScopedWith = exports.fiberRefLocallyScoped = exports.fiberJoinAll = exports.fiberInterruptFork = exports.fiberCollectAll = exports.fiberAwaitAll = exports.existsPar = exports.defaultLogger = exports.daemonChildren = exports.currentSupervisor = exports.currentRuntimeFlags = exports.currentMinimumLogLevel = exports.currentLoggers = exports.collectPar = exports.collectAllWithPar = exports.collectAllSuccessesPar = exports.collectAllParDiscard = exports.collectAllPar = exports.collect = exports.addFinalizer = exports.acquireRelease = exports.FiberRuntime = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var Deferred = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3885));
-var ExecutionStrategy = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4038));
-var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8722));
-var RuntimeFlagsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5110));
-var FiberStatus = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6709));
-var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4605));
-var _configProvider = /*#__PURE__*/__nccwpck_require__(2816);
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var defaultServices = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6050));
-var internalFiber = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3120));
-var FiberMessage = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(639));
-var fiberRefs = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8122));
-var fiberScope = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7700));
-var internalLogger = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1263));
-var _mainThread = /*#__PURE__*/__nccwpck_require__(1184);
-var metric = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(517));
-var metricBoundaries = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5472));
-var metricLabel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7663));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(195));
-var _runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(295));
-var supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8799));
-var SupervisorPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1447));
-var LogLevel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8440));
-var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8740));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Deferred = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3576));
+var ExecutionStrategy = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4786));
+var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(517));
+var RuntimeFlagsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7855));
+var FiberStatus = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8175));
+var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5861));
+var _configProvider = /*#__PURE__*/__nccwpck_require__(647);
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var defaultServices = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9546));
+var internalFiber = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5434));
+var FiberMessage = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(678));
+var fiberRefs = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1244));
+var fiberScope = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4955));
+var internalLogger = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1502));
+var _mainThread = /*#__PURE__*/__nccwpck_require__(4185);
+var metric = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2519));
+var metricBoundaries = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1903));
+var metricLabel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5077));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4016));
+var _runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2166));
+var supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6937));
+var SupervisorPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7630));
+var LogLevel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3658));
+var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6607));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
 var Context = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8364));
 var HashSet = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1470));
 var MutableQueue = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3064));
+var MRef = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4210));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 var _a, _b;
@@ -15502,7 +16952,6 @@ const drainQueueWhileRunningTable = {
     return core.flatMap(() => cur)(core.yieldNow(_message.priority));
   }
 };
-let globalErrorSeq = 0;
 /** @internal */
 class FiberRuntime {
   constructor(fiberId, fiberRefs0, runtimeFlags0, runtime) {
@@ -16194,7 +17643,7 @@ class FiberRuntime {
       const currentStack = this.stackToLines();
       cause = internalCause.annotated(cause.cause, new internalCause.StackAnnotation(Chunk.take(Debug.runtimeDebug.traceStackLimit)(Chunk.dedupeAdjacent(stack.length === 0 ? currentStack : currentStack.length === 0 ? stack : Chunk.unsafeLast(stack) === Chunk.unsafeLast(currentStack) ? stack : Chunk.concat(currentStack)(stack))), cause.annotation.seq));
     } else {
-      cause = internalCause.annotated(op.cause, new internalCause.StackAnnotation(this.stackToLines(), globalErrorSeq++));
+      cause = internalCause.annotated(op.cause, new internalCause.StackAnnotation(this.stackToLines(), MRef.getAndIncrement(internalCause.globalErrorSeq)));
     }
     const cont = this.getNextFailCont();
     if (cont !== undefined) {
@@ -16347,18 +17796,10 @@ class FiberRuntime {
       return Chunk.empty();
     }
     const lines = [];
-    let current = this._stack.length - 1;
+    let current = this._traceStack.length - 1;
     while (current >= 0 && lines.length < Debug.runtimeDebug.traceStackLimit) {
-      const value = this._stack[current];
-      switch (value._tag) {
-        case OpCodes.OP_TRACED:
-          {
-            if (value.trace) {
-              lines.push(value.trace);
-            }
-            break;
-          }
-      }
+      const value = this._traceStack[current];
+      lines.push(value);
       current = current - 1;
     }
     return Chunk.unsafeFromArray(lines);
@@ -16821,7 +18262,7 @@ exports.fiberScoped = fiberScoped;
 
 /***/ }),
 
-/***/ 7700:
+/***/ 4955:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -16831,8 +18272,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.unsafeMake = exports.globalScope = exports.FiberScopeTypeId = void 0;
-var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8722));
-var FiberMessage = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(639));
+var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(517));
+var FiberMessage = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(678));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 var _a, _b;
@@ -16891,7 +18332,7 @@ exports.globalScope = globalScope;
 
 /***/ }),
 
-/***/ 595:
+/***/ 7083:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -16986,7 +18427,1044 @@ exports.isSuspended = isSuspended;
 
 /***/ }),
 
-/***/ 1350:
+/***/ 3825:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.unsafeMakeSubscription = exports.unsafeMakeHub = exports.unbounded = exports.subscribe = exports.sliding = exports.size = exports.shutdown = exports.publishAll = exports.publish = exports.makeHub = exports.isShutdown = exports.isFull = exports.isEmpty = exports.dropping = exports.capacity = exports.bounded = exports.awaitShutdown = exports.SlidingStrategy = exports.DroppingStrategy = void 0;
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(484));
+var queue = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6340));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+var MutableQueue = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3064));
+var MutableRef = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4210));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+var _a, _b;
+const addSubscribers = (subscription, pollers) => subscribers => {
+  if (!subscribers.has(subscription)) {
+    subscribers.set(subscription, new Set());
+  }
+  const set = subscribers.get(subscription);
+  set.add(pollers);
+};
+const removeSubscribers = (subscription, pollers) => subscribers => {
+  if (!subscribers.has(subscription)) {
+    return;
+  }
+  const set = subscribers.get(subscription);
+  set.delete(pollers);
+  if (set.size === 0) {
+    subscribers.delete(subscription);
+  }
+};
+/** @internal */
+const bounded = /*#__PURE__*/Debug.methodWithTrace(trace => requestedCapacity => core.flatMap(atomicHub => makeHub(atomicHub, new BackPressureStrategy()))(core.sync(() => makeBoundedHub(requestedCapacity))).traced(trace));
+/** @internal */
+exports.bounded = bounded;
+const dropping = /*#__PURE__*/Debug.methodWithTrace(trace => requestedCapacity => core.flatMap(atomicHub => makeHub(atomicHub, new DroppingStrategy()))(core.sync(() => makeBoundedHub(requestedCapacity))).traced(trace));
+/** @internal */
+exports.dropping = dropping;
+const sliding = /*#__PURE__*/Debug.methodWithTrace(trace => requestedCapacity => core.flatMap(atomicHub => makeHub(atomicHub, new SlidingStrategy()))(core.sync(() => makeBoundedHub(requestedCapacity))).traced(trace));
+/** @internal */
+exports.sliding = sliding;
+const unbounded = /*#__PURE__*/Debug.methodWithTrace(trace => () => core.flatMap(atomicHub => makeHub(atomicHub, new DroppingStrategy()))(core.sync(() => makeUnboundedHub())).traced(trace));
+/** @internal */
+exports.unbounded = unbounded;
+const capacity = self => {
+  return self.capacity();
+};
+/** @internal */
+exports.capacity = capacity;
+const size = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.size().traced(trace));
+/** @internal */
+exports.size = size;
+const isFull = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.isFull().traced(trace));
+/** @internal */
+exports.isFull = isFull;
+const isEmpty = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.isEmpty().traced(trace));
+/** @internal */
+exports.isEmpty = isEmpty;
+const shutdown = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.shutdown().traced(trace));
+/** @internal */
+exports.shutdown = shutdown;
+const isShutdown = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.isShutdown().traced(trace));
+/** @internal */
+exports.isShutdown = isShutdown;
+const awaitShutdown = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.awaitShutdown().traced(trace));
+/** @internal */
+exports.awaitShutdown = awaitShutdown;
+const publish = /*#__PURE__*/Debug.dualWithTrace(2, trace => (self, value) => self.publish(value).traced(trace));
+/** @internal */
+exports.publish = publish;
+const publishAll = /*#__PURE__*/Debug.dualWithTrace(2, trace => (self, elements) => self.publishAll(elements).traced(trace));
+/** @internal */
+exports.publishAll = publishAll;
+const subscribe = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.subscribe().traced(trace));
+/** @internal */
+exports.subscribe = subscribe;
+const makeBoundedHub = requestedCapacity => {
+  ensureCapacity(requestedCapacity);
+  if (requestedCapacity === 1) {
+    return new BoundedHubSingle();
+  } else if (nextPow2(requestedCapacity) === requestedCapacity) {
+    return new BoundedHubPow2(requestedCapacity);
+  } else {
+    return new BoundedHubArb(requestedCapacity);
+  }
+};
+/** @internal */
+const makeUnboundedHub = () => {
+  return new UnboundedHub();
+};
+/** @internal */
+const makeSubscription = /*#__PURE__*/Debug.methodWithTrace(trace => (hub, subscribers, strategy) => core.map(core.deferredMake(), deferred => unsafeMakeSubscription(hub, subscribers, hub.subscribe(), MutableQueue.unbounded(), deferred, MutableRef.make(false), strategy)).traced(trace));
+/** @internal */
+const unsafeMakeSubscription = (hub, subscribers, subscription, pollers, shutdownHook, shutdownFlag, strategy) => {
+  return new SubscriptionImpl(hub, subscribers, subscription, pollers, shutdownHook, shutdownFlag, strategy);
+};
+/** @internal */
+exports.unsafeMakeSubscription = unsafeMakeSubscription;
+class BoundedHubArb {
+  constructor(requestedCapacity) {
+    this.publisherIndex = 0;
+    this.subscriberCount = 0;
+    this.subscribersIndex = 0;
+    this.array = Array.from({
+      length: requestedCapacity
+    });
+    this.subscribers = Array.from({
+      length: requestedCapacity
+    });
+    this.capacity = requestedCapacity;
+  }
+  isEmpty() {
+    return this.publisherIndex === this.subscribersIndex;
+  }
+  isFull() {
+    return this.publisherIndex === this.subscribersIndex + this.capacity;
+  }
+  size() {
+    return this.publisherIndex - this.subscribersIndex;
+  }
+  publish(value) {
+    if (this.isFull()) {
+      return false;
+    }
+    if (this.subscriberCount !== 0) {
+      const index = this.publisherIndex % this.capacity;
+      this.array[index] = value;
+      this.subscribers[index] = this.subscriberCount;
+      this.publisherIndex += 1;
+    }
+    return true;
+  }
+  publishAll(elements) {
+    const chunk = Chunk.fromIterable(elements);
+    const n = chunk.length;
+    const size = this.publisherIndex - this.subscribersIndex;
+    const available = this.capacity - size;
+    const forHub = Math.min(n, available);
+    if (forHub === 0) {
+      return chunk;
+    }
+    let iteratorIndex = 0;
+    const publishAllIndex = this.publisherIndex + forHub;
+    while (this.publisherIndex !== publishAllIndex) {
+      const a = Chunk.unsafeGet(iteratorIndex++)(chunk);
+      const index = this.publisherIndex % this.capacity;
+      this.array[index] = a;
+      this.subscribers[index] = this.subscriberCount;
+      this.publisherIndex += 1;
+    }
+    return Chunk.drop(iteratorIndex - 1)(chunk);
+  }
+  slide() {
+    if (this.subscribersIndex !== this.publisherIndex) {
+      const index = this.subscribersIndex % this.capacity;
+      this.array[index] = null;
+      this.subscribers[index] = 0;
+      this.subscribersIndex += 1;
+    }
+  }
+  subscribe() {
+    this.subscriberCount += 1;
+    return new BoundedHubArbSubscription(this, this.publisherIndex, false);
+  }
+}
+class BoundedHubArbSubscription {
+  constructor(self, subscriberIndex, unsubscribed) {
+    this.self = self;
+    this.subscriberIndex = subscriberIndex;
+    this.unsubscribed = unsubscribed;
+  }
+  isEmpty() {
+    return this.unsubscribed || this.self.publisherIndex === this.subscriberIndex || this.self.publisherIndex === this.self.subscribersIndex;
+  }
+  size() {
+    if (this.unsubscribed) {
+      return 0;
+    }
+    return this.self.publisherIndex - Math.max(this.subscriberIndex, this.self.subscribersIndex);
+  }
+  poll(default_) {
+    if (this.unsubscribed) {
+      return default_;
+    }
+    this.subscriberIndex = Math.max(this.subscriberIndex, this.self.subscribersIndex);
+    if (this.subscriberIndex !== this.self.publisherIndex) {
+      const index = this.subscriberIndex % this.self.capacity;
+      const elem = this.self.array[index];
+      this.self.subscribers[index] -= 1;
+      if (this.self.subscribers[index] === 0) {
+        this.self.array[index] = null;
+        this.self.subscribersIndex += 1;
+      }
+      this.subscriberIndex += 1;
+      return elem;
+    }
+    return default_;
+  }
+  pollUpTo(n) {
+    if (this.unsubscribed) {
+      return Chunk.empty();
+    }
+    this.subscriberIndex = Math.max(this.subscriberIndex, this.self.subscribersIndex);
+    const size = this.self.publisherIndex - this.subscriberIndex;
+    const toPoll = Math.min(n, size);
+    if (toPoll <= 0) {
+      return Chunk.empty();
+    }
+    const builder = [];
+    const pollUpToIndex = this.subscriberIndex + toPoll;
+    while (this.subscriberIndex !== pollUpToIndex) {
+      const index = this.subscriberIndex % this.self.capacity;
+      const a = this.self.array[index];
+      this.self.subscribers[index] -= 1;
+      if (this.self.subscribers[index] === 0) {
+        this.self.array[index] = null;
+        this.self.subscribersIndex += 1;
+      }
+      builder.push(a);
+      this.subscriberIndex += 1;
+    }
+    return Chunk.fromIterable(builder);
+  }
+  unsubscribe() {
+    if (!this.unsubscribed) {
+      this.unsubscribed = true;
+      this.self.subscriberCount -= 1;
+      this.subscriberIndex = Math.max(this.subscriberIndex, this.self.subscribersIndex);
+      while (this.subscriberIndex !== this.self.publisherIndex) {
+        const index = this.subscriberIndex % this.self.capacity;
+        this.self.subscribers[index] -= 1;
+        if (this.self.subscribers[index] === 0) {
+          this.self.array[index] = null;
+          this.self.subscribersIndex += 1;
+        }
+        this.subscriberIndex += 1;
+      }
+    }
+  }
+}
+/** @internal */
+class BoundedHubPow2 {
+  constructor(requestedCapacity) {
+    this.publisherIndex = 0;
+    this.subscriberCount = 0;
+    this.subscribersIndex = 0;
+    this.array = Array.from({
+      length: requestedCapacity
+    });
+    this.mask = requestedCapacity - 1;
+    this.subscribers = Array.from({
+      length: requestedCapacity
+    });
+    this.capacity = requestedCapacity;
+  }
+  isEmpty() {
+    return this.publisherIndex === this.subscribersIndex;
+  }
+  isFull() {
+    return this.publisherIndex === this.subscribersIndex + this.capacity;
+  }
+  size() {
+    return this.publisherIndex - this.subscribersIndex;
+  }
+  publish(value) {
+    if (this.isFull()) {
+      return false;
+    }
+    if (this.subscriberCount !== 0) {
+      const index = this.publisherIndex & this.mask;
+      this.array[index] = value;
+      this.subscribers[index] = this.subscriberCount;
+      this.publisherIndex += 1;
+    }
+    return true;
+  }
+  publishAll(elements) {
+    const chunk = Chunk.fromIterable(elements);
+    const n = chunk.length;
+    const size = this.publisherIndex - this.subscribersIndex;
+    const available = this.capacity - size;
+    const forHub = Math.min(n, available);
+    if (forHub === 0) {
+      return chunk;
+    }
+    let iteratorIndex = 0;
+    const publishAllIndex = this.publisherIndex + forHub;
+    while (this.publisherIndex !== publishAllIndex) {
+      const elem = Chunk.unsafeGet(iteratorIndex++)(chunk);
+      const index = this.publisherIndex & this.mask;
+      this.array[index] = elem;
+      this.subscribers[index] = this.subscriberCount;
+      this.publisherIndex += 1;
+    }
+    return Chunk.drop(iteratorIndex - 1)(chunk);
+  }
+  slide() {
+    if (this.subscribersIndex !== this.publisherIndex) {
+      const index = this.subscribersIndex & this.mask;
+      this.array[index] = null;
+      this.subscribers[index] = 0;
+      this.subscribersIndex += 1;
+    }
+  }
+  subscribe() {
+    this.subscriberCount += 1;
+    return new BoundedHubPow2Subscription(this, this.publisherIndex, false);
+  }
+}
+/** @internal */
+class BoundedHubPow2Subscription {
+  constructor(self, subscriberIndex, unsubscribed) {
+    this.self = self;
+    this.subscriberIndex = subscriberIndex;
+    this.unsubscribed = unsubscribed;
+  }
+  isEmpty() {
+    return this.unsubscribed || this.self.publisherIndex === this.subscriberIndex || this.self.publisherIndex === this.self.subscribersIndex;
+  }
+  size() {
+    if (this.unsubscribed) {
+      return 0;
+    }
+    return this.self.publisherIndex - Math.max(this.subscriberIndex, this.self.subscribersIndex);
+  }
+  poll(default_) {
+    if (this.unsubscribed) {
+      return default_;
+    }
+    this.subscriberIndex = Math.max(this.subscriberIndex, this.self.subscribersIndex);
+    if (this.subscriberIndex !== this.self.publisherIndex) {
+      const index = this.subscriberIndex & this.self.mask;
+      const elem = this.self.array[index];
+      this.self.subscribers[index] -= 1;
+      if (this.self.subscribers[index] === 0) {
+        this.self.array[index] = null;
+        this.self.subscribersIndex += 1;
+      }
+      this.subscriberIndex += 1;
+      return elem;
+    }
+    return default_;
+  }
+  pollUpTo(n) {
+    if (this.unsubscribed) {
+      return Chunk.empty();
+    }
+    this.subscriberIndex = Math.max(this.subscriberIndex, this.self.subscribersIndex);
+    const size = this.self.publisherIndex - this.subscriberIndex;
+    const toPoll = Math.min(n, size);
+    if (toPoll <= 0) {
+      return Chunk.empty();
+    }
+    const builder = [];
+    const pollUpToIndex = this.subscriberIndex + toPoll;
+    while (this.subscriberIndex !== pollUpToIndex) {
+      const index = this.subscriberIndex & this.self.mask;
+      const elem = this.self.array[index];
+      this.self.subscribers[index] -= 1;
+      if (this.self.subscribers[index] === 0) {
+        this.self.array[index] = null;
+        this.self.subscribersIndex += 1;
+      }
+      builder.push(elem);
+      this.subscriberIndex += 1;
+    }
+    return Chunk.fromIterable(builder);
+  }
+  unsubscribe() {
+    if (!this.unsubscribed) {
+      this.unsubscribed = true;
+      this.self.subscriberCount -= 1;
+      this.subscriberIndex = Math.max(this.subscriberIndex, this.self.subscribersIndex);
+      while (this.subscriberIndex !== this.self.publisherIndex) {
+        const index = this.subscriberIndex & this.self.mask;
+        this.self.subscribers[index] -= 1;
+        if (this.self.subscribers[index] === 0) {
+          this.self.array[index] = null;
+          this.self.subscribersIndex += 1;
+        }
+        this.subscriberIndex += 1;
+      }
+    }
+  }
+}
+/** @internal */
+class BoundedHubSingle {
+  constructor() {
+    this.publisherIndex = 0;
+    this.subscriberCount = 0;
+    this.subscribers = 0;
+    this.value = null;
+    this.capacity = 1;
+  }
+  isEmpty() {
+    return this.subscribers === 0;
+  }
+  isFull() {
+    return !this.isEmpty();
+  }
+  size() {
+    return this.isEmpty() ? 0 : 1;
+  }
+  publish(value) {
+    if (this.isFull()) {
+      return false;
+    }
+    if (this.subscriberCount !== 0) {
+      this.value = value;
+      this.subscribers = this.subscriberCount;
+      this.publisherIndex += 1;
+    }
+    return true;
+  }
+  publishAll(elements) {
+    const chunk = Chunk.fromIterable(elements);
+    if (Chunk.isEmpty(chunk)) {
+      return chunk;
+    }
+    if (this.publish(Chunk.unsafeHead(chunk))) {
+      return Chunk.drop(1)(chunk);
+    } else {
+      return chunk;
+    }
+  }
+  slide() {
+    if (this.isFull()) {
+      this.subscribers = 0;
+      this.value = null;
+    }
+  }
+  subscribe() {
+    this.subscriberCount += 1;
+    return new BoundedHubSingleSubscription(this, this.publisherIndex, false);
+  }
+}
+/** @internal */
+class BoundedHubSingleSubscription {
+  constructor(self, subscriberIndex, unsubscribed) {
+    this.self = self;
+    this.subscriberIndex = subscriberIndex;
+    this.unsubscribed = unsubscribed;
+  }
+  isEmpty() {
+    return this.unsubscribed || this.self.subscribers === 0 || this.subscriberIndex === this.self.publisherIndex;
+  }
+  size() {
+    return this.isEmpty() ? 0 : 1;
+  }
+  poll(default_) {
+    if (this.isEmpty()) {
+      return default_;
+    }
+    const elem = this.self.value;
+    this.self.subscribers -= 1;
+    if (this.self.subscribers === 0) {
+      this.self.value = null;
+    }
+    this.subscriberIndex += 1;
+    return elem;
+  }
+  pollUpTo(n) {
+    if (this.isEmpty() || n < 1) {
+      return Chunk.empty();
+    }
+    const a = this.self.value;
+    this.self.subscribers -= 1;
+    if (this.self.subscribers === 0) {
+      this.self.value = null;
+    }
+    this.subscriberIndex += 1;
+    return Chunk.of(a);
+  }
+  unsubscribe() {
+    if (!this.unsubscribed) {
+      this.unsubscribed = true;
+      this.self.subscriberCount -= 1;
+      if (this.subscriberIndex !== this.self.publisherIndex) {
+        this.self.subscribers -= 1;
+        if (this.self.subscribers === 0) {
+          this.self.value = null;
+        }
+      }
+    }
+  }
+}
+/** @internal */
+class Node {
+  constructor(value, subscribers, next) {
+    this.value = value;
+    this.subscribers = subscribers;
+    this.next = next;
+  }
+}
+/** @internal */
+class UnboundedHub {
+  constructor() {
+    this.publisherHead = new Node(null, 0, null);
+    this.publisherIndex = 0;
+    this.subscribersIndex = 0;
+    this.capacity = Number.MAX_SAFE_INTEGER;
+    this.publisherTail = this.publisherHead;
+  }
+  isEmpty() {
+    return this.publisherHead === this.publisherTail;
+  }
+  isFull() {
+    return false;
+  }
+  size() {
+    return this.publisherIndex - this.subscribersIndex;
+  }
+  publish(value) {
+    const subscribers = this.publisherTail.subscribers;
+    if (subscribers !== 0) {
+      this.publisherTail.next = new Node(value, subscribers, null);
+      this.publisherTail = this.publisherTail.next;
+      this.publisherIndex += 1;
+    }
+    return true;
+  }
+  publishAll(elements) {
+    for (const a of elements) {
+      this.publish(a);
+    }
+    return Chunk.empty();
+  }
+  slide() {
+    if (this.publisherHead !== this.publisherTail) {
+      this.publisherHead = this.publisherHead.next;
+      this.publisherHead.value = null;
+      this.subscribersIndex += 1;
+    }
+  }
+  subscribe() {
+    this.publisherTail.subscribers += 1;
+    return new UnboundedHubSubscription(this, this.publisherTail, this.publisherIndex, false);
+  }
+}
+/** @internal */
+class UnboundedHubSubscription {
+  constructor(self, subscriberHead, subscriberIndex, unsubscribed) {
+    this.self = self;
+    this.subscriberHead = subscriberHead;
+    this.subscriberIndex = subscriberIndex;
+    this.unsubscribed = unsubscribed;
+  }
+  isEmpty() {
+    if (this.unsubscribed) {
+      return true;
+    }
+    let empty = true;
+    let loop = true;
+    while (loop) {
+      if (this.subscriberHead === this.self.publisherTail) {
+        loop = false;
+      } else {
+        if (this.subscriberHead.next.value !== null) {
+          empty = false;
+          loop = false;
+        } else {
+          this.subscriberHead = this.subscriberHead.next;
+          this.subscriberIndex += 1;
+        }
+      }
+    }
+    return empty;
+  }
+  size() {
+    if (this.unsubscribed) {
+      return 0;
+    }
+    return this.self.publisherIndex - Math.max(this.subscriberIndex, this.self.subscribersIndex);
+  }
+  poll(default_) {
+    if (this.unsubscribed) {
+      return default_;
+    }
+    let loop = true;
+    let polled = default_;
+    while (loop) {
+      if (this.subscriberHead === this.self.publisherTail) {
+        loop = false;
+      } else {
+        const elem = this.subscriberHead.next.value;
+        if (elem !== null) {
+          polled = elem;
+          this.subscriberHead.subscribers -= 1;
+          if (this.subscriberHead.subscribers === 0) {
+            this.self.publisherHead = this.self.publisherHead.next;
+            this.self.publisherHead.value = null;
+            this.self.subscribersIndex += 1;
+          }
+          loop = false;
+        }
+        this.subscriberHead = this.subscriberHead.next;
+        this.subscriberIndex += 1;
+      }
+    }
+    return polled;
+  }
+  pollUpTo(n) {
+    const builder = [];
+    const default_ = null;
+    let i = 0;
+    while (i !== n) {
+      const a = this.poll(default_);
+      if (a === default_) {
+        i = n;
+      } else {
+        builder.push(a);
+        i += 1;
+      }
+    }
+    return Chunk.fromIterable(builder);
+  }
+  unsubscribe() {
+    if (!this.unsubscribed) {
+      this.unsubscribed = true;
+      this.self.publisherTail.subscribers -= 1;
+      while (this.subscriberHead !== this.self.publisherTail) {
+        if (this.subscriberHead.next.value !== null) {
+          this.subscriberHead.subscribers -= 1;
+          if (this.subscriberHead.subscribers === 0) {
+            this.self.publisherHead = this.self.publisherHead.next;
+            this.self.publisherHead.value = null;
+            this.self.subscribersIndex += 1;
+          }
+        }
+        this.subscriberHead = this.subscriberHead.next;
+      }
+    }
+  }
+}
+/** @internal */
+class SubscriptionImpl {
+  constructor(hub, subscribers, subscription, pollers, shutdownHook, shutdownFlag, strategy) {
+    this.hub = hub;
+    this.subscribers = subscribers;
+    this.subscription = subscription;
+    this.pollers = pollers;
+    this.shutdownHook = shutdownHook;
+    this.shutdownFlag = shutdownFlag;
+    this.strategy = strategy;
+    this[_a] = queue.dequeueVariance;
+  }
+  capacity() {
+    return this.hub.capacity;
+  }
+  size() {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => MutableRef.get(this.shutdownFlag) ? core.interrupt() : core.succeed(this.subscription.size())).traced(trace));
+  }
+  isFull() {
+    return Debug.bodyWithTrace(trace => core.map(this.size(), size => size === this.capacity()).traced(trace));
+  }
+  isEmpty() {
+    return Debug.bodyWithTrace(trace => core.map(this.size(), size => size === 0).traced(trace));
+  }
+  shutdown() {
+    return Debug.bodyWithTrace(trace => core.uninterruptible(core.withFiberRuntime(state => {
+      MutableRef.set(true)(this.shutdownFlag);
+      return core.asUnit(core.whenEffect(core.deferredSucceed(this.shutdownHook, void 0))(core.zipRight(core.sync(() => this.strategy.unsafeOnHubEmptySpace(this.hub, this.subscribers)))(core.zipRight(core.sync(() => this.subscription.unsubscribe()))(fiberRuntime.forEachPar(d => core.deferredInterruptWith(d, state.id()))(unsafePollAllQueue(this.pollers))))));
+    }).traced(trace)));
+  }
+  isShutdown() {
+    return Debug.bodyWithTrace(trace => core.sync(() => MutableRef.get(this.shutdownFlag)).traced(trace));
+  }
+  awaitShutdown() {
+    return Debug.bodyWithTrace(trace => core.deferredAwait(this.shutdownHook).traced(trace));
+  }
+  take() {
+    return Debug.bodyWithTrace(trace => core.withFiberRuntime(state => {
+      if (MutableRef.get(this.shutdownFlag)) {
+        return core.interrupt();
+      }
+      const message = MutableQueue.isEmpty(this.pollers) ? this.subscription.poll(MutableQueue.EmptyMutableQueue) : MutableQueue.EmptyMutableQueue;
+      if (message === MutableQueue.EmptyMutableQueue) {
+        const deferred = core.deferredUnsafeMake(state.id());
+        return core.onInterrupt(() => core.sync(() => unsafeRemove(this.pollers, deferred)))(core.suspendSucceed(() => {
+          MutableQueue.offer(deferred)(this.pollers);
+          addSubscribers(this.subscription, this.pollers)(this.subscribers);
+          this.strategy.unsafeCompletePollers(this.hub, this.subscribers, this.subscription, this.pollers);
+          return MutableRef.get(this.shutdownFlag) ? core.interrupt() : core.deferredAwait(deferred);
+        }));
+      } else {
+        this.strategy.unsafeOnHubEmptySpace(this.hub, this.subscribers);
+        return core.succeed(message);
+      }
+    }).traced(trace));
+  }
+  takeAll() {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => {
+      if (MutableRef.get(this.shutdownFlag)) {
+        return core.interrupt();
+      }
+      const as = MutableQueue.isEmpty(this.pollers) ? unsafePollAllSubscription(this.subscription) : Chunk.empty();
+      this.strategy.unsafeOnHubEmptySpace(this.hub, this.subscribers);
+      return core.succeed(as);
+    }).traced(trace));
+  }
+  takeUpTo(max) {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => {
+      if (MutableRef.get(this.shutdownFlag)) {
+        return core.interrupt();
+      }
+      const as = MutableQueue.isEmpty(this.pollers) ? unsafePollN(this.subscription, max) : Chunk.empty();
+      this.strategy.unsafeOnHubEmptySpace(this.hub, this.subscribers);
+      return core.succeed(as);
+    }).traced(trace));
+  }
+  takeBetween(min, max) {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => takeRemainderLoop(this, min, max, Chunk.empty())).traced(trace));
+  }
+}
+_a = queue.DequeueTypeId;
+/** @internal */
+const takeRemainderLoop = (self, min, max, acc) => {
+  if (max < min) {
+    return core.succeed(acc);
+  }
+  return core.flatMap(bs => {
+    const remaining = min - bs.length;
+    if (remaining === 1) {
+      return core.map(b => Chunk.append(b)(Chunk.concat(bs)(acc)))(self.take());
+    }
+    if (remaining > 1) {
+      return core.flatMap(b => takeRemainderLoop(self, remaining - 1, max - bs.length - 1, Chunk.append(b)(Chunk.concat(bs)(acc))))(self.take());
+    }
+    return core.succeed(Chunk.concat(bs)(acc));
+  })(self.takeUpTo(max));
+};
+/** @internal */
+class HubImpl {
+  constructor(hub, subscribers, scope, shutdownHook, shutdownFlag, strategy) {
+    this.hub = hub;
+    this.subscribers = subscribers;
+    this.scope = scope;
+    this.shutdownHook = shutdownHook;
+    this.shutdownFlag = shutdownFlag;
+    this.strategy = strategy;
+    this[_b] = queue.enqueueVariance;
+  }
+  capacity() {
+    return this.hub.capacity;
+  }
+  size() {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => MutableRef.get(this.shutdownFlag) ? core.interrupt() : core.sync(() => this.hub.size())).traced(trace));
+  }
+  isFull() {
+    return Debug.bodyWithTrace(trace => core.map(size => size === this.capacity())(this.size()).traced(trace));
+  }
+  isEmpty() {
+    return Debug.bodyWithTrace(trace => core.map(size => size === 0)(this.size()).traced(trace));
+  }
+  awaitShutdown() {
+    return Debug.bodyWithTrace(trace => core.deferredAwait(this.shutdownHook).traced(trace));
+  }
+  isShutdown() {
+    return Debug.bodyWithTrace(trace => core.sync(() => MutableRef.get(this.shutdownFlag)).traced(trace));
+  }
+  shutdown() {
+    return Debug.bodyWithTrace(trace => core.uninterruptible(core.withFiberRuntime(state => {
+      MutableRef.set(true)(this.shutdownFlag);
+      return core.asUnit(core.whenEffect(core.deferredSucceed(this.shutdownHook, void 0))(core.zipRight(this.strategy.shutdown())(this.scope.close(core.exitInterrupt(state.id())))));
+    })).traced(trace));
+  }
+  publish(value) {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => {
+      if (MutableRef.get(this.shutdownFlag)) {
+        return core.interrupt();
+      }
+      if (this.hub.publish(value)) {
+        this.strategy.unsafeCompleteSubscribers(this.hub, this.subscribers);
+        return core.succeed(true);
+      }
+      return this.strategy.handleSurplus(this.hub, this.subscribers, Chunk.of(value), this.shutdownFlag);
+    }).traced(trace));
+  }
+  publishAll(elements) {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => {
+      if (MutableRef.get(this.shutdownFlag)) {
+        return core.interrupt();
+      }
+      const surplus = unsafePublishAll(this.hub, elements);
+      this.strategy.unsafeCompleteSubscribers(this.hub, this.subscribers);
+      if (Chunk.isEmpty(surplus)) {
+        return core.succeed(true);
+      }
+      return this.strategy.handleSurplus(this.hub, this.subscribers, surplus, this.shutdownFlag);
+    }).traced(trace));
+  }
+  subscribe() {
+    return Debug.bodyWithTrace(trace => fiberRuntime.acquireRelease(core.tap(dequeue => this.scope.addFinalizer(() => dequeue.shutdown()))(makeSubscription(this.hub, this.subscribers, this.strategy)), dequeue => dequeue.shutdown()).traced(trace));
+  }
+  offer(value) {
+    return Debug.bodyWithTrace(trace => this.publish(value).traced(trace));
+  }
+  offerAll(elements) {
+    return Debug.bodyWithTrace(trace => this.publishAll(elements).traced(trace));
+  }
+}
+_b = queue.EnqueueTypeId;
+/** @internal */
+const makeHub = /*#__PURE__*/Debug.methodWithTrace(trace => (hub, strategy) => core.flatMap(fiberRuntime.scopeMake(), scope => core.map(core.deferredMake(), deferred => unsafeMakeHub(hub, new Map(), scope, deferred, MutableRef.make(false), strategy))).traced(trace));
+/** @internal */
+exports.makeHub = makeHub;
+const unsafeMakeHub = (hub, subscribers, scope, shutdownHook, shutdownFlag, strategy) => {
+  return new HubImpl(hub, subscribers, scope, shutdownHook, shutdownFlag, strategy);
+};
+/** @internal */
+exports.unsafeMakeHub = unsafeMakeHub;
+const nextPow2 = n => {
+  const nextPow = Math.ceil(Math.log(n) / Math.log(2.0));
+  return Math.max(Math.pow(2, nextPow), 2);
+};
+/** @internal */
+const ensureCapacity = capacity => {
+  if (capacity <= 0) {
+    throw cause.InvalidHubCapacityException(`Cannot construct Hub with capacity of ${capacity}`);
+  }
+};
+/** @internal */
+const unsafeCompleteDeferred = (deferred, a) => {
+  core.deferredUnsafeDone(deferred, core.succeed(a));
+};
+/** @internal */
+const unsafeOfferAll = (queue, as) => {
+  return MutableQueue.offerAll(as)(queue);
+};
+/** @internal */
+const unsafePollAllQueue = queue => {
+  return MutableQueue.pollUpTo(Number.POSITIVE_INFINITY)(queue);
+};
+/** @internal */
+const unsafePollAllSubscription = subscription => {
+  return subscription.pollUpTo(Number.POSITIVE_INFINITY);
+};
+/** @internal */
+const unsafePollN = (subscription, max) => {
+  return subscription.pollUpTo(max);
+};
+/** @internal */
+const unsafePublishAll = (hub, as) => {
+  return hub.publishAll(as);
+};
+/** @internal */
+const unsafeRemove = (queue, value) => {
+  unsafeOfferAll(queue, Chunk.filter(elem => elem !== value)(unsafePollAllQueue(queue)));
+};
+/**
+ * A strategy that applies back pressure to publishers when the hub is at
+ * capacity. This guarantees that all subscribers will receive all messages
+ * published to the hub while they are subscribed. However, it creates the
+ * risk that a slow subscriber will slow down the rate at which messages
+ * are published and received by other subscribers.
+ *
+ * @internal
+ */
+class BackPressureStrategy {
+  constructor() {
+    this.publishers = MutableQueue.unbounded();
+  }
+  shutdown() {
+    return core.flatMap(core.fiberId(), fiberId => core.flatMap(core.sync(() => unsafePollAllQueue(this.publishers)), publishers => fiberRuntime.forEachParDiscard(publishers, ([_, deferred, last]) => last ? core.asUnit(core.deferredInterruptWith(deferred, fiberId)) : core.unit())));
+  }
+  handleSurplus(hub, subscribers, elements, isShutdown) {
+    return core.withFiberRuntime(state => {
+      const deferred = core.deferredUnsafeMake(state.id());
+      return core.onInterrupt(() => core.sync(() => this.unsafeRemove(deferred)))(core.suspendSucceed(() => {
+        this.unsafeOffer(elements, deferred);
+        this.unsafeOnHubEmptySpace(hub, subscribers);
+        this.unsafeCompleteSubscribers(hub, subscribers);
+        return MutableRef.get(isShutdown) ? core.interrupt() : core.deferredAwait(deferred);
+      }));
+    });
+  }
+  unsafeOnHubEmptySpace(hub, subscribers) {
+    let keepPolling = true;
+    while (keepPolling && !hub.isFull()) {
+      const publisher = MutableQueue.poll(MutableQueue.EmptyMutableQueue)(this.publishers);
+      if (publisher === MutableQueue.EmptyMutableQueue) {
+        keepPolling = false;
+      } else {
+        const published = hub.publish(publisher[0]);
+        if (published && publisher[2]) {
+          unsafeCompleteDeferred(publisher[1], true);
+        } else if (!published) {
+          unsafeOfferAll(this.publishers, Chunk.prepend(publisher)(unsafePollAllQueue(this.publishers)));
+        }
+        this.unsafeCompleteSubscribers(hub, subscribers);
+      }
+    }
+  }
+  unsafeCompletePollers(hub, subscribers, subscription, pollers) {
+    return unsafeStrategyCompletePollers(this, hub, subscribers, subscription, pollers);
+  }
+  unsafeCompleteSubscribers(hub, subscribers) {
+    return unsafeStrategyCompleteSubscribers(this, hub, subscribers);
+  }
+  unsafeOffer(elements, deferred) {
+    const iterator = elements[Symbol.iterator]();
+    let next = iterator.next();
+    if (!next.done) {
+      // eslint-disable-next-line no-constant-condition
+      while (1) {
+        const value = next.value;
+        next = iterator.next();
+        if (next.done) {
+          MutableQueue.offer([value, deferred, true])(this.publishers);
+          break;
+        }
+        MutableQueue.offer([value, deferred, false])(this.publishers);
+      }
+    }
+  }
+  unsafeRemove(deferred) {
+    unsafeOfferAll(this.publishers, Chunk.filter(([_, a]) => a !== deferred)(unsafePollAllQueue(this.publishers)));
+  }
+}
+/**
+ * A strategy that drops new messages when the hub is at capacity. This
+ * guarantees that a slow subscriber will not slow down the rate at which
+ * messages are published. However, it creates the risk that a slow
+ * subscriber will slow down the rate at which messages are received by
+ * other subscribers and that subscribers may not receive all messages
+ * published to the hub while they are subscribed.
+ *
+ * @internal
+ */
+class DroppingStrategy {
+  shutdown() {
+    return core.unit();
+  }
+  handleSurplus(_hub, _subscribers, _elements, _isShutdown) {
+    return core.succeed(false);
+  }
+  unsafeOnHubEmptySpace(_hub, _subscribers) {
+    //
+  }
+  unsafeCompletePollers(hub, subscribers, subscription, pollers) {
+    return unsafeStrategyCompletePollers(this, hub, subscribers, subscription, pollers);
+  }
+  unsafeCompleteSubscribers(hub, subscribers) {
+    return unsafeStrategyCompleteSubscribers(this, hub, subscribers);
+  }
+}
+/**
+ * A strategy that adds new messages and drops old messages when the hub is
+ * at capacity. This guarantees that a slow subscriber will not slow down
+ * the rate at which messages are published and received by other
+ * subscribers. However, it creates the risk that a slow subscriber will
+ * not receive some messages published to the hub while it is subscribed.
+ *
+ * @internal
+ */
+exports.DroppingStrategy = DroppingStrategy;
+class SlidingStrategy {
+  shutdown() {
+    return core.unit();
+  }
+  handleSurplus(hub, subscribers, elements, _isShutdown) {
+    return core.sync(() => {
+      this.unsafeSlidingPublish(hub, elements);
+      this.unsafeCompleteSubscribers(hub, subscribers);
+      return true;
+    });
+  }
+  unsafeOnHubEmptySpace(_hub, _subscribers) {
+    //
+  }
+  unsafeCompletePollers(hub, subscribers, subscription, pollers) {
+    return unsafeStrategyCompletePollers(this, hub, subscribers, subscription, pollers);
+  }
+  unsafeCompleteSubscribers(hub, subscribers) {
+    return unsafeStrategyCompleteSubscribers(this, hub, subscribers);
+  }
+  unsafeSlidingPublish(hub, elements) {
+    const it = elements[Symbol.iterator]();
+    let next = it.next();
+    if (!next.done && hub.capacity > 0) {
+      let a = next.value;
+      let loop = true;
+      while (loop) {
+        hub.slide();
+        const pub = hub.publish(a);
+        if (pub && (next = it.next()) && !next.done) {
+          a = next.value;
+        } else if (pub) {
+          loop = false;
+        }
+      }
+    }
+  }
+}
+/** @internal */
+exports.SlidingStrategy = SlidingStrategy;
+const unsafeStrategyCompletePollers = (strategy, hub, subscribers, subscription, pollers) => {
+  let keepPolling = true;
+  while (keepPolling && !subscription.isEmpty()) {
+    const poller = MutableQueue.poll(MutableQueue.EmptyMutableQueue)(pollers);
+    if (poller === MutableQueue.EmptyMutableQueue) {
+      removeSubscribers(subscription, pollers)(subscribers);
+      if (MutableQueue.isEmpty(pollers)) {
+        keepPolling = false;
+      } else {
+        addSubscribers(subscription, pollers)(subscribers);
+      }
+    } else {
+      const pollResult = subscription.poll(MutableQueue.EmptyMutableQueue);
+      if (pollResult === MutableQueue.EmptyMutableQueue) {
+        unsafeOfferAll(pollers, Chunk.prepend(poller)(unsafePollAllQueue(pollers)));
+      } else {
+        unsafeCompleteDeferred(poller, pollResult);
+        strategy.unsafeOnHubEmptySpace(hub, subscribers);
+      }
+    }
+  }
+};
+/** @internal */
+const unsafeStrategyCompleteSubscribers = (strategy, hub, subscribers) => {
+  for (const [subscription, pollersSet] of subscribers) {
+    for (const pollers of pollersSet) {
+      strategy.unsafeCompletePollers(hub, subscribers, subscription, pollers);
+    }
+  }
+};
+//# sourceMappingURL=hub.js.map
+
+/***/ }),
+
+/***/ 706:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -16998,21 +19476,21 @@ Object.defineProperty(exports, "__esModule", ({
 exports.fromEffect = exports.fresh = exports.flatten = exports.flatMap = exports.failSync = exports.failCauseSync = exports.failCause = exports.fail = exports.extendScope = exports.discard = exports.dieSync = exports.die = exports.context = exports.catchAllCause = exports.catchAll = exports.buildWithScope = exports.build = exports.LayerTypeId = void 0;
 exports.fromEffectContext = fromEffectContext;
 exports.zipWithPar = exports.useMerge = exports.use = exports.toRuntime = exports.toLayerScoped = exports.toLayer = exports.tapErrorCause = exports.tapError = exports.tap = exports.syncContext = exports.sync = exports.suspend = exports.succeedContext = exports.succeed = exports.service = exports.scopedDiscard = exports.scopedContext = exports.scoped = exports.scope = exports.retry = exports.provideSomeLayer = exports.provideMerge = exports.provideLayer = exports.provide = exports.project = exports.passthrough = exports.orElse = exports.orDie = exports.mergeAll = exports.merge = exports.memoize = exports.matchLayer = exports.matchCauseLayer = exports.mapError = exports.map = exports.launch = exports.isLayer = exports.isFresh = exports.fromFunction = exports.fromEffectDiscard = void 0;
-var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7433));
-var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6181));
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7794));
-var circular = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7499));
-var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7378));
-var EffectOpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(195));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1906));
-var ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3177));
-var runtime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5272));
-var synchronized = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8705));
-var ScheduleDecision = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2678));
-var Intervals = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2054));
-var Scope = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2322));
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3932));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(47));
+var circular = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4076));
+var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(484));
+var EffectOpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4016));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2556));
+var ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4397));
+var runtime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2450));
+var synchronized = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(143));
+var ScheduleDecision = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7016));
+var Intervals = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3342));
+var Scope = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6627));
 var Context = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8364));
 var Duration = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2095));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
@@ -17453,7 +19931,7 @@ exports.toLayerScoped = toLayerScoped;
 
 /***/ }),
 
-/***/ 8974:
+/***/ 8421:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -17463,13 +19941,13 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.withMinimumLogLevel = exports.setConfigProvider = exports.replaceLogger = exports.removeLogger = exports.minimumLogLevel = exports.enableWindDown = exports.enableRuntimeMetrics = exports.enableOpSupervision = exports.enableInterruption = exports.enableCooperativeYielding = exports.disableWindDown = exports.disableRuntimeMetrics = exports.disableOpSupervision = exports.disableInterruption = exports.disableCooperativeYielding = exports.addSupervisor = exports.addLogger = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7378));
-var layer = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1350));
-var runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(295));
-var runtimeFlagsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7064));
-var _supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8799));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(484));
+var layer = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(706));
+var runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2166));
+var runtimeFlagsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5180));
+var _supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6937));
 var HashSet = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1470));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -17529,7 +20007,7 @@ exports.setConfigProvider = setConfigProvider;
 
 /***/ }),
 
-/***/ 7978:
+/***/ 4234:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -17557,7 +20035,7 @@ exports.render = render;
 
 /***/ }),
 
-/***/ 1263:
+/***/ 1502:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -17567,14 +20045,14 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.zipRight = exports.zipLeft = exports.zip = exports.unsafeRunSyncExit = exports.unsafeRunSync = exports.sync = exports.succeed = exports.stringLogger = exports.simple = exports.none = exports.map = exports.makeLogger = exports.logfmtLogger = exports.filterLogLevel = exports.contramap = exports.LoggerTypeId = exports.AsyncFiber = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2924));
-var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var Pretty = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4208));
-var _fiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9497));
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(195));
-var _scheduler = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(350));
-var LogSpan = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8111));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var Pretty = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7332));
+var _fiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2307));
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4016));
+var _scheduler = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5085));
+var LogSpan = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9306));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
@@ -17775,7 +20253,7 @@ exports.unsafeRunSync = unsafeRunSync;
 
 /***/ }),
 
-/***/ 1184:
+/***/ 4185:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -18002,7 +20480,7 @@ function yieldBackgroundOrContinue() {
 
 /***/ }),
 
-/***/ 517:
+/***/ 2519:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -18012,14 +20490,14 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.zip = exports.withNow = exports.value = exports.update = exports.unsafeSnapshot = exports.trackSuccessWith = exports.trackSuccess = exports.trackErrorWith = exports.trackError = exports.trackDurationWith = exports.trackDuration = exports.trackDefectWith = exports.trackDefect = exports.trackAll = exports.timerWithBoundaries = exports.timer = exports.taggedWithLabels = exports.taggedWithLabelSet = exports.taggedWith = exports.tagged = exports.sync = exports.summaryTimestamp = exports.summary = exports.succeed = exports.snapshot = exports.set = exports.mapType = exports.map = exports.make = exports.incrementBy = exports.increment = exports.histogram = exports.globalMetricRegistry = exports.gauge = exports.fromMetricKey = exports.fromConst = exports.frequency = exports.counter = exports.contramap = exports.MetricTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var _effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7794));
-var metricBoundaries = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5472));
-var metricKey = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8241));
-var metricLabel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7663));
-var metricRegistry = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(906));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var _effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(47));
+var metricBoundaries = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1903));
+var metricKey = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(909));
+var metricLabel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5077));
+var metricRegistry = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2756));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
 var Duration = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2095));
@@ -18206,7 +20684,7 @@ exports.unsafeSnapshot = unsafeSnapshot;
 
 /***/ }),
 
-/***/ 5472:
+/***/ 1903:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -18265,7 +20743,7 @@ exports.exponential = exponential;
 
 /***/ }),
 
-/***/ 2947:
+/***/ 1420:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -18275,8 +20753,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.summary = exports.onUpdate = exports.make = exports.histogram = exports.gauge = exports.frequency = exports.counter = exports.MetricHookTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var metricState = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9546));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var metricState = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9672));
 var number = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7639));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
@@ -18604,7 +21082,7 @@ const resolveQuantile = (error, sampleCount, current, consumed, quantile, rest) 
 
 /***/ }),
 
-/***/ 8241:
+/***/ 909:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -18614,9 +21092,9 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.taggedWithLabels = exports.taggedWithLabelSet = exports.tagged = exports.summary = exports.isMetricKey = exports.histogram = exports.gauge = exports.frequency = exports.counter = exports.MetricKeyTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var metricKeyType = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3924));
-var metricLabel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7663));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var metricKeyType = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(52));
+var metricLabel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5077));
 var Equal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8826));
 var Hash = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(441));
 var HashSet = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1470));
@@ -18690,7 +21168,7 @@ exports.taggedWithLabelSet = taggedWithLabelSet;
 
 /***/ }),
 
-/***/ 3924:
+/***/ 52:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -18900,7 +21378,7 @@ exports.isSummaryKey = isSummaryKey;
 
 /***/ }),
 
-/***/ 7663:
+/***/ 5077:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -18948,7 +21426,7 @@ exports.isMetricLabel = isMetricLabel;
 
 /***/ }),
 
-/***/ 7829:
+/***/ 2530:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -18989,7 +21467,7 @@ exports.unsafeMake = unsafeMake;
 
 /***/ }),
 
-/***/ 906:
+/***/ 2756:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -18999,9 +21477,9 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.make = exports.MetricRegistryTypeId = void 0;
-var metricHook = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2947));
-var metricKeyType = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3924));
-var metricPair = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7829));
+var metricHook = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1420));
+var metricKeyType = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(52));
+var metricPair = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2530));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var HashSet = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1470));
 var MutableHashMap = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7766));
@@ -19115,7 +21593,7 @@ exports.make = make;
 
 /***/ }),
 
-/***/ 9546:
+/***/ 9672:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -19316,7 +21794,7 @@ exports.isSummaryState = isSummaryState;
 
 /***/ }),
 
-/***/ 3278:
+/***/ 9031:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -19351,7 +21829,7 @@ exports.OP_SEQUENTIAL = OP_SEQUENTIAL;
 
 /***/ }),
 
-/***/ 9670:
+/***/ 4408:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -19398,7 +21876,7 @@ exports.OP_ZIP_WITH = OP_ZIP_WITH;
 
 /***/ }),
 
-/***/ 8924:
+/***/ 1499:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -19430,7 +21908,7 @@ exports.OP_UNSUPPORTED = OP_UNSUPPORTED;
 
 /***/ }),
 
-/***/ 6938:
+/***/ 846:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -19450,7 +21928,7 @@ exports.OP_STATE_DONE = OP_STATE_DONE;
 
 /***/ }),
 
-/***/ 195:
+/***/ 4016:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -19506,7 +21984,7 @@ exports.OP_REVERT_FLAGS = OP_REVERT_FLAGS;
 
 /***/ }),
 
-/***/ 1906:
+/***/ 2556:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -19547,7 +22025,466 @@ exports.OP_ZIP_WITH_PAR = OP_ZIP_WITH_PAR;
 
 /***/ }),
 
-/***/ 9539:
+/***/ 6340:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.unsafeRemove = exports.unsafeCompleteTakers = exports.unbounded = exports.takeUpTo = exports.takeN = exports.takeBetween = exports.takeAll = exports.take = exports.slidingStrategy = exports.sliding = exports.size = exports.shutdown = exports.poll = exports.offerAll = exports.offer = exports.isShutdown = exports.isQueue = exports.isFull = exports.isEnqueue = exports.isEmpty = exports.isDequeue = exports.enqueueVariance = exports.droppingStrategy = exports.dropping = exports.dequeueVariance = exports.capacity = exports.bounded = exports.backPressureStrategy = exports.awaitShutdown = exports.QueueStrategyTypeId = exports.EnqueueTypeId = exports.DequeueTypeId = void 0;
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var fiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(484));
+var ReadonlyArray = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2483));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+var MutableQueue = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3064));
+var MutableRef = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4210));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+var _a, _b, _c, _d, _e;
+/** @internal */
+const EnqueueSymbolKey = "@effect/io/Queue/Enqueue";
+/** @internal */
+const EnqueueTypeId = /*#__PURE__*/Symbol.for(EnqueueSymbolKey);
+/** @internal */
+exports.EnqueueTypeId = EnqueueTypeId;
+const DequeueSymbolKey = "@effect/io/Queue/Dequeue";
+/** @internal */
+const DequeueTypeId = /*#__PURE__*/Symbol.for(DequeueSymbolKey);
+/** @internal */
+exports.DequeueTypeId = DequeueTypeId;
+const QueueStrategySymbolKey = "@effect/io/Queue/Strategy";
+/** @internal */
+const QueueStrategyTypeId = /*#__PURE__*/Symbol.for(QueueStrategySymbolKey);
+/** @internal */
+exports.QueueStrategyTypeId = QueueStrategyTypeId;
+const queueStrategyVariance = {
+  _A: _ => _
+};
+/** @internal */
+const enqueueVariance = {
+  _In: _ => _
+};
+/** @internal */
+exports.enqueueVariance = enqueueVariance;
+const dequeueVariance = {
+  _Out: _ => _
+};
+/** @internal */
+exports.dequeueVariance = dequeueVariance;
+class QueueImpl {
+  constructor( /** @internal */
+  queue, /** @internal */
+  takers, /** @internal */
+  shutdownHook, /** @internal */
+  shutdownFlag, /** @internal */
+  strategy) {
+    this.queue = queue;
+    this.takers = takers;
+    this.shutdownHook = shutdownHook;
+    this.shutdownFlag = shutdownFlag;
+    this.strategy = strategy;
+    this[_a] = enqueueVariance;
+    this[_b] = dequeueVariance;
+  }
+  capacity() {
+    return MutableQueue.capacity(this.queue);
+  }
+  size() {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => MutableRef.get(this.shutdownFlag) ? core.interrupt() : core.succeed(MutableQueue.length(this.queue) - MutableQueue.length(this.takers) + this.strategy.surplusSize())).traced(trace));
+  }
+  isEmpty() {
+    return Debug.bodyWithTrace(trace => core.map(this.size(), size => size <= 0).traced(trace));
+  }
+  isFull() {
+    return Debug.bodyWithTrace(trace => core.map(this.size(), size => size >= this.capacity()).traced(trace));
+  }
+  shutdown() {
+    return Debug.bodyWithTrace(trace => core.uninterruptible(core.withFiberRuntime(state => {
+      MutableRef.set(true)(this.shutdownFlag);
+      return core.asUnit(core.whenEffect(core.deferredSucceed(this.shutdownHook, void 0))(core.zipRight(this.strategy.shutdown())(fiberRuntime.forEachParDiscard(d => core.deferredInterruptWith(d, state.id()))(unsafePollAll(this.takers)))));
+    })).traced(trace));
+  }
+  isShutdown() {
+    return Debug.bodyWithTrace(trace => core.sync(() => MutableRef.get(this.shutdownFlag)).traced(trace));
+  }
+  awaitShutdown() {
+    return Debug.bodyWithTrace(trace => core.deferredAwait(this.shutdownHook).traced(trace));
+  }
+  offer(value) {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => {
+      if (MutableRef.get(this.shutdownFlag)) {
+        return core.interrupt();
+      }
+      let noRemaining;
+      if (MutableQueue.isEmpty(this.queue)) {
+        const taker = MutableQueue.poll(MutableQueue.EmptyMutableQueue)(this.takers);
+        if (taker !== MutableQueue.EmptyMutableQueue) {
+          unsafeCompleteDeferred(taker, value);
+          noRemaining = true;
+        } else {
+          noRemaining = false;
+        }
+      } else {
+        noRemaining = false;
+      }
+      if (noRemaining) {
+        return core.succeed(true);
+      }
+      // Not enough takers, offer to the queue
+      const succeeded = MutableQueue.offer(value)(this.queue);
+      unsafeCompleteTakers(this.strategy, this.queue, this.takers);
+      return succeeded ? core.succeed(true) : this.strategy.handleSurplus([value], this.queue, this.takers, this.shutdownFlag);
+    }).traced(trace));
+  }
+  offerAll(iterable) {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => {
+      if (MutableRef.get(this.shutdownFlag)) {
+        return core.interrupt();
+      }
+      const values = ReadonlyArray.fromIterable(iterable);
+      const pTakers = MutableQueue.isEmpty(this.queue) ? ReadonlyArray.fromIterable(unsafePollN(this.takers, values.length)) : ReadonlyArray.empty;
+      const [forTakers, remaining] = ReadonlyArray.splitAt(pTakers.length)(values);
+      for (let i = 0; i < pTakers.length; i++) {
+        const taker = pTakers[i];
+        const item = forTakers[i];
+        unsafeCompleteDeferred(taker, item);
+      }
+      if (remaining.length === 0) {
+        return core.succeed(true);
+      }
+      // Not enough takers, offer to the queue
+      const surplus = unsafeOfferAll(this.queue, remaining);
+      unsafeCompleteTakers(this.strategy, this.queue, this.takers);
+      return Chunk.isEmpty(surplus) ? core.succeed(true) : this.strategy.handleSurplus(surplus, this.queue, this.takers, this.shutdownFlag);
+    }).traced(trace));
+  }
+  take() {
+    return Debug.bodyWithTrace(trace => core.withFiberRuntime(state => {
+      if (MutableRef.get(this.shutdownFlag)) {
+        return core.interrupt();
+      }
+      const item = MutableQueue.poll(MutableQueue.EmptyMutableQueue)(this.queue);
+      if (item !== MutableQueue.EmptyMutableQueue) {
+        this.strategy.unsafeOnQueueEmptySpace(this.queue, this.takers);
+        return core.succeed(item);
+      } else {
+        // Add the deferred to takers, then:
+        // - Try to take again in case a value was added since
+        // - Wait for the deferred to be completed
+        // - Clean up resources in case of interruption
+        const deferred = core.deferredUnsafeMake(state.id());
+        return core.onInterrupt(() => {
+          return core.sync(() => unsafeRemove(this.takers, deferred));
+        })(core.suspendSucceed(() => {
+          MutableQueue.offer(deferred)(this.takers);
+          unsafeCompleteTakers(this.strategy, this.queue, this.takers);
+          return MutableRef.get(this.shutdownFlag) ? core.interrupt() : core.deferredAwait(deferred);
+        }));
+      }
+    }).traced(trace));
+  }
+  takeAll() {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => {
+      return MutableRef.get(this.shutdownFlag) ? core.interrupt() : core.sync(() => {
+        const values = unsafePollAll(this.queue);
+        this.strategy.unsafeOnQueueEmptySpace(this.queue, this.takers);
+        return Chunk.fromIterable(values);
+      });
+    }).traced(trace));
+  }
+  takeUpTo(max) {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => MutableRef.get(this.shutdownFlag) ? core.interrupt() : core.sync(() => {
+      const values = unsafePollN(this.queue, max);
+      this.strategy.unsafeOnQueueEmptySpace(this.queue, this.takers);
+      return Chunk.fromIterable(values);
+    })).traced(trace));
+  }
+  takeBetween(min, max) {
+    return Debug.bodyWithTrace(trace => core.suspendSucceed(() => takeRemainderLoop(this, min, max, Chunk.empty())).traced(trace));
+  }
+}
+_a = EnqueueTypeId, _b = DequeueTypeId;
+/** @internal */
+const takeRemainderLoop = (self, min, max, acc) => {
+  if (max < min) {
+    return core.succeed(acc);
+  }
+  return core.flatMap(bs => {
+    const remaining = min - bs.length;
+    if (remaining === 1) {
+      return core.map(b => Chunk.append(b)(Chunk.concat(bs)(acc)))(take(self));
+    }
+    if (remaining > 1) {
+      return core.flatMap(b => takeRemainderLoop(self, remaining - 1, max - bs.length - 1, Chunk.append(b)(Chunk.concat(bs)(acc))))(take(self));
+    }
+    return core.succeed(Chunk.concat(bs)(acc));
+  })(takeUpTo(self, max));
+};
+/** @internal */
+const isQueue = u => {
+  return isEnqueue(u) && isDequeue(u);
+};
+/** @internal */
+exports.isQueue = isQueue;
+const isEnqueue = u => {
+  return typeof u === "object" && u != null && EnqueueTypeId in u;
+};
+/** @internal */
+exports.isEnqueue = isEnqueue;
+const isDequeue = u => {
+  return typeof u === "object" && u != null && DequeueTypeId in u;
+};
+/** @internal */
+exports.isDequeue = isDequeue;
+const bounded = /*#__PURE__*/Debug.methodWithTrace(trace => requestedCapacity => core.flatMap(queue => make(queue, backPressureStrategy()))(core.sync(() => MutableQueue.bounded(requestedCapacity))).traced(trace));
+/** @internal */
+exports.bounded = bounded;
+const dropping = /*#__PURE__*/Debug.methodWithTrace(trace => requestedCapacity => core.flatMap(queue => make(queue, droppingStrategy()))(core.sync(() => MutableQueue.bounded(requestedCapacity))).traced(trace));
+/** @internal */
+exports.dropping = dropping;
+const sliding = /*#__PURE__*/Debug.methodWithTrace(trace => requestedCapacity => core.flatMap(queue => make(queue, slidingStrategy()))(core.sync(() => MutableQueue.bounded(requestedCapacity))).traced(trace));
+/** @internal */
+exports.sliding = sliding;
+const unbounded = /*#__PURE__*/Debug.methodWithTrace(trace => () => core.flatMap(queue => make(queue, droppingStrategy()))(core.sync(() => MutableQueue.unbounded())).traced(trace));
+/** @internal */
+exports.unbounded = unbounded;
+const unsafeMake = (queue, takers, shutdownHook, shutdownFlag, strategy) => {
+  return new QueueImpl(queue, takers, shutdownHook, shutdownFlag, strategy);
+};
+/** @internal */
+const make = /*#__PURE__*/Debug.methodWithTrace(trace => (queue, strategy) => core.map(deferred => unsafeMake(queue, MutableQueue.unbounded(), deferred, MutableRef.make(false), strategy))(core.deferredMake()).traced(trace));
+/** @internal */
+const capacity = self => {
+  return self.capacity();
+};
+/** @internal */
+exports.capacity = capacity;
+const size = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.size().traced(trace));
+/** @internal */
+exports.size = size;
+const isFull = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.isFull().traced(trace));
+/** @internal */
+exports.isFull = isFull;
+const isEmpty = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.isEmpty().traced(trace));
+/** @internal */
+exports.isEmpty = isEmpty;
+const isShutdown = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.isShutdown().traced(trace));
+/** @internal */
+exports.isShutdown = isShutdown;
+const awaitShutdown = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.awaitShutdown().traced(trace));
+/** @internal */
+exports.awaitShutdown = awaitShutdown;
+const shutdown = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.shutdown().traced(trace));
+/** @internal */
+exports.shutdown = shutdown;
+const offer = /*#__PURE__*/Debug.dualWithTrace(2, trace => (self, value) => self.offer(value).traced(trace));
+/** @internal */
+exports.offer = offer;
+const offerAll = /*#__PURE__*/Debug.dualWithTrace(2, trace => (self, iterable) => self.offerAll(iterable).traced(trace));
+/** @internal */
+exports.offerAll = offerAll;
+const poll = /*#__PURE__*/Debug.methodWithTrace(trace => self => core.map(Chunk.head)(self.takeUpTo(1)).traced(trace));
+/** @internal */
+exports.poll = poll;
+const take = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.take().traced(trace));
+/** @internal */
+exports.take = take;
+const takeAll = /*#__PURE__*/Debug.methodWithTrace(trace => self => self.takeAll().traced(trace));
+/** @internal */
+exports.takeAll = takeAll;
+const takeUpTo = /*#__PURE__*/Debug.dualWithTrace(2, trace => (self, max) => self.takeUpTo(max).traced(trace));
+/** @internal */
+exports.takeUpTo = takeUpTo;
+const takeBetween = /*#__PURE__*/Debug.dualWithTrace(3, trace => (self, min, max) => self.takeBetween(min, max).traced(trace));
+/** @internal */
+exports.takeBetween = takeBetween;
+const takeN = /*#__PURE__*/Debug.dualWithTrace(2, trace => (self, n) => self.takeBetween(n, n).traced(trace));
+// -----------------------------------------------------------------------------
+// Strategy
+// -----------------------------------------------------------------------------
+/** @internal */
+exports.takeN = takeN;
+const backPressureStrategy = () => {
+  return new BackPressureStrategy();
+};
+/** @internal */
+exports.backPressureStrategy = backPressureStrategy;
+const droppingStrategy = () => {
+  return new DroppingStrategy();
+};
+/** @internal */
+exports.droppingStrategy = droppingStrategy;
+const slidingStrategy = () => {
+  return new SlidingStrategy();
+};
+/** @internal */
+exports.slidingStrategy = slidingStrategy;
+class BackPressureStrategy {
+  constructor() {
+    this[_c] = queueStrategyVariance;
+    this.putters = MutableQueue.unbounded();
+  }
+  surplusSize() {
+    return MutableQueue.length(this.putters);
+  }
+  shutdown() {
+    return core.flatMap(fiberId => core.flatMap(fiberRuntime.forEachParDiscard(([_, deferred, isLastItem]) => isLastItem ? core.asUnit(core.deferredInterruptWith(deferred, fiberId)) : core.unit()))(core.sync(() => unsafePollAll(this.putters))))(core.fiberId());
+  }
+  handleSurplus(iterable, queue, takers, isShutdown) {
+    return core.withFiberRuntime(state => {
+      const deferred = core.deferredUnsafeMake(state.id());
+      return core.onInterrupt(() => core.sync(() => this.unsafeRemove(deferred)))(core.suspendSucceed(() => {
+        this.unsafeOffer(iterable, deferred);
+        this.unsafeOnQueueEmptySpace(queue, takers);
+        unsafeCompleteTakers(this, queue, takers);
+        return MutableRef.get(isShutdown) ? core.interrupt() : core.deferredAwait(deferred);
+      }));
+    });
+  }
+  unsafeOnQueueEmptySpace(queue, takers) {
+    let keepPolling = true;
+    while (keepPolling && !MutableQueue.isFull(queue)) {
+      const putter = MutableQueue.poll(MutableQueue.EmptyMutableQueue)(this.putters);
+      if (putter === MutableQueue.EmptyMutableQueue) {
+        keepPolling = false;
+      } else {
+        const offered = MutableQueue.offer(putter[0])(queue);
+        if (offered && putter[2]) {
+          unsafeCompleteDeferred(putter[1], true);
+        } else if (!offered) {
+          unsafeOfferAll(this.putters, Chunk.prepend(putter)(unsafePollAll(this.putters)));
+        }
+        unsafeCompleteTakers(this, queue, takers);
+      }
+    }
+  }
+  unsafeOffer(iterable, deferred) {
+    const iterator = iterable[Symbol.iterator]();
+    let next = iterator.next();
+    if (!next.done) {
+      // eslint-disable-next-line no-constant-condition
+      while (1) {
+        const value = next.value;
+        next = iterator.next();
+        if (next.done) {
+          MutableQueue.offer([value, deferred, true])(this.putters);
+          break;
+        }
+        MutableQueue.offer([value, deferred, false])(this.putters);
+      }
+    }
+  }
+  unsafeRemove(deferred) {
+    unsafeOfferAll(this.putters, Chunk.filter(([, _]) => _ !== deferred)(unsafePollAll(this.putters)));
+  }
+}
+_c = QueueStrategyTypeId;
+/** @internal */
+class DroppingStrategy {
+  constructor() {
+    this[_d] = queueStrategyVariance;
+  }
+  surplusSize() {
+    return 0;
+  }
+  shutdown() {
+    return core.unit();
+  }
+  handleSurplus(_iterable, _queue, _takers, _isShutdown) {
+    return core.succeed(false);
+  }
+  unsafeOnQueueEmptySpace(_queue, _takers) {
+    //
+  }
+}
+_d = QueueStrategyTypeId;
+/** @internal */
+class SlidingStrategy {
+  constructor() {
+    this[_e] = queueStrategyVariance;
+  }
+  surplusSize() {
+    return 0;
+  }
+  shutdown() {
+    return core.unit();
+  }
+  handleSurplus(iterable, queue, takers, _isShutdown) {
+    return core.sync(() => {
+      this.unsafeOffer(queue, iterable);
+      unsafeCompleteTakers(this, queue, takers);
+      return true;
+    });
+  }
+  unsafeOnQueueEmptySpace(_queue, _takers) {
+    //
+  }
+  unsafeOffer(queue, iterable) {
+    const iterator = iterable[Symbol.iterator]();
+    let next;
+    let offering = true;
+    while (!(next = iterator.next()).done && offering) {
+      if (MutableQueue.capacity(queue) === 0) {
+        return;
+      }
+      // Poll 1 and retry
+      MutableQueue.poll(MutableQueue.EmptyMutableQueue)(queue);
+      offering = MutableQueue.offer(next.value)(queue);
+    }
+  }
+}
+_e = QueueStrategyTypeId;
+/** @internal */
+const unsafeCompleteDeferred = (deferred, a) => {
+  return core.deferredUnsafeDone(deferred, core.succeed(a));
+};
+/** @internal */
+const unsafeOfferAll = (queue, as) => {
+  return MutableQueue.offerAll(as)(queue);
+};
+/** @internal */
+const unsafePollAll = queue => {
+  return MutableQueue.pollUpTo(Number.POSITIVE_INFINITY)(queue);
+};
+/** @internal */
+const unsafePollN = (queue, max) => {
+  return MutableQueue.pollUpTo(max)(queue);
+};
+/** @internal */
+const unsafeRemove = (queue, a) => {
+  unsafeOfferAll(queue, Chunk.filter(b => a !== b)(unsafePollAll(queue)));
+};
+/** @internal */
+exports.unsafeRemove = unsafeRemove;
+const unsafeCompleteTakers = (strategy, queue, takers) => {
+  // Check both a taker and an item are in the queue, starting with the taker
+  let keepPolling = true;
+  while (keepPolling && !MutableQueue.isEmpty(queue)) {
+    const taker = MutableQueue.poll(MutableQueue.EmptyMutableQueue)(takers);
+    if (taker !== MutableQueue.EmptyMutableQueue) {
+      const element = MutableQueue.poll(MutableQueue.EmptyMutableQueue)(queue);
+      if (element !== MutableQueue.EmptyMutableQueue) {
+        unsafeCompleteDeferred(taker, element);
+        strategy.unsafeOnQueueEmptySpace(queue, takers);
+      } else {
+        unsafeOfferAll(takers, Chunk.prepend(taker)(unsafePollAll(takers)));
+      }
+      keepPolling = true;
+    } else {
+      keepPolling = false;
+    }
+  }
+};
+exports.unsafeCompleteTakers = unsafeCompleteTakers;
+//# sourceMappingURL=queue.js.map
+
+/***/ }),
+
+/***/ 7115:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -19557,8 +22494,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.randomTag = exports.make = exports.RandomTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
 var Context = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8364));
 var PCGRandom = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(416));
@@ -19621,7 +22558,7 @@ exports.make = make;
 
 /***/ }),
 
-/***/ 3177:
+/***/ 4397:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -19631,8 +22568,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.updateSomeAndGet = exports.updateSome = exports.updateAndGet = exports.update = exports.unsafeMake = exports.unsafeGet = exports.setAndGet = exports.set = exports.refVariance = exports.modifySome = exports.modify = exports.make = exports.getAndUpdateSome = exports.getAndUpdate = exports.getAndSet = exports.get = exports.RefTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var MutableRef = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4210));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
@@ -19751,7 +22688,7 @@ exports.unsafeGet = unsafeGet;
 
 /***/ }),
 
-/***/ 5272:
+/***/ 2450:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -19761,19 +22698,19 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.unsafeRunSyncExitEffect = exports.unsafeRunSyncEitherEffect = exports.unsafeRunSyncEither = exports.unsafeRunSyncEffect = exports.unsafeRunPromiseExitEffect = exports.unsafeRunPromiseExit = exports.unsafeRunPromiseEitherEffect = exports.unsafeRunPromiseEither = exports.unsafeRunPromiseEffect = exports.unsafeRunPromise = exports.unsafeRunEffect = exports.unsafeRunCallback = exports.unsafeForkEffect = exports.unsafeFork = exports.runtime = exports.make = exports.defaultRuntimeFlags = exports.defaultRuntime = exports.asyncEffect = exports.RuntimeImpl = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2924));
-var Fiber = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6962));
-var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8722));
-var FiberRefs = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(745));
-var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var FiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7378));
-var fiberScope = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7700));
-var _logger = /*#__PURE__*/__nccwpck_require__(1263);
-var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(195));
-var runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(295));
-var _supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8799));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var Fiber = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(439));
+var FiberId = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(517));
+var FiberRefs = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2524));
+var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var FiberRuntime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(484));
+var fiberScope = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4955));
+var _logger = /*#__PURE__*/__nccwpck_require__(1502);
+var OpCodes = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4016));
+var runtimeFlags = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2166));
+var _supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6937));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Context = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8364));
@@ -19899,7 +22836,7 @@ exports.asyncEffect = asyncEffect;
 
 /***/ }),
 
-/***/ 295:
+/***/ 2166:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -19909,8 +22846,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.windDown = exports.toSet = exports.runtimeMetrics = exports.renderPatch = exports.render = exports.patch = exports.opSupervision = exports.none = exports.make = exports.isEnabled = exports.isDisabled = exports.interruption = exports.interruptible = exports.enabledSet = exports.enableAll = exports.enable = exports.disabledSet = exports.disableAll = exports.disable = exports.differ = exports.diff = exports.cooperativeYielding = exports.allFlags = exports.WindDown = exports.RuntimeMetrics = exports.OpSupervision = exports.None = exports.Interruption = exports.CooperativeYielding = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var runtimeFlagsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7064));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var runtimeFlagsPatch = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5180));
 var Differ = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7127));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -20024,7 +22961,7 @@ exports.differ = differ;
 
 /***/ }),
 
-/***/ 7064:
+/***/ 5180:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -20034,7 +22971,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.make = exports.isEnabled = exports.isEmpty = exports.isDisabled = exports.isActive = exports.invert = exports.inverse = exports.exclude = exports.enabled = exports.enable = exports.empty = exports.either = exports.disable = exports.both = exports.andThen = exports.active = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /** @internal */
@@ -20093,7 +23030,7 @@ exports.invert = invert;
 
 /***/ }),
 
-/***/ 9895:
+/***/ 6254:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -20104,16 +23041,16 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.repeatWhile_Effect = exports.repeatWhileEquals_Effect = exports.repeatWhileEffect_Effect = exports.repeatUntil_Effect = exports.repeatUntilEquals_Effect = exports.repeatUntilEffect_Effect = exports.repeatOrElse_Effect = exports.repeatOrElseEither_Effect = exports.repeatForever = exports.reduceEffect = exports.reduce = exports.recurs = exports.recurWhileEquals = exports.recurWhileEffect = exports.recurWhile = exports.recurUpTo = exports.recurUntilOption = exports.recurUntilEquals = exports.recurUntilEffect = exports.recurUntil = exports.reconsiderEffect = exports.reconsider = exports.provideService = exports.provideContext = exports.passthrough = exports.once = exports.onDecision = exports.nextSecond = exports.nextMinute = exports.nextHour = exports.nextDayOfMonth = exports.nextDay = exports.modifyDelayEffect = exports.modifyDelay = exports.minuteOfHour = exports.mapEffect = exports.map = exports.makeWithState = exports.linear = exports.left = exports.jitteredWith = exports.jittered = exports.intersectWith = exports.intersect = exports.identity = exports.hourOfDay = exports.fromFunction = exports.fromDelays = exports.fromDelay = exports.forever = exports.fixed = exports.findNextMonth = exports.fibonacci = exports.exponential = exports.ensuring = exports.endOfSecond = exports.endOfMinute = exports.endOfHour = exports.endOfDay = exports.elapsed = exports.eitherWith = exports.either = exports.duration = exports.driver = exports.dimapEffect = exports.dimap = exports.delays = exports.delayedSchedule = exports.delayedEffect = exports.delayed = exports.dayOfWeek = exports.dayOfMonth = exports.count = exports.contramapEffect = exports.contramapContext = exports.contramap = exports.compose = exports.collectWhileEffect = exports.collectWhile = exports.collectUntilEffect = exports.collectUntil = exports.collectAllOutputs = exports.collectAllInputs = exports.chooseMerge = exports.choose = exports.checkEffect = exports.check = exports.bothInOut = exports.beginningOfSecond = exports.beginningOfMinute = exports.beginningOfHour = exports.beginningOfDay = exports.asUnit = exports.as = exports.andThenEither = exports.andThen = exports.addDelayEffect = exports.addDelay = exports.ScheduleTypeId = exports.ScheduleDriverTypeId = void 0;
 exports.zipWith = exports.zipRight = exports.zipLeft = exports.windowed = exports.whileOutputEffect = exports.whileOutput = exports.whileInputEffect = exports.whileInput = exports.upTo = exports.untilOutputEffect = exports.untilOutput = exports.untilInputEffect = exports.untilInput = exports.unionWith = exports.union = exports.unfold = exports.tapOutput = exports.tapInput = exports.sync = exports.succeed = exports.stop = exports.spaced = exports.secondOfMinute = exports.schedule_Effect = exports.scheduleFrom_Effect = exports.run = exports.right = exports.retry_Effect = exports.retryWhile_Effect = exports.retryWhileEquals_Effect = exports.retryWhileEffect_Effect = exports.retryUntil_Effect = exports.retryUntilEquals_Effect = exports.retryUntilEffect_Effect = exports.retryOrElse_Effect = exports.retryOrElseEither_Effect = exports.retryN_Effect = exports.resetWhen = exports.resetAfter = exports.repetitions = exports.repeat_Effect = void 0;
-var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6181));
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4430));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
-var effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7794));
-var Random = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6493));
-var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8740));
-var ScheduleDecision = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2678));
-var Interval = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6226));
-var Intervals = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2054));
+var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3932));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var internalCause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9473));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
+var effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(47));
+var Random = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8818));
+var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6607));
+var ScheduleDecision = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7016));
+var Interval = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9552));
+var Intervals = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3342));
 var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
 var _Function = /*#__PURE__*/__nccwpck_require__(711);
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
@@ -20975,7 +23912,7 @@ const scheduleFrom_EffectLoop = (self, initial, driver) => core.matchEffect(() =
 
 /***/ }),
 
-/***/ 5305:
+/***/ 3782:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -20985,7 +23922,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.isDone = exports.isContinue = exports.done = exports.continueWith = exports._continue = exports.OP_DONE = exports.OP_CONTINUE = void 0;
-var Intervals = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2054));
+var Intervals = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3342));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -21030,7 +23967,7 @@ exports.isDone = isDone;
 
 /***/ }),
 
-/***/ 604:
+/***/ 7003:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -21040,7 +23977,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.union = exports.size = exports.min = exports.max = exports.make = exports.lessThan = exports.isNonEmpty = exports.isEmpty = exports.intersect = exports.empty = exports.before = exports.after = exports.IntervalTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Duration = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2095));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
@@ -21128,7 +24065,7 @@ exports.before = before;
 
 /***/ }),
 
-/***/ 7668:
+/***/ 4528:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -21138,8 +24075,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.union = exports.start = exports.max = exports.make = exports.lessThan = exports.isNonEmpty = exports.intersect = exports.fromIterable = exports.end = exports.empty = exports.IntervalsTypeId = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var Interval = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6226));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Interval = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9552));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
@@ -21275,7 +24212,7 @@ exports.max = max;
 
 /***/ }),
 
-/***/ 350:
+/***/ 5085:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -21357,7 +24294,7 @@ exports.SyncScheduler = SyncScheduler;
 
 /***/ }),
 
-/***/ 672:
+/***/ 8170:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -21400,7 +24337,7 @@ exports.SingleShotGen = SingleShotGen;
 
 /***/ }),
 
-/***/ 1709:
+/***/ 9390:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -21497,7 +24434,7 @@ exports.snakeCase = snakeCase;
 
 /***/ }),
 
-/***/ 8799:
+/***/ 6937:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -21507,8 +24444,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.unsafeTrack = exports.track = exports.none = exports.fromEffect = exports.fibersIn = exports.Zip = exports.Track = exports.SupervisorTypeId = exports.ProxySupervisor = exports.Const = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
 var MutableRef = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4210));
 var SortedSet = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1143));
@@ -21715,7 +24652,7 @@ exports.fibersIn = fibersIn;
 
 /***/ }),
 
-/***/ 1447:
+/***/ 7630:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -21725,7 +24662,7 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.patch = exports.empty = exports.differ = exports.diff = exports.combine = exports.OP_REMOVE_SUPERVISOR = exports.OP_EMPTY = exports.OP_AND_THEN = exports.OP_ADD_SUPERVISOR = void 0;
-var supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8799));
+var supervisor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6937));
 var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
 var Differ = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7127));
 var Equal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8826));
@@ -21863,7 +24800,7 @@ exports.differ = differ;
 
 /***/ }),
 
-/***/ 8705:
+/***/ 143:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -21873,8 +24810,8 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.updateSomeEffect = exports.updateEffect = exports.updateAndGetEffect = exports.modifySomeEffect = exports.modifyEffect = exports.modify = exports.getAndUpdateSomeEffect = exports.getAndUpdateEffect = void 0;
-var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5668));
-var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2873));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3211));
 var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -21927,6 +24864,10688 @@ const updateSomeEffect = /*#__PURE__*/Debug.dualWithTrace(2, (trace, restore) =>
 }).traced(trace));
 exports.updateSomeEffect = updateSomeEffect;
 //# sourceMappingURL=synchronizedRef.js.map
+
+/***/ }),
+
+/***/ 1707:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.forever = exports.flattenTake = exports.flattenParUnbounded = exports.flattenPar = exports.flattenIterables = exports.flattenExitOption = exports.flattenExit = exports.flattenEffect = exports.flattenChunks = exports.flatten = exports.flatMapParSwitch = exports.flatMapPar = exports.flatMap = exports.findEffect = exports.find = exports.finalizer = exports.filterEffect = exports.filter = exports.failSync = exports.failCauseSync = exports.failCause = exports.fail = exports.execute = exports.ensuring = exports.empty = exports.either = exports.dropWhileEffect = exports.dropWhile = exports.dropUntilEffect = exports.dropUntil = exports.dropRight = exports.drop = exports.drainFork = exports.drain = exports.done = exports.distributedWithDynamic = exports.distributedWith = exports.dieSync = exports.dieMessage = exports.die = exports.debounce = exports.crossWith = exports.crossRight = exports.crossLeft = exports.cross = exports.contramapContext = exports.contextWithStream = exports.contextWithEffect = exports.contextWith = exports.context = exports.concatAll = exports.concat = exports.combineChunks = exports.combine = exports.collectWhileSuccess = exports.collectWhileSome = exports.collectWhileRight = exports.collectWhileLeft = exports.collectWhileEffect = exports.collectWhile = exports.collectSuccess = exports.collectSome = exports.collectRight = exports.collectLeft = exports.collectEffect = exports.collect = exports.chunksWith = exports.chunks = exports.changesWithEffect = exports.changesWith = exports.changes = exports.catchSomeCause = exports.catchSome = exports.catchAllCause = exports.catchAll = exports.bufferUnbounded = exports.bufferSliding = exports.bufferDropping = exports.bufferChunksSliding = exports.bufferChunksDropping = exports.bufferChunks = exports.buffer = exports.broadcastedQueuesDynamic = exports.broadcastedQueues = exports.broadcastDynamic = exports.broadcast = exports.branchAfter = exports.asyncScoped = exports.asyncOption = exports.asyncInterrupt = exports.asyncEffect = exports.async = exports.as = exports.aggregateWithinEither = exports.aggregateWithin = exports.aggregate = exports.acquireRelease = exports.absolve = exports.StreamTypeId = exports.DefaultChunkSize = void 0;
+exports.paginate = exports.orElseSucceed = exports.orElseOptional = exports.orElseIfEmptyStream = exports.orElseIfEmptyChunk = exports.orElseIfEmpty = exports.orElseFail = exports.orElseEither = exports.orElse = exports.orDieWith = exports.orDie = exports.onError = exports.onDone = exports.never = exports.mkString = exports.mergeWith = exports.mergeRight = exports.mergeLeft = exports.mergeHaltRight = exports.mergeHaltLeft = exports.mergeHaltEither = exports.mergeEither = exports.mergeAllUnbounded = exports.mergeAll = exports.merge = exports.mapErrorCause = exports.mapError = exports.mapEffectParUnordered = exports.mapEffectParByKey = exports.mapEffectPar = exports.mapEffect = exports.mapConcatEffect = exports.mapConcatChunkEffect = exports.mapConcatChunk = exports.mapConcat = exports.mapChunksEffect = exports.mapChunks = exports.mapBoth = exports.mapAccumEffect = exports.mapAccum = exports.map = exports.make = exports.logWarningCauseMessage = exports.logWarningCause = exports.logWarning = exports.logTraceCauseMessage = exports.logTraceCause = exports.logTrace = exports.logInfoCauseMessage = exports.logInfoCause = exports.logInfo = exports.logFatalCauseMessage = exports.logFatalCause = exports.logFatal = exports.logErrorCauseMessage = exports.logErrorCause = exports.logError = exports.logDebugCauseMessage = exports.logDebugCause = exports.logDebug = exports.log = exports.iterate = exports.intersperseAffixes = exports.intersperse = exports.interruptWhenDeferred = exports.interruptWhen = exports.interruptAfter = exports.interleaveWith = exports.interleave = exports.identity = exports.haltWhenDeferred = exports.haltWhen = exports.haltAfter = exports.groupedWithin = exports.grouped = exports.groupByKey = exports.groupBy = exports.groupAdjacentBy = exports.fromSchedule = exports.fromQueueWithShutdown = exports.fromQueue = exports.fromPull = exports.fromIteratorSucceed = exports.fromIterableEffect = exports.fromIterable = exports.fromHubWithShutdown = exports.fromHubScopedWithShutdown = exports.fromHubScoped = exports.fromHub = exports.fromEffectOption = exports.fromEffect = exports.fromChunks = exports.fromChunkQueueWithShutdown = exports.fromChunkQueue = exports.fromChunkHubWithShutdown = exports.fromChunkHubScopedWithShutdown = exports.fromChunkHubScoped = exports.fromChunkHub = exports.fromChunk = exports.fromChannel = void 0;
+exports.timeoutFailCause = exports.timeoutFail = exports.timeout = exports.tick = exports.throttleShapeEffect = exports.throttleShape = exports.throttleEnforceEffect = exports.throttleEnforce = exports.tapSink = exports.tapErrorCause = exports.tapError = exports.tap = exports.takeWhile = exports.takeUntilEffect = exports.takeUntil = exports.takeRight = exports.take = exports.sync = exports.suspend = exports.succeed = exports.splitOnChunk = exports.split = exports.someOrFail = exports.someOrElse = exports.some = exports.sliding = exports.serviceWithStream = exports.serviceWithEffect = exports.serviceWith = exports.service = exports.scoped = exports.scheduleWith = exports.scheduleEither = exports.schedule = exports.scanReduceEffect = exports.scanReduce = exports.scanEffect = exports.scan = exports.runSum = exports.runScoped = exports.runLast = exports.runIntoQueueScoped = exports.runIntoQueueElementsScoped = exports.runIntoQueue = exports.runIntoHubScoped = exports.runIntoHub = exports.runHead = exports.runForEachWhileScoped = exports.runForEachWhile = exports.runForEachScoped = exports.runForEachChunkScoped = exports.runForEachChunk = exports.runForEach = exports.runFoldWhileScopedEffect = exports.runFoldWhileScoped = exports.runFoldWhileEffect = exports.runFoldWhile = exports.runFoldScopedEffect = exports.runFoldScoped = exports.runFoldEffect = exports.runFold = exports.runDrain = exports.runCount = exports.runCollect = exports.run = exports.rightOrFail = exports.right = exports.retry = exports.repeatWith = exports.repeatForever = exports.repeatElementsWith = exports.repeatElementsEither = exports.repeatElements = exports.repeatEither = exports.repeatEffectWithSchedule = exports.repeatEffectOption = exports.repeatEffectChunkOption = exports.repeatEffectChunk = exports.repeatEffect = exports.repeat = exports.refineOrDieWith = exports.refineOrDie = exports.rechunk = exports.range = exports.provideSomeLayer = exports.provideServiceStream = exports.provideServiceEffect = exports.provideService = exports.provideLayer = exports.provideContext = exports.prepend = exports.pipeThroughChannelOrFail = exports.pipeThroughChannel = exports.pipeThrough = exports.peel = exports.partitionEither = exports.partition = exports.paginateEffect = exports.paginateChunkEffect = exports.paginateChunk = void 0;
+exports.zipWithPreviousAndNext = exports.zipWithPrevious = exports.zipWithNext = exports.zipWithIndex = exports.zipWithChunks = exports.zipWith = exports.zipRight = exports.zipLeft = exports.zipLatestWith = exports.zipLatest = exports.zipFlatten = exports.zipAllWith = exports.zipAllSortedByKeyWith = exports.zipAllSortedByKeyRight = exports.zipAllSortedByKeyLeft = exports.zipAllSortedByKey = exports.zipAllRight = exports.zipAllLeft = exports.zipAll = exports.zip = exports.whenEffect = exports.whenCaseEffect = exports.whenCase = exports.when = exports.updateService = exports.unwrapScoped = exports.unwrap = exports.unit = exports.unfoldEffect = exports.unfoldChunkEffect = exports.unfoldChunk = exports.unfold = exports.transduce = exports.toQueueUnbounded = exports.toQueueSliding = exports.toQueueOfElements = exports.toQueueDropping = exports.toQueue = exports.toPull = exports.toHub = exports.timeoutTo = void 0;
+var _groupBy = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3203));
+var internal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5416));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/**
+ * @since 1.0.0
+ * @category symbols
+ */
+const StreamTypeId = internal.StreamTypeId;
+/**
+ * The default chunk size used by the various combinators and constructors of
+ * `Stream`.
+ *
+ * @since 1.0.0
+ * @category constants
+ */
+exports.StreamTypeId = StreamTypeId;
+const DefaultChunkSize = 4096;
+/**
+ * Submerges the error case of an `Either` into the `Stream`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.DefaultChunkSize = DefaultChunkSize;
+const absolve = internal.absolve;
+/**
+ * Creates a stream from a single value that will get cleaned up after the
+ * stream is consumed.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.absolve = absolve;
+const acquireRelease = internal.acquireRelease;
+/**
+ * Aggregates elements of this stream using the provided sink for as long as
+ * the downstream operators on the stream are busy.
+ *
+ * This operator divides the stream into two asynchronous "islands". Operators
+ * upstream of this operator run on one fiber, while downstream operators run
+ * on another. Whenever the downstream fiber is busy processing elements, the
+ * upstream fiber will feed elements into the sink until it signals
+ * completion.
+ *
+ * Any sink can be used here, but see `Sink.foldWeightedEffect` and
+ * `Sink.foldUntilEffect` for sinks that cover the common usecases.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.acquireRelease = acquireRelease;
+const aggregate = internal.aggregate;
+/**
+ * Like `aggregateWithinEither`, but only returns the `Right` results.
+ *
+ * @param sink A `Sink` used to perform the aggregation.
+ * @param schedule A `Schedule` used to signal when to stop the aggregation.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.aggregate = aggregate;
+const aggregateWithin = internal.aggregateWithin;
+/**
+ * Aggregates elements using the provided sink until it completes, or until
+ * the delay signalled by the schedule has passed.
+ *
+ * This operator divides the stream into two asynchronous islands. Operators
+ * upstream of this operator run on one fiber, while downstream operators run
+ * on another. Elements will be aggregated by the sink until the downstream
+ * fiber pulls the aggregated value, or until the schedule's delay has passed.
+ *
+ * Aggregated elements will be fed into the schedule to determine the delays
+ * between pulls.
+ *
+ * @param sink A `Sink` used to perform the aggregation.
+ * @param schedule A `Schedule` used to signal when to stop the aggregation.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.aggregateWithin = aggregateWithin;
+const aggregateWithinEither = internal.aggregateWithinEither;
+/**
+ * Maps the success values of this stream to the specified constant value.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.aggregateWithinEither = aggregateWithinEither;
+const as = internal.as;
+exports.as = as;
+const _async = internal._async;
+exports.async = _async;
+/**
+ * Creates a stream from an asynchronous callback that can be called multiple
+ * times The registration of the callback itself returns an effect. The
+ * optionality of the error type `E` can be used to signal the end of the
+ * stream, by setting it to `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+const asyncEffect = internal.asyncEffect;
+/**
+ * Creates a stream from an asynchronous callback that can be called multiple
+ * times. The registration of the callback returns either a canceler or
+ * synchronously returns a stream. The optionality of the error type `E` can
+ * be used to signal the end of the stream, by setting it to `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.asyncEffect = asyncEffect;
+const asyncInterrupt = internal.asyncInterrupt;
+/**
+ * Creates a stream from an asynchronous callback that can be called multiple
+ * times. The registration of the callback can possibly return the stream
+ * synchronously. The optionality of the error type `E` can be used to signal
+ * the end of the stream, by setting it to `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.asyncInterrupt = asyncInterrupt;
+const asyncOption = internal.asyncOption;
+/**
+ * Creates a stream from an asynchronous callback that can be called multiple
+ * times. The registration of the callback itself returns an a scoped
+ * resource. The optionality of the error type `E` can be used to signal the
+ * end of the stream, by setting it to `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.asyncOption = asyncOption;
+const asyncScoped = internal.asyncScoped;
+/**
+ * Returns a `Stream` that first collects `n` elements from the input `Stream`,
+ * and then creates a new `Stream` using the specified function, and sends all
+ * the following elements through that.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.asyncScoped = asyncScoped;
+const branchAfter = internal.branchAfter;
+/**
+ * Fan out the stream, producing a list of streams that have the same elements
+ * as this stream. The driver stream will only ever advance the `maximumLag`
+ * chunks before the slowest downstream stream.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category utils
+ */
+exports.branchAfter = branchAfter;
+const broadcast = internal.broadcast;
+/**
+ * Fan out the stream, producing a dynamic number of streams that have the
+ * same elements as this stream. The driver stream will only ever advance the
+ * `maximumLag` chunks before the slowest downstream stream.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category utils
+ */
+exports.broadcast = broadcast;
+const broadcastDynamic = internal.broadcastDynamic;
+/**
+ * Converts the stream to a scoped list of queues. Every value will be
+ * replicated to every queue with the slowest queue being allowed to buffer
+ * `maximumLag` chunks before the driver is back pressured.
+ *
+ * Queues can unsubscribe from upstream by shutting down.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category utils
+ */
+exports.broadcastDynamic = broadcastDynamic;
+const broadcastedQueues = internal.broadcastedQueues;
+/**
+ * Converts the stream to a scoped dynamic amount of queues. Every chunk will
+ * be replicated to every queue with the slowest queue being allowed to buffer
+ * `maximumLag` chunks before the driver is back pressured.
+ *
+ * Queues can unsubscribe from upstream by shutting down.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category utils
+ */
+exports.broadcastedQueues = broadcastedQueues;
+const broadcastedQueuesDynamic = internal.broadcastedQueuesDynamic;
+/**
+ * Allows a faster producer to progress independently of a slower consumer by
+ * buffering up to `capacity` elements in a queue.
+ *
+ * @note This combinator destroys the chunking structure. It's recommended to
+ *       use rechunk afterwards. Additionally, prefer capacities that are powers
+ *       of 2 for better performance.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.broadcastedQueuesDynamic = broadcastedQueuesDynamic;
+const buffer = internal.buffer;
+/**
+ * Allows a faster producer to progress independently of a slower consumer by
+ * buffering up to `capacity` chunks in a queue.
+ *
+ * @note Prefer capacities that are powers of 2 for better performance.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.buffer = buffer;
+const bufferChunks = internal.bufferChunks;
+/**
+ * Allows a faster producer to progress independently of a slower consumer by
+ * buffering up to `capacity` chunks in a dropping queue.
+ *
+ * @note Prefer capacities that are powers of 2 for better performance.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.bufferChunks = bufferChunks;
+const bufferChunksDropping = internal.bufferChunksDropping;
+/**
+ * Allows a faster producer to progress independently of a slower consumer by
+ * buffering up to `capacity` chunks in a sliding queue.
+ *
+ * @note Prefer capacities that are powers of 2 for better performance.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.bufferChunksDropping = bufferChunksDropping;
+const bufferChunksSliding = internal.bufferChunksSliding;
+/**
+ * Allows a faster producer to progress independently of a slower consumer by
+ * buffering up to `capacity` elements in a dropping queue.
+ *
+ * @note This combinator destroys the chunking structure. It's recommended to
+ *       use rechunk afterwards. Additionally, Prefer capacities that are
+ *       powers of 2 for better performance.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.bufferChunksSliding = bufferChunksSliding;
+const bufferDropping = internal.bufferDropping;
+/**
+ * Allows a faster producer to progress independently of a slower consumer by
+ * buffering up to `capacity` elements in a sliding queue.
+ *
+ * @note This combinator destroys the chunking structure. It's recommended to
+ *       use rechunk afterwards. Additionally, Prefer capacities that are
+ *       powers of 2 for better performance.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.bufferDropping = bufferDropping;
+const bufferSliding = internal.bufferSliding;
+/**
+ * Allows a faster producer to progress independently of a slower consumer by
+ * buffering chunks into an unbounded queue.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.bufferSliding = bufferSliding;
+const bufferUnbounded = internal.bufferUnbounded;
+/**
+ * Switches over to the stream produced by the provided function in case this
+ * one fails with a typed error.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.bufferUnbounded = bufferUnbounded;
+const catchAll = internal.catchAll;
+/**
+ * Switches over to the stream produced by the provided function in case this
+ * one fails. Allows recovery from all causes of failure, including
+ * interruption if the stream is uninterruptible.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.catchAll = catchAll;
+const catchAllCause = internal.catchAllCause;
+/**
+ * Switches over to the stream produced by the provided function in case this
+ * one fails with some typed error.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.catchAllCause = catchAllCause;
+const catchSome = internal.catchSome;
+/**
+ * Switches over to the stream produced by the provided function in case this
+ * one fails with some errors. Allows recovery from all causes of failure,
+ * including interruption if the stream is uninterruptible.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.catchSome = catchSome;
+const catchSomeCause = internal.catchSomeCause;
+/**
+ * Returns a new stream that only emits elements that are not equal to the
+ * previous element emitted, using natural equality to determine whether two
+ * elements are equal.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.catchSomeCause = catchSomeCause;
+const changes = internal.changes;
+/**
+ * Returns a new stream that only emits elements that are not equal to the
+ * previous element emitted, using the specified function to determine whether
+ * two elements are equal.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.changes = changes;
+const changesWith = internal.changesWith;
+/**
+ * Returns a new stream that only emits elements that are not equal to the
+ * previous element emitted, using the specified effectual function to
+ * determine whether two elements are equal.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.changesWith = changesWith;
+const changesWithEffect = internal.changesWithEffect;
+/**
+ * Exposes the underlying chunks of the stream as a stream of chunks of
+ * elements.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.changesWithEffect = changesWithEffect;
+const chunks = internal.chunks;
+/**
+ * Performs the specified stream transformation with the chunk structure of
+ * the stream exposed.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.chunks = chunks;
+const chunksWith = internal.chunksWith;
+/**
+ * Performs a filter and map in a single step.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.chunksWith = chunksWith;
+const collect = internal.collect;
+/**
+ * Performs an effectful filter and map in a single step.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collect = collect;
+const collectEffect = internal.collectEffect;
+/**
+ * Filters any `Right` values.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectEffect = collectEffect;
+const collectLeft = internal.collectLeft;
+/**
+ * Filters any `Left` values.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectLeft = collectLeft;
+const collectRight = internal.collectRight;
+/**
+ * Filters any 'None' values.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectRight = collectRight;
+const collectSome = internal.collectSome;
+/**
+ * Filters any `Exit.Failure` values.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectSome = collectSome;
+const collectSuccess = internal.collectSuccess;
+/**
+ * Transforms all elements of the stream for as long as the specified partial
+ * function is defined.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectSuccess = collectSuccess;
+const collectWhile = internal.collectWhile;
+/**
+ * Terminates the stream when encountering the first `Right`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectWhile = collectWhile;
+const collectWhileLeft = internal.collectWhileLeft;
+/**
+ * Terminates the stream when encountering the first `None`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectWhileLeft = collectWhileLeft;
+const collectWhileSome = internal.collectWhileSome;
+/**
+ * Terminates the stream when encountering the first `Left`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectWhileSome = collectWhileSome;
+const collectWhileRight = internal.collectWhileRight;
+/**
+ * Terminates the stream when encountering the first `Exit.Failure`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectWhileRight = collectWhileRight;
+const collectWhileSuccess = internal.collectWhileSuccess;
+/**
+ * Effectfully transforms all elements of the stream for as long as the
+ * specified partial function is defined.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectWhileSuccess = collectWhileSuccess;
+const collectWhileEffect = internal.collectWhileEffect;
+/**
+ * Combines the elements from this stream and the specified stream by
+ * repeatedly applying the function `f` to extract an element using both sides
+ * and conceptually "offer" it to the destination stream. `f` can maintain
+ * some internal state to control the combining process, with the initial
+ * state being specified by `s`.
+ *
+ * Where possible, prefer `Stream.combineChunks` for a more efficient
+ * implementation.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.collectWhileEffect = collectWhileEffect;
+const combine = internal.combine;
+/**
+ * Combines the chunks from this stream and the specified stream by repeatedly
+ * applying the function `f` to extract a chunk using both sides and
+ * conceptually "offer" it to the destination stream. `f` can maintain some
+ * internal state to control the combining process, with the initial state
+ * being specified by `s`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.combine = combine;
+const combineChunks = internal.combineChunks;
+/**
+ * Concatenates the specified stream with this stream, resulting in a stream
+ * that emits the elements from this stream and then the elements from the
+ * specified stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.combineChunks = combineChunks;
+const concat = internal.concat;
+/**
+ * Concatenates all of the streams in the chunk to one stream.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.concat = concat;
+const concatAll = internal.concatAll;
+/**
+ * Composes this stream with the specified stream to create a cartesian
+ * product of elements. The `that` stream would be run multiple times, for
+ * every element in the `this` stream.
+ *
+ * See also `Stream.zip` for the more common point-wise variant.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.concatAll = concatAll;
+const cross = internal.cross;
+/**
+ * Composes this stream with the specified stream to create a cartesian
+ * product of elements, but keeps only elements from this stream. The `that`
+ * stream would be run multiple times, for every element in the `this` stream.
+ *
+ * See also `Stream.zipLeft` for the more common point-wise variant.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.cross = cross;
+const crossLeft = internal.crossLeft;
+/**
+ * Composes this stream with the specified stream to create a cartesian
+ * product of elements, but keeps only elements from the other stream. The
+ * `that` stream would be run multiple times, for every element in the `this`
+ * stream.
+ *
+ * See also `Stream.zipRight` for the more common point-wise variant.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.crossLeft = crossLeft;
+const crossRight = internal.crossRight;
+/**
+ * Composes this stream with the specified stream to create a cartesian
+ * product of elements with a specified function. The `that` stream would be
+ * run multiple times, for every element in the `this` stream.
+ *
+ * See also `Stream.zipWith` for the more common point-wise variant.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.crossRight = crossRight;
+const crossWith = internal.crossWith;
+/**
+ * Delays the emission of values by holding new values for a set duration. If
+ * no new values arrive during that time the value is emitted, however if a
+ * new value is received during the holding period the previous value is
+ * discarded and the process is repeated with the new value.
+ *
+ * This operator is useful if you have a stream of "bursty" events which
+ * eventually settle down and you only need the final event of the burst. For
+ * example, a search engine may only want to initiate a search after a user
+ * has paused typing so as to not prematurely recommend results.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.crossWith = crossWith;
+const debounce = internal.debounce;
+/**
+ * The stream that dies with the specified defect.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.debounce = debounce;
+const die = internal.die;
+/**
+ * The stream that dies with the specified lazily evaluated defect.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.die = die;
+const dieSync = internal.dieSync;
+/**
+ * The stream that dies with an exception described by `message`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.dieSync = dieSync;
+const dieMessage = internal.dieMessage;
+/**
+ * More powerful version of `Stream.broadcast`. Allows to provide a function
+ * that determines what queues should receive which elements. The decide
+ * function will receive the indices of the queues in the resulting list.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.dieMessage = dieMessage;
+const distributedWith = internal.distributedWith;
+/**
+ * More powerful version of `Stream.distributedWith`. This returns a function
+ * that will produce new queues and corresponding indices. You can also
+ * provide a function that will be executed after the final events are
+ * enqueued in all queues. Shutdown of the queues is handled by the driver.
+ * Downstream users can also shutdown queues manually. In this case the driver
+ * will continue but no longer backpressure on them.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category utils
+ */
+exports.distributedWith = distributedWith;
+const distributedWithDynamic = internal.distributedWithDynamic;
+/**
+ * The stream that ends with the specified `Exit` value.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.distributedWithDynamic = distributedWithDynamic;
+const done = internal.done;
+/**
+ * Converts this stream to a stream that executes its effects but emits no
+ * elements. Useful for sequencing effects using streams:
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.done = done;
+const drain = internal.drain;
+/**
+ * Drains the provided stream in the background for as long as this stream is
+ * running. If this stream ends before `other`, `other` will be interrupted.
+ * If `other` fails, this stream will fail with that error.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.drain = drain;
+const drainFork = internal.drainFork;
+/**
+ * Drops the specified number of elements from this stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.drainFork = drainFork;
+const drop = internal.drop;
+/**
+ * Drops the last specified number of elements from this stream.
+ *
+ * @note This combinator keeps `n` elements in memory. Be careful with big
+ *       numbers.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.drop = drop;
+const dropRight = internal.dropRight;
+/**
+ * Drops all elements of the stream until the specified predicate evaluates to
+ * `true`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.dropRight = dropRight;
+const dropUntil = internal.dropUntil;
+/**
+ * Drops all elements of the stream until the specified effectful predicate
+ * evaluates to `true`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.dropUntil = dropUntil;
+const dropUntilEffect = internal.dropUntilEffect;
+/**
+ * Drops all elements of the stream for as long as the specified predicate
+ * evaluates to `true`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.dropUntilEffect = dropUntilEffect;
+const dropWhile = internal.dropWhile;
+/**
+ * Drops all elements of the stream for as long as the specified predicate
+ * produces an effect that evalutates to `true`
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.dropWhile = dropWhile;
+const dropWhileEffect = internal.dropWhileEffect;
+/**
+ * Returns a stream whose failures and successes have been lifted into an
+ * `Either`. The resulting stream cannot fail, because the failures have been
+ * exposed as part of the `Either` success case.
+ *
+ * @note The stream will end as soon as the first error occurs.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.dropWhileEffect = dropWhileEffect;
+const either = internal.either;
+/**
+ * The empty stream.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.either = either;
+const empty = internal.empty;
+/**
+ * Executes the provided finalizer after this stream's finalizers run.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.empty = empty;
+const ensuring = internal.ensuring;
+/**
+ * Accesses the whole context of the stream.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.ensuring = ensuring;
+const context = internal.context;
+/**
+ * Accesses the context of the stream.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.context = context;
+const contextWith = internal.contextWith;
+/**
+ * Accesses the context of the stream in the context of an effect.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.contextWith = contextWith;
+const contextWithEffect = internal.contextWithEffect;
+/**
+ * Accesses the context of the stream in the context of a stream.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.contextWithEffect = contextWithEffect;
+const contextWithStream = internal.contextWithStream;
+/**
+ * Creates a stream that executes the specified effect but emits no elements.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.contextWithStream = contextWithStream;
+const execute = internal.execute;
+/**
+ * Terminates with the specified error.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.execute = execute;
+const fail = internal.fail;
+/**
+ * Terminates with the specified lazily evaluated error.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fail = fail;
+const failSync = internal.failSync;
+/**
+ * The stream that always fails with the specified `Cause`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.failSync = failSync;
+const failCause = internal.failCause;
+/**
+ * The stream that always fails with the specified lazily evaluated `Cause`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.failCause = failCause;
+const failCauseSync = internal.failCauseSync;
+/**
+ * Filters the elements emitted by this stream using the provided function.
+ *
+ * @since 1.0.0
+ * @category filtering
+ */
+exports.failCauseSync = failCauseSync;
+const filter = internal.filter;
+/**
+ * Effectfully filters the elements emitted by this stream.
+ *
+ * @since 1.0.0
+ * @category filtering
+ */
+exports.filter = filter;
+const filterEffect = internal.filterEffect;
+/**
+ * Creates a one-element stream that never fails and executes the finalizer
+ * when it ends.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.filterEffect = filterEffect;
+const finalizer = internal.finalizer;
+/**
+ * Finds the first element emitted by this stream that satisfies the provided
+ * predicate.
+ *
+ * @since 1.0.0
+ * @category elements
+ */
+exports.finalizer = finalizer;
+const find = internal.find;
+/**
+ * Finds the first element emitted by this stream that satisfies the provided
+ * effectful predicate.
+ *
+ * @since 1.0.0
+ * @category elements
+ */
+exports.find = find;
+const findEffect = internal.findEffect;
+/**
+ * Returns a stream made of the concatenation in strict order of all the
+ * streams produced by passing each element of this stream to `f0`
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.findEffect = findEffect;
+const flatMap = internal.flatMap;
+/**
+ * Maps each element of this stream to another stream and returns the
+ * non-deterministic merge of those streams, executing up to `n` inner streams
+ * concurrently. Up to `bufferSize` elements of the produced streams may be
+ * buffered in memory by this operator.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flatMap = flatMap;
+const flatMapPar = internal.flatMapPar;
+/**
+ * Maps each element of this stream to another stream and returns the
+ * non-deterministic merge of those streams, executing up to `n` inner streams
+ * concurrently. When a new stream is created from an element of the source
+ * stream, the oldest executing stream is cancelled. Up to `bufferSize`
+ * elements of the produced streams may be buffered in memory by this
+ * operator.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flatMapPar = flatMapPar;
+const flatMapParSwitch = internal.flatMapParSwitch;
+/**
+ * Flattens this stream-of-streams into a stream made of the concatenation in
+ * strict order of all the streams.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flatMapParSwitch = flatMapParSwitch;
+const flatten = internal.flatten;
+/**
+ * Submerges the chunks carried by this stream into the stream's structure,
+ * while still preserving them.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flatten = flatten;
+const flattenChunks = internal.flattenChunks;
+/**
+ * Flattens `Effect` values into the stream's structure, preserving all
+ * information about the effect.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flattenChunks = flattenChunks;
+const flattenEffect = internal.flattenEffect;
+/**
+ * Flattens `Exit` values. `Exit.Failure` values translate to stream
+ * failures while `Exit.Success` values translate to stream elements.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flattenEffect = flattenEffect;
+const flattenExit = internal.flattenExit;
+/**
+ * Unwraps `Exit` values that also signify end-of-stream by failing with `None`.
+ *
+ * For `Exit` values that do not signal end-of-stream, prefer:
+ *
+ * ```ts
+ * stream.mapZIO(ZIO.done(_))
+ * ```
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flattenExit = flattenExit;
+const flattenExitOption = internal.flattenExitOption;
+/**
+ * Submerges the iterables carried by this stream into the stream's structure,
+ * while still preserving them.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flattenExitOption = flattenExitOption;
+const flattenIterables = internal.flattenIterables;
+/**
+ * Flattens a stream of streams into a stream by executing a non-deterministic
+ * concurrent merge. Up to `n` streams may be consumed in parallel and up to
+ * `outputBuffer` elements may be buffered by this operator.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flattenIterables = flattenIterables;
+const flattenPar = internal.flattenPar;
+/**
+ * Like `Stream.flattenPar`, but executes all streams concurrently.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flattenPar = flattenPar;
+const flattenParUnbounded = internal.flattenParUnbounded;
+/**
+ * Unwraps `Exit` values and flatten chunks that also signify end-of-stream
+ * by failing with `None`.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.flattenParUnbounded = flattenParUnbounded;
+const flattenTake = internal.flattenTake;
+/**
+ * Repeats this stream forever.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.flattenTake = flattenTake;
+const forever = internal.forever;
+/**
+ * Creates a stream from a `Channel`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.forever = forever;
+const fromChannel = internal.fromChannel;
+/**
+ * Creates a stream from a `Chunk` of values.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromChannel = fromChannel;
+const fromChunk = internal.fromChunk;
+/**
+ * Creates a stream from a subscription to a `Hub`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromChunk = fromChunk;
+const fromChunkHub = internal.fromChunkHub;
+/**
+ * Creates a stream from a subscription to a `Hub` in the context of a scoped
+ * effect. The scoped effect describes subscribing to receive messages from
+ * the hub while the stream describes taking messages from the hub.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromChunkHub = fromChunkHub;
+const fromChunkHubScoped = internal.fromChunkHubScoped;
+/**
+ * Creates a stream from a subscription to a `Hub`.
+ *
+ * The hub will be shut down once the stream is closed.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromChunkHubScoped = fromChunkHubScoped;
+const fromChunkHubWithShutdown = internal.fromChunkHubWithShutdown;
+/**
+ * Creates a stream from a subscription to a `Hub` in the context of a scoped
+ * effect. The scoped effect describes subscribing to receive messages from
+ * the hub while the stream describes taking messages from the hub.
+ *
+ * The hub will be shut down once the stream is closed.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromChunkHubWithShutdown = fromChunkHubWithShutdown;
+const fromChunkHubScopedWithShutdown = internal.fromChunkHubScopedWithShutdown;
+/**
+ * Creates a stream from a `Queue` of values.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromChunkHubScopedWithShutdown = fromChunkHubScopedWithShutdown;
+const fromChunkQueue = internal.fromChunkQueue;
+/**
+ * Creates a stream from a `Queue` of values.
+ *
+ * The queue will be shutdown once the stream is closed.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromChunkQueue = fromChunkQueue;
+const fromChunkQueueWithShutdown = internal.fromChunkQueueWithShutdown;
+/**
+ * Creates a stream from an arbitrary number of chunks.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromChunkQueueWithShutdown = fromChunkQueueWithShutdown;
+const fromChunks = internal.fromChunks;
+/**
+ * Either emits the success value of this effect or terminates the stream
+ * with the failure value of this effect.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromChunks = fromChunks;
+const fromEffect = internal.fromEffect;
+/**
+ * Creates a stream from an effect producing a value of type `A` or an empty
+ * `Stream`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromEffect = fromEffect;
+const fromEffectOption = internal.fromEffectOption;
+/**
+ * Creates a stream from a subscription to a `Hub`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromEffectOption = fromEffectOption;
+const fromHub = internal.fromHub;
+/**
+ * Creates a stream from a subscription to a `Hub` in the context of a scoped
+ * effect. The scoped effect describes subscribing to receive messages from
+ * the hub while the stream describes taking messages from the hub.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromHub = fromHub;
+const fromHubScoped = internal.fromHubScoped;
+/**
+ * Creates a stream from a subscription to a `Hub`.
+ *
+ * The hub will be shut down once the stream is closed.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromHubScoped = fromHubScoped;
+const fromHubWithShutdown = internal.fromHubWithShutdown;
+/**
+ * Creates a stream from a subscription to a `Hub` in the context of a scoped
+ * effect. The scoped effect describes subscribing to receive messages from
+ * the hub while the stream describes taking messages from the hub.
+ *
+ * The hub will be shut down once the stream is closed.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromHubWithShutdown = fromHubWithShutdown;
+const fromHubScopedWithShutdown = internal.fromHubScopedWithShutdown;
+/**
+ * Creates a stream from an `Iterable` collection of values.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromHubScopedWithShutdown = fromHubScopedWithShutdown;
+const fromIterable = internal.fromIterable;
+/**
+ * Creates a stream from an effect producing a value of type `Iterable<A>`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromIterable = fromIterable;
+const fromIterableEffect = internal.fromIterableEffect;
+/**
+ * Creates a stream from an iterator
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromIterableEffect = fromIterableEffect;
+const fromIteratorSucceed = internal.fromIteratorSucceed;
+/**
+ * Creates a stream from an effect that pulls elements from another stream.
+ *
+ * See `Stream.toPull` for reference.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromIteratorSucceed = fromIteratorSucceed;
+const fromPull = internal.fromPull;
+/**
+ * Creates a stream from a queue of values
+ *
+ * @param maxChunkSize The maximum number of queued elements to put in one chunk in the stream
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromPull = fromPull;
+const fromQueue = internal.fromQueue;
+/**
+ * Creates a stream from a queue of values. The queue will be shutdown once
+ * the stream is closed.
+ *
+ * @param maxChunkSize The maximum number of queued elements to put in one chunk in the stream
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromQueue = fromQueue;
+const fromQueueWithShutdown = internal.fromQueueWithShutdown;
+/**
+ * Creates a stream from a `Schedule` that does not require any further
+ * input. The stream will emit an element for each value output from the
+ * schedule, continuing for as long as the schedule continues.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.fromQueueWithShutdown = fromQueueWithShutdown;
+const fromSchedule = internal.fromSchedule;
+/**
+ * Creates a pipeline that groups on adjacent keys, calculated by the
+ * specified function.
+ *
+ * @since 1.0.0
+ * @category grouping
+ */
+exports.fromSchedule = fromSchedule;
+const groupAdjacentBy = internal.groupAdjacentBy;
+/**
+ * More powerful version of `Stream.groupByKey`.
+ *
+ * @since 1.0.0
+ * @category grouping
+ */
+exports.groupAdjacentBy = groupAdjacentBy;
+const groupBy = _groupBy.groupBy;
+/**
+ * Partition a stream using a function and process each stream individually.
+ * This returns a data structure that can be used to further filter down which
+ * groups shall be processed.
+ *
+ * After calling apply on the GroupBy object, the remaining groups will be
+ * processed in parallel and the resulting streams merged in a
+ * nondeterministic fashion.
+ *
+ * Up to `buffer` elements may be buffered in any group stream before the
+ * producer is backpressured. Take care to consume from all streams in order
+ * to prevent deadlocks.
+ *
+ * For example, to collect the first 2 words for every starting letter from a
+ * stream of words:
+ *
+ * ```ts
+ * import * as GroupBy from "@effect/stream/GroupBy"
+ * import * as Stream from "@effect/stream/Stream"
+ * import { pipe } from "@fp-ts/core/Function"
+ *
+ * pipe(
+ *   Stream.fromIterable(["hello", "world", "hi", "holla"]),
+ *   Stream.groupByKey((word) => word[0]),
+ *   GroupBy.evaluate((key, stream) =>
+ *     pipe(
+ *       stream,
+ *       Stream.take(2),
+ *       Stream.map((words) => [key, words] as const)
+ *     )
+ *   )
+ * )
+ * ```
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.groupBy = groupBy;
+const groupByKey = _groupBy.groupByKey;
+/**
+ * Partitions the stream with specified `chunkSize`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.groupByKey = groupByKey;
+const grouped = internal.grouped;
+/**
+ * Partitions the stream with the specified `chunkSize` or until the specified
+ * `duration` has passed, whichever is satisfied first.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.grouped = grouped;
+const groupedWithin = internal.groupedWithin;
+/**
+ * Specialized version of haltWhen which halts the evaluation of this stream
+ * after the given duration.
+ *
+ * An element in the process of being pulled will not be interrupted when the
+ * given duration completes. See `interruptAfter` for this behavior.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.groupedWithin = groupedWithin;
+const haltAfter = internal.haltAfter;
+/**
+ * Halts the evaluation of this stream when the provided effect completes. The
+ * given effect will be forked as part of the returned stream, and its success
+ * will be discarded.
+ *
+ * An element in the process of being pulled will not be interrupted when the
+ * effect completes. See `interruptWhen` for this behavior.
+ *
+ * If the effect completes with a failure, the stream will emit that failure.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.haltAfter = haltAfter;
+const haltWhen = internal.haltWhen;
+/**
+ * Halts the evaluation of this stream when the provided promise resolves.
+ *
+ * If the promise completes with a failure, the stream will emit that failure.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.haltWhen = haltWhen;
+const haltWhenDeferred = internal.haltWhenDeferred;
+/**
+ * The identity pipeline, which does not modify streams in any way.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.haltWhenDeferred = haltWhenDeferred;
+const identity = internal.identityStream;
+/**
+ * Interleaves this stream and the specified stream deterministically by
+ * alternating pulling values from this stream and the specified stream. When
+ * one stream is exhausted all remaining values in the other stream will be
+ * pulled.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.identity = identity;
+const interleave = internal.interleave;
+/**
+ * Combines this stream and the specified stream deterministically using the
+ * stream of boolean values `pull` to control which stream to pull from next.
+ * A value of `true` indicates to pull from this stream and a value of `false`
+ * indicates to pull from the specified stream. Only consumes as many elements
+ * as requested by the `pull` stream. If either this stream or the specified
+ * stream are exhausted further requests for values from that stream will be
+ * ignored.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.interleave = interleave;
+const interleaveWith = internal.interleaveWith;
+/**
+ * Intersperse stream with provided `element`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.interleaveWith = interleaveWith;
+const intersperse = internal.intersperse;
+/**
+ * Intersperse the specified element, also adding a prefix and a suffix.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.intersperse = intersperse;
+const intersperseAffixes = internal.intersperseAffixes;
+/**
+ * Specialized version of `Stream.interruptWhen` which interrupts the
+ * evaluation of this stream after the given `Duration`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.intersperseAffixes = intersperseAffixes;
+const interruptAfter = internal.interruptAfter;
+/**
+ * Interrupts the evaluation of this stream when the provided effect
+ * completes. The given effect will be forked as part of this stream, and its
+ * success will be discarded. This combinator will also interrupt any
+ * in-progress element being pulled from upstream.
+ *
+ * If the effect completes with a failure before the stream completes, the
+ * returned stream will emit that failure.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.interruptAfter = interruptAfter;
+const interruptWhen = internal.interruptWhen;
+/**
+ * Interrupts the evaluation of this stream when the provided promise
+ * resolves. This combinator will also interrupt any in-progress element being
+ * pulled from upstream.
+ *
+ * If the promise completes with a failure, the stream will emit that failure.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.interruptWhen = interruptWhen;
+const interruptWhenDeferred = internal.interruptWhenDeferred;
+/**
+ * The infinite stream of iterative function application: a, f(a), f(f(a)),
+ * f(f(f(a))), ...
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.interruptWhenDeferred = interruptWhenDeferred;
+const iterate = internal.iterate;
+/**
+ * Logs the specified message at the current log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.iterate = iterate;
+const log = internal.log;
+/**
+ * Logs the specified message at the debug log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.log = log;
+const logDebug = internal.logDebug;
+/**
+ * Logs the specified `Cause` at the debug log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logDebug = logDebug;
+const logDebugCause = internal.logDebugCause;
+/**
+ * Logs the specified message and `Cause` at the debug log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logDebugCause = logDebugCause;
+const logDebugCauseMessage = internal.logDebugCauseMessage;
+/**
+ * Logs the specified message at the error log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logDebugCauseMessage = logDebugCauseMessage;
+const logError = internal.logError;
+/**
+ * Logs the specified `Cause` at the error log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logError = logError;
+const logErrorCause = internal.logErrorCause;
+/**
+ * Logs the specified message and `Cause` at the error log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logErrorCause = logErrorCause;
+const logErrorCauseMessage = internal.logErrorCauseMessage;
+/**
+ * Logs the specified message at the fatal log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logErrorCauseMessage = logErrorCauseMessage;
+const logFatal = internal.logFatal;
+/**
+ * Logs the specified `Cause` at the fatal log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logFatal = logFatal;
+const logFatalCause = internal.logFatalCause;
+/**
+ * Logs the specified message and `Cause` at the fatal log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logFatalCause = logFatalCause;
+const logFatalCauseMessage = internal.logFatalCauseMessage;
+/**
+ * Logs the specified message at the info log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logFatalCauseMessage = logFatalCauseMessage;
+const logInfo = internal.logInfo;
+/**
+ * Logs the specified `Cause` at the info log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logInfo = logInfo;
+const logInfoCause = internal.logInfoCause;
+/**
+ * Logs the specified message and `Cause` at the info log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logInfoCause = logInfoCause;
+const logInfoCauseMessage = internal.logInfoCauseMessage;
+/**
+ * Logs the specified message at the warning log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logInfoCauseMessage = logInfoCauseMessage;
+const logWarning = internal.logWarning;
+/**
+ * Logs the specified `Cause` at the warning log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logWarning = logWarning;
+const logWarningCause = internal.logWarningCause;
+/**
+ * Logs the specified message and `Cause` at the warning log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logWarningCause = logWarningCause;
+const logWarningCauseMessage = internal.logWarningCauseMessage;
+/**
+ * Logs the specified message at the trace log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logWarningCauseMessage = logWarningCauseMessage;
+const logTrace = internal.logTrace;
+/**
+ * Logs the specified `Cause` at the trace log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logTrace = logTrace;
+const logTraceCause = internal.logTraceCause;
+/**
+ * Logs the specified message and `Cause` at the trace log level.
+ *
+ * @since 1.0.0
+ * @category logging
+ */
+exports.logTraceCause = logTraceCause;
+const logTraceCauseMessage = internal.logTraceCauseMessage;
+/**
+ * Creates a stream from an sequence of values.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.logTraceCauseMessage = logTraceCauseMessage;
+const make = internal.make;
+/**
+ * Transforms the elements of this stream using the supplied function.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.make = make;
+const map = internal.map;
+/**
+ * Statefully maps over the elements of this stream to produce new elements.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.map = map;
+const mapAccum = internal.mapAccum;
+/**
+ * Statefully and effectfully maps over the elements of this stream to produce
+ * new elements.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapAccum = mapAccum;
+const mapAccumEffect = internal.mapAccumEffect;
+/**
+ * Returns a stream whose failure and success channels have been mapped by the
+ * specified pair of functions, `f` and `g`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mapAccumEffect = mapAccumEffect;
+const mapBoth = internal.mapBoth;
+/**
+ * Transforms the chunks emitted by this stream.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapBoth = mapBoth;
+const mapChunks = internal.mapChunks;
+/**
+ * Effectfully transforms the chunks emitted by this stream.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapChunks = mapChunks;
+const mapChunksEffect = internal.mapChunksEffect;
+/**
+ * Maps each element to an iterable, and flattens the iterables into the
+ * output of this stream.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapChunksEffect = mapChunksEffect;
+const mapConcat = internal.mapConcat;
+/**
+ * Maps each element to a chunk, and flattens the chunks into the output of
+ * this stream.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapConcat = mapConcat;
+const mapConcatChunk = internal.mapConcatChunk;
+/**
+ * Effectfully maps each element to a chunk, and flattens the chunks into the
+ * output of this stream.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapConcatChunk = mapConcatChunk;
+const mapConcatChunkEffect = internal.mapConcatChunkEffect;
+/**
+ * Effectfully maps each element to an iterable, and flattens the iterables
+ * into the output of this stream.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapConcatChunkEffect = mapConcatChunkEffect;
+const mapConcatEffect = internal.mapConcatEffect;
+/**
+ * Maps over elements of the stream with the specified effectful function.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapConcatEffect = mapConcatEffect;
+const mapEffect = internal.mapEffect;
+/**
+ * Transforms the errors emitted by this stream using `f`.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapEffect = mapEffect;
+const mapError = internal.mapError;
+/**
+ * Transforms the full causes of failures emitted by this stream.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapError = mapError;
+const mapErrorCause = internal.mapErrorCause;
+/**
+ * Maps over elements of the stream with the specified effectful function,
+ * executing up to `n` invocations of `f` concurrently. Transformed elements
+ * will be emitted in the original order.
+ *
+ * @note This combinator destroys the chunking structure. It's recommended to use
+ *       rechunk afterwards.
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapErrorCause = mapErrorCause;
+const mapEffectPar = internal.mapEffectPar;
+/**
+ * Maps over elements of the stream with the specified effectful function,
+ * partitioned by `p` executing invocations of `f` concurrently. The number of
+ * concurrent invocations of `f` is determined by the number of different
+ * outputs of type `K`. Up to `buffer` elements may be buffered per partition.
+ * Transformed elements may be reordered but the order within a partition is
+ * maintained.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapEffectPar = mapEffectPar;
+const mapEffectParByKey = _groupBy.mapEffectParByKey;
+/**
+ * Maps over elements of the stream with the specified effectful function,
+ * executing up to `n` invocations of `f` concurrently. The element order is
+ * not enforced by this combinator, and elements may be reordered.
+ *
+ * @since 1.0.0
+ * @category mapping
+ */
+exports.mapEffectParByKey = mapEffectParByKey;
+const mapEffectParUnordered = internal.mapEffectParUnordered;
+/**
+ * Merges this stream and the specified stream together.
+ *
+ * New produced stream will terminate when both specified stream terminate if
+ * no termination strategy is specified.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mapEffectParUnordered = mapEffectParUnordered;
+const merge = internal.merge;
+/**
+ * Merges a variable list of streams in a non-deterministic fashion. Up to `n`
+ * streams may be consumed in parallel and up to `outputBuffer` chunks may be
+ * buffered by this operator.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.merge = merge;
+const mergeAll = internal.mergeAll;
+/**
+ * Like `Stream.mergeAll`, but runs all streams concurrently.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mergeAll = mergeAll;
+const mergeAllUnbounded = internal.mergeAllUnbounded;
+/**
+ * Merges this stream and the specified stream together to a common element
+ * type with the specified mapping functions.
+ *
+ * New produced stream will terminate when both specified stream terminate if
+ * no termination strategy is specified.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mergeAllUnbounded = mergeAllUnbounded;
+const mergeWith = internal.mergeWith;
+/**
+ * Merges this stream and the specified stream together. New produced stream
+ * will terminate when either stream terminates.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mergeWith = mergeWith;
+const mergeHaltEither = internal.mergeHaltEither;
+/**
+ * Merges this stream and the specified stream together. New produced stream
+ * will terminate when this stream terminates.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mergeHaltEither = mergeHaltEither;
+const mergeHaltLeft = internal.mergeHaltLeft;
+/**
+ * Merges this stream and the specified stream together. New produced stream
+ * will terminate when the specified stream terminates.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mergeHaltLeft = mergeHaltLeft;
+const mergeHaltRight = internal.mergeHaltRight;
+/**
+ * Merges this stream and the specified stream together to produce a stream of
+ * eithers.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mergeHaltRight = mergeHaltRight;
+const mergeEither = internal.mergeEither;
+/**
+ * Merges this stream and the specified stream together, discarding the values
+ * from the right stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mergeEither = mergeEither;
+const mergeLeft = internal.mergeLeft;
+/**
+ * Merges this stream and the specified stream together, discarding the values
+ * from the left stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mergeLeft = mergeLeft;
+const mergeRight = internal.mergeRight;
+/**
+ * Returns a combined string resulting from concatenating each of the values
+ * from the stream.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category utils
+ */
+exports.mergeRight = mergeRight;
+const mkString = internal.mkString;
+/**
+ * The stream that never produces any value or fails with any error.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.mkString = mkString;
+const never = internal.never;
+/**
+ * Runs the specified effect if this stream fails, providing the error to the
+ * effect if it exists.
+ *
+ * Note: Unlike `Effect.onError` there is no guarantee that the provided
+ * effect will not be interrupted.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.never = never;
+const onError = internal.onError;
+/**
+ * Runs the specified effect if this stream ends.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.onError = onError;
+const onDone = internal.onDone;
+/**
+ * Translates any failure into a stream termination, making the stream
+ * infallible and all failures unchecked.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.onDone = onDone;
+const orDie = internal.orDie;
+/**
+ * Keeps none of the errors, and terminates the stream with them, using the
+ * specified function to convert the `E` into a defect.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.orDie = orDie;
+const orDieWith = internal.orDieWith;
+/**
+ * Switches to the provided stream in case this one fails with a typed error.
+ *
+ * See also `Stream.catchAll`.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.orDieWith = orDieWith;
+const orElse = internal.orElse;
+/**
+ * Switches to the provided stream in case this one fails with a typed error.
+ *
+ * See also `Stream.catchAll`.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.orElse = orElse;
+const orElseEither = internal.orElseEither;
+/**
+ * Fails with given error in case this one fails with a typed error.
+ *
+ * See also `Stream.catchAll`.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.orElseEither = orElseEither;
+const orElseFail = internal.orElseFail;
+/**
+ * Produces the specified element if this stream is empty.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.orElseFail = orElseFail;
+const orElseIfEmpty = internal.orElseIfEmpty;
+/**
+ * Produces the specified chunk if this stream is empty.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.orElseIfEmpty = orElseIfEmpty;
+const orElseIfEmptyChunk = internal.orElseIfEmptyChunk;
+/**
+ * Switches to the provided stream in case this one is empty.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.orElseIfEmptyChunk = orElseIfEmptyChunk;
+const orElseIfEmptyStream = internal.orElseIfEmptyStream;
+/**
+ * Switches to the provided stream in case this one fails with the `None`
+ * value.
+ *
+ * See also `Stream.catchAll`.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.orElseIfEmptyStream = orElseIfEmptyStream;
+const orElseOptional = internal.orElseOptional;
+/**
+ * Succeeds with the specified value if this one fails with a typed error.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.orElseOptional = orElseOptional;
+const orElseSucceed = internal.orElseSucceed;
+/**
+ * Like `Stream.unfold`, but allows the emission of values to end one step further
+ * than the unfolding of the state. This is useful for embedding paginated
+ * APIs, hence the name.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.orElseSucceed = orElseSucceed;
+const paginate = internal.paginate;
+/**
+ * Like `Stream.unfoldChunk`, but allows the emission of values to end one step
+ * further than the unfolding of the state. This is useful for embedding
+ * paginated APIs, hence the name.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.paginate = paginate;
+const paginateChunk = internal.paginateChunk;
+/**
+ * Like `Stream.unfoldChunkEffect`, but allows the emission of values to end one step
+ * further than the unfolding of the state. This is useful for embedding
+ * paginated APIs, hence the name.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.paginateChunk = paginateChunk;
+const paginateChunkEffect = internal.paginateChunkEffect;
+/**
+ * Like `Stream.unfoldEffect` but allows the emission of values to end one step
+ * further than the unfolding of the state. This is useful for embedding
+ * paginated APIs, hence the name.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.paginateChunkEffect = paginateChunkEffect;
+const paginateEffect = internal.paginateEffect;
+/**
+ * Partition a stream using a predicate. The first stream will contain all
+ * element evaluated to true and the second one will contain all element
+ * evaluated to false. The faster stream may advance by up to buffer elements
+ * further than the slower one.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.paginateEffect = paginateEffect;
+const partition = internal.partition;
+/**
+ * Split a stream by an effectful predicate. The faster stream may advance by
+ * up to buffer elements further than the slower one.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.partition = partition;
+const partitionEither = internal.partitionEither;
+/**
+ * Peels off enough material from the stream to construct a `Z` using the
+ * provided `Sink` and then returns both the `Z` and the rest of the
+ * `Stream` in a scope. Like all scoped values, the provided stream is
+ * valid only within the scope.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category utils
+ */
+exports.partitionEither = partitionEither;
+const peel = internal.peel;
+/**
+ * Pipes all of the values from this stream through the provided sink.
+ *
+ * See also `Stream.transduce`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.peel = peel;
+const pipeThrough = internal.pipeThrough;
+/**
+ * Pipes all the values from this stream through the provided channel.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.pipeThrough = pipeThrough;
+const pipeThroughChannel = internal.pipeThroughChannel;
+/**
+ * Pipes all values from this stream through the provided channel, passing
+ * through any error emitted by this stream unchanged.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.pipeThroughChannel = pipeThroughChannel;
+const pipeThroughChannelOrFail = internal.pipeThroughChannelOrFail;
+/**
+ * Emits the provided chunk before emitting any other value.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.pipeThroughChannelOrFail = pipeThroughChannelOrFail;
+const prepend = internal.prepend;
+/**
+ * Provides the stream with its required context, which eliminates its
+ * dependency on `R`.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.prepend = prepend;
+const provideContext = internal.provideContext;
+/**
+ * Provides a `Layer` to the stream, which translates it to another level.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.provideContext = provideContext;
+const provideLayer = internal.provideLayer;
+/**
+ * Provides the stream with the single service it requires. If the stream
+ * requires more than one service use `Stream.provideContext` instead.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.provideLayer = provideLayer;
+const provideService = internal.provideService;
+/**
+ * Provides the stream with the single service it requires. If the stream
+ * requires more than one service use `Stream.provideContext` instead.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.provideService = provideService;
+const provideServiceEffect = internal.provideServiceEffect;
+/**
+ * Provides the stream with the single service it requires. If the stream
+ * requires more than one service use `Stream.provideContext` instead.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.provideServiceEffect = provideServiceEffect;
+const provideServiceStream = internal.provideServiceStream;
+/**
+ * Transforms the context being provided to the stream with the specified
+ * function.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.provideServiceStream = provideServiceStream;
+const contramapContext = internal.contramapContext;
+/**
+ * Splits the context into two parts, providing one part using the
+ * specified layer and leaving the remainder `R0`.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.contramapContext = contramapContext;
+const provideSomeLayer = internal.provideSomeLayer;
+/**
+ * Constructs a stream from a range of integers (lower bound included, upper
+ * bound not included).
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.provideSomeLayer = provideSomeLayer;
+const range = internal.range;
+/**
+ * Re-chunks the elements of the stream into chunks of `n` elements each. The
+ * last chunk might contain less than `n` elements.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.range = range;
+const rechunk = internal.rechunk;
+/**
+ * Keeps some of the errors, and terminates the fiber with the rest
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.rechunk = rechunk;
+const refineOrDie = internal.refineOrDie;
+/**
+ * Keeps some of the errors, and terminates the fiber with the rest, using the
+ * specified function to convert the `E` into a defect.
+ *
+ * @since 1.0.0
+ * @category error handling
+ */
+exports.refineOrDie = refineOrDie;
+const refineOrDieWith = internal.refineOrDieWith;
+/**
+ * Repeats the entire stream using the specified schedule. The stream will
+ * execute normally, and then repeat again according to the provided schedule.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.refineOrDieWith = refineOrDieWith;
+const repeat = internal.repeat;
+/**
+ * Creates a stream from an effect producing a value of type `A` which repeats
+ * forever.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.repeat = repeat;
+const repeatEffect = internal.repeatEffect;
+/**
+ * Creates a stream from an effect producing chunks of `A` values which
+ * repeats forever.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.repeatEffect = repeatEffect;
+const repeatEffectChunk = internal.repeatEffectChunk;
+/**
+ * Creates a stream from an effect producing chunks of `A` values until it
+ * fails with `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.repeatEffectChunk = repeatEffectChunk;
+const repeatEffectChunkOption = internal.repeatEffectChunkOption;
+/**
+ * Creates a stream from an effect producing values of type `A` until it fails
+ * with `None`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.repeatEffectChunkOption = repeatEffectChunkOption;
+const repeatEffectOption = internal.repeatEffectOption;
+/**
+ * Creates a stream from an effect producing a value of type `A`, which is
+ * repeated using the specified schedule.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.repeatEffectOption = repeatEffectOption;
+const repeatEffectWithSchedule = internal.repeatEffectWithSchedule;
+/**
+ * Repeats the entire stream using the specified schedule. The stream will
+ * execute normally, and then repeat again according to the provided schedule.
+ * The schedule output will be emitted at the end of each repetition.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.repeatEffectWithSchedule = repeatEffectWithSchedule;
+const repeatEither = internal.repeatEither;
+/**
+ * Repeats each element of the stream using the provided schedule. Repetitions
+ * are done in addition to the first execution, which means using
+ * `Schedule.recurs(1)` actually results in the original effect, plus an
+ * additional recurrence, for a total of two repetitions of each value in the
+ * stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.repeatEither = repeatEither;
+const repeatElements = internal.repeatElements;
+/**
+ * Repeats each element of the stream using the provided schedule. When the
+ * schedule is finished, then the output of the schedule will be emitted into
+ * the stream. Repetitions are done in addition to the first execution, which
+ * means using `Schedule.recurs(1)` actually results in the original effect,
+ * plus an additional recurrence, for a total of two repetitions of each value
+ * in the stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.repeatElements = repeatElements;
+const repeatElementsEither = internal.repeatElementsEither;
+/**
+ * Repeats each element of the stream using the provided schedule. When the
+ * schedule is finished, then the output of the schedule will be emitted into
+ * the stream. Repetitions are done in addition to the first execution, which
+ * means using `Schedule.recurs(1)` actually results in the original effect,
+ * plus an additional recurrence, for a total of two repetitions of each value
+ * in the stream.
+ *
+ * This function accepts two conversion functions, which allow the output of
+ * this stream and the output of the provided schedule to be unified into a
+ * single type. For example, `Either` or similar data type.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.repeatElementsEither = repeatElementsEither;
+const repeatElementsWith = internal.repeatElementsWith;
+/**
+ * Repeats the provided value infinitely.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.repeatElementsWith = repeatElementsWith;
+const repeatForever = internal.repeatForever;
+/**
+ * Repeats the entire stream using the specified schedule. The stream will
+ * execute normally, and then repeat again according to the provided schedule.
+ * The schedule output will be emitted at the end of each repetition and can
+ * be unified with the stream elements using the provided functions.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.repeatForever = repeatForever;
+const repeatWith = internal.repeatWith;
+/**
+ * When the stream fails, retry it according to the given schedule
+ *
+ * This retries the entire stream, so will re-execute all of the stream's
+ * acquire operations.
+ *
+ * The schedule is reset as soon as the first element passes through the
+ * stream again.
+ *
+ * @param schedule A `Schedule` receiving as input the errors of the stream.
+ * @since 1.0.0
+ * @category utils
+ */
+exports.repeatWith = repeatWith;
+const retry = internal.retry;
+/**
+ * Fails with the error `None` if value is `Left`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.retry = retry;
+const right = internal.right;
+/**
+ * Fails with given error 'e' if value is `Left`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.right = right;
+const rightOrFail = internal.rightOrFail;
+/**
+ * Runs the sink on the stream to produce either the sink's result or an error.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.rightOrFail = rightOrFail;
+const run = internal.run;
+/**
+ * Runs the stream and collects all of its elements to a chunk.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.run = run;
+const runCollect = internal.runCollect;
+/**
+ * Runs the stream and emits the number of elements processed
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runCollect = runCollect;
+const runCount = internal.runCount;
+/**
+ * Runs the stream only for its effects. The emitted elements are discarded.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runCount = runCount;
+const runDrain = internal.runDrain;
+/**
+ * Executes a pure fold over the stream of values - reduces all elements in
+ * the stream to a value of type `S`.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runDrain = runDrain;
+const runFold = internal.runFold;
+/**
+ * Executes an effectful fold over the stream of values.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runFold = runFold;
+const runFoldEffect = internal.runFoldEffect;
+/**
+ * Executes a pure fold over the stream of values. Returns a scoped value that
+ * represents the scope of the stream.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runFoldEffect = runFoldEffect;
+const runFoldScoped = internal.runFoldScoped;
+/**
+ * Executes an effectful fold over the stream of values. Returns a scoped
+ * value that represents the scope of the stream.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runFoldScoped = runFoldScoped;
+const runFoldScopedEffect = internal.runFoldScopedEffect;
+/**
+ * Reduces the elements in the stream to a value of type `S`. Stops the fold
+ * early when the condition is not fulfilled. Example:
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runFoldScopedEffect = runFoldScopedEffect;
+const runFoldWhile = internal.runFoldWhile;
+/**
+ * Executes an effectful fold over the stream of values. Stops the fold early
+ * when the condition is not fulfilled.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runFoldWhile = runFoldWhile;
+const runFoldWhileEffect = internal.runFoldWhileEffect;
+/**
+ * Executes a pure fold over the stream of values. Returns a scoped value that
+ * represents the scope of the stream. Stops the fold early when the condition
+ * is not fulfilled.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runFoldWhileEffect = runFoldWhileEffect;
+const runFoldWhileScoped = internal.runFoldWhileScoped;
+/**
+ * Executes an effectful fold over the stream of values. Returns a scoped
+ * value that represents the scope of the stream. Stops the fold early when
+ * the condition is not fulfilled.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runFoldWhileScoped = runFoldWhileScoped;
+const runFoldWhileScopedEffect = internal.runFoldWhileScopedEffect;
+/**
+ * Consumes all elements of the stream, passing them to the specified
+ * callback.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runFoldWhileScopedEffect = runFoldWhileScopedEffect;
+const runForEach = internal.runForEach;
+/**
+ * Consumes all elements of the stream, passing them to the specified
+ * callback.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runForEach = runForEach;
+const runForEachChunk = internal.runForEachChunk;
+/**
+ * Like `Stream.runForEachChunk`, but returns a scoped effect so the
+ * finalization order can be controlled.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runForEachChunk = runForEachChunk;
+const runForEachChunkScoped = internal.runForEachChunkScoped;
+/**
+ * Like `Stream.forEach`, but returns a scoped effect so the finalization
+ * order can be controlled.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runForEachChunkScoped = runForEachChunkScoped;
+const runForEachScoped = internal.runForEachScoped;
+/**
+ * Consumes elements of the stream, passing them to the specified callback,
+ * and terminating consumption when the callback returns `false`.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runForEachScoped = runForEachScoped;
+const runForEachWhile = internal.runForEachWhile;
+/**
+ * Like `Stream.runForEachWhile`, but returns a scoped effect so the
+ * finalization order can be controlled.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runForEachWhile = runForEachWhile;
+const runForEachWhileScoped = internal.runForEachWhileScoped;
+/**
+ * Runs the stream to completion and yields the first value emitted by it,
+ * discarding the rest of the elements.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runForEachWhileScoped = runForEachWhileScoped;
+const runHead = internal.runHead;
+/**
+ * Publishes elements of this stream to a hub. Stream failure and ending will
+ * also be signalled.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runHead = runHead;
+const runIntoHub = internal.runIntoHub;
+/**
+ * Like `Stream.runIntoHub`, but provides the result as a scoped effect to
+ * allow for scope composition.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runIntoHub = runIntoHub;
+const runIntoHubScoped = internal.runIntoHubScoped;
+/**
+ * Enqueues elements of this stream into a queue. Stream failure and ending
+ * will also be signalled.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runIntoHubScoped = runIntoHubScoped;
+const runIntoQueue = internal.runIntoQueue;
+/**
+ * Like `Stream.runIntoQueue`, but provides the result as a scoped [[ZIO]]
+ * to allow for scope composition.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runIntoQueue = runIntoQueue;
+const runIntoQueueElementsScoped = internal.runIntoQueueElementsScoped;
+/**
+ * Like `Stream.runIntoQueue`, but provides the result as a scoped effect
+ * to allow for scope composition.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runIntoQueueElementsScoped = runIntoQueueElementsScoped;
+const runIntoQueueScoped = internal.runIntoQueueScoped;
+/**
+ * Runs the stream to completion and yields the last value emitted by it,
+ * discarding the rest of the elements.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runIntoQueueScoped = runIntoQueueScoped;
+const runLast = internal.runLast;
+/**
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runLast = runLast;
+const runScoped = internal.runScoped;
+/**
+ * Runs the stream to a sink which sums elements, provided they are Numeric.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.runScoped = runScoped;
+const runSum = internal.runSum;
+/**
+ * Statefully maps over the elements of this stream to produce all
+ * intermediate results of type `S` given an initial S.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.runSum = runSum;
+const scan = internal.scan;
+/**
+ * Statefully and effectfully maps over the elements of this stream to produce
+ * all intermediate results of type `S` given an initial S.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.scan = scan;
+const scanEffect = internal.scanEffect;
+/**
+ * Statefully maps over the elements of this stream to produce all
+ * intermediate results.
+ *
+ * See also `Stream.scan`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.scanEffect = scanEffect;
+const scanReduce = internal.scanReduce;
+/**
+ * Statefully and effectfully maps over the elements of this stream to produce
+ * all intermediate results.
+ *
+ * See also `Stream.scanEffect`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.scanReduce = scanReduce;
+const scanReduceEffect = internal.scanReduceEffect;
+/**
+ * Schedules the output of the stream using the provided `schedule`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.scanReduceEffect = scanReduceEffect;
+const schedule = internal.schedule;
+/**
+ * Schedules the output of the stream using the provided `schedule` and emits
+ * its output at the end (if `schedule` is finite).
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.schedule = schedule;
+const scheduleEither = internal.scheduleEither;
+/**
+ * Schedules the output of the stream using the provided `schedule` and emits
+ * its output at the end (if `schedule` is finite). Uses the provided function
+ * to align the stream and schedule outputs on the same type.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.scheduleEither = scheduleEither;
+const scheduleWith = internal.scheduleWith;
+/**
+ * Creates a single-valued stream from a scoped resource.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.scheduleWith = scheduleWith;
+const scoped = internal.scoped;
+/**
+ * Accesses the specified service in the context of the effect.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.scoped = scoped;
+const service = internal.service;
+/**
+ * Accesses the specified service in the context of the stream.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.service = service;
+const serviceWith = internal.serviceWith;
+/**
+ * Accesses the specified service in the context of the stream in the
+ * context of an effect.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.serviceWith = serviceWith;
+const serviceWithEffect = internal.serviceWithEffect;
+/**
+ * Accesses the specified service in the context of the stream in the
+ * context of a stream.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.serviceWithEffect = serviceWithEffect;
+const serviceWithStream = internal.serviceWithStream;
+/**
+ * Emits a sliding window of `n` elements.
+ *
+ * ```ts
+ * import * as Stream from "@effect/stream/Stream"
+ * import { pipe } from "@fp-ts/core/Function"
+ *
+ * pipe(
+ *   Stream.make(1, 2, 3, 4),
+ *   Stream.sliding(2),
+ *   Stream.runCollect
+ * )
+ * // => Chunk(Chunk(1, 2), Chunk(2, 3), Chunk(3, 4))
+ * ```
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.serviceWithStream = serviceWithStream;
+const sliding = internal.sliding;
+/**
+ * Converts an option on values into an option on errors.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.sliding = sliding;
+const some = internal.some;
+/**
+ * Extracts the optional value, or returns the given 'default'.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.some = some;
+const someOrElse = internal.someOrElse;
+/**
+ * Extracts the optional value, or fails with the given error 'e'.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.someOrElse = someOrElse;
+const someOrFail = internal.someOrFail;
+/**
+ * Splits elements based on a predicate.
+ *
+ * ```ts
+ * import * as Stream from "@effect/stream/Stream"
+ * import { pipe } from "@fp-ts/core/Function"
+ *
+ * pipe(
+ *   Stream.range(1, 10),
+ *   Stream.split((n) => n % 4 === 0),
+ *   Stream.runCollect
+ * )
+ * // => Chunk(Chunk(1, 2, 3), Chunk(5, 6, 7), Chunk(9))
+ * ```
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.someOrFail = someOrFail;
+const split = internal.split;
+/**
+ * Splits elements on a delimiter and transforms the splits into desired output.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.split = split;
+const splitOnChunk = internal.splitOnChunk;
+/**
+ * Creates a single-valued pure stream.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.splitOnChunk = splitOnChunk;
+const succeed = internal.succeed;
+/**
+ * Creates a single-valued pure stream.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.succeed = succeed;
+const sync = internal.sync;
+/**
+ * Returns a lazily constructed stream.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.sync = sync;
+const suspend = internal.suspend;
+/**
+ * Takes the specified number of elements from this stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.suspend = suspend;
+const take = internal.take;
+/**
+ * Takes the last specified number of elements from this stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.take = take;
+const takeRight = internal.takeRight;
+/**
+ * Takes all elements of the stream until the specified predicate evaluates to
+ * `true`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.takeRight = takeRight;
+const takeUntil = internal.takeUntil;
+/**
+ * Takes all elements of the stream until the specified effectual predicate
+ * evaluates to `true`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.takeUntil = takeUntil;
+const takeUntilEffect = internal.takeUntilEffect;
+/**
+ * Takes all elements of the stream for as long as the specified predicate
+ * evaluates to `true`.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.takeUntilEffect = takeUntilEffect;
+const takeWhile = internal.takeWhile;
+/**
+ * Adds an effect to consumption of every element of the stream.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.takeWhile = takeWhile;
+const tap = internal.tap;
+/**
+ * Returns a stream that effectfully "peeks" at the failure of the stream.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.tap = tap;
+const tapError = internal.tapError;
+/**
+ * Returns a stream that effectfully "peeks" at the cause of failure of the
+ * stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.tapError = tapError;
+const tapErrorCause = internal.tapErrorCause;
+/**
+ * Sends all elements emitted by this stream to the specified sink in addition
+ * to emitting them.
+ *
+ * @since 1.0.0
+ * @category sequencing
+ */
+exports.tapErrorCause = tapErrorCause;
+const tapSink = internal.tapSink;
+/**
+ * Throttles the chunks of this stream according to the given bandwidth
+ * parameters using the token bucket algorithm. Allows for burst in the
+ * processing of elements by allowing the token bucket to accumulate tokens up
+ * to a `units + burst` threshold. Chunks that do not meet the bandwidth
+ * constraints are dropped. The weight of each chunk is determined by the
+ * `costFn` function.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.tapSink = tapSink;
+const throttleEnforce = internal.throttleEnforce;
+/**
+ * Throttles the chunks of this stream according to the given bandwidth
+ * parameters using the token bucket algorithm. Allows for burst in the
+ * processing of elements by allowing the token bucket to accumulate tokens up
+ * to a `units + burst` threshold. Chunks that do not meet the bandwidth
+ * constraints are dropped. The weight of each chunk is determined by the
+ * `costFn` effectful function.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.throttleEnforce = throttleEnforce;
+const throttleEnforceEffect = internal.throttleEnforceEffect;
+/**
+ * Delays the chunks of this stream according to the given bandwidth
+ * parameters using the token bucket algorithm. Allows for burst in the
+ * processing of elements by allowing the token bucket to accumulate tokens up
+ * to a `units + burst` threshold. The weight of each chunk is determined by
+ * the `costFn` function.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.throttleEnforceEffect = throttleEnforceEffect;
+const throttleShape = internal.throttleShape;
+/**
+ * Delays the chunks of this stream according to the given bandwidth
+ * parameters using the token bucket algorithm. Allows for burst in the
+ * processing of elements by allowing the token bucket to accumulate tokens up
+ * to a `units + burst` threshold. The weight of each chunk is determined by
+ * the `costFn` effectful function.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.throttleShape = throttleShape;
+const throttleShapeEffect = internal.throttleShapeEffect;
+/**
+ * A stream that emits Unit values spaced by the specified duration.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.throttleShapeEffect = throttleShapeEffect;
+const tick = internal.tick;
+/**
+ * Ends the stream if it does not produce a value after the specified duration.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.tick = tick;
+const timeout = internal.timeout;
+/**
+ * Fails the stream with given error if it does not produce a value after d
+ * duration.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.timeout = timeout;
+const timeoutFail = internal.timeoutFail;
+/**
+ * Fails the stream with given cause if it does not produce a value after d
+ * duration.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.timeoutFail = timeoutFail;
+const timeoutFailCause = internal.timeoutFailCause;
+/**
+ * Switches the stream if it does not produce a value after the specified
+ * duration.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.timeoutFailCause = timeoutFailCause;
+const timeoutTo = internal.timeoutTo;
+/**
+ * Converts the stream to a scoped hub of chunks. After the scope is closed,
+ * the hub will never again produce values and should be discarded.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.timeoutTo = timeoutTo;
+const toHub = internal.toHub;
+/**
+ * Returns in a scope a ZIO effect that can be used to repeatedly pull chunks
+ * from the stream. The pull effect fails with None when the stream is
+ * finished, or with Some error if it fails, otherwise it returns a chunk of
+ * the stream's output.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.toHub = toHub;
+const toPull = internal.toPull;
+/**
+ * Converts the stream to a scoped queue of chunks. After the scope is closed,
+ * the queue will never again produce values and should be discarded.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.toPull = toPull;
+const toQueue = internal.toQueue;
+/**
+ * Converts the stream to a dropping scoped queue of chunks. After the scope
+ * is closed, the queue will never again produce values and should be
+ * discarded.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.toQueue = toQueue;
+const toQueueDropping = internal.toQueueDropping;
+/**
+ * Converts the stream to a scoped queue of elements. After the scope is
+ * closed, the queue will never again produce values and should be discarded.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.toQueueDropping = toQueueDropping;
+const toQueueOfElements = internal.toQueueOfElements;
+/**
+ * Converts the stream to a sliding scoped queue of chunks. After the scope is
+ * closed, the queue will never again produce values and should be discarded.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.toQueueOfElements = toQueueOfElements;
+const toQueueSliding = internal.toQueueSliding;
+/**
+ * Converts the stream into an unbounded scoped queue. After the scope is
+ * closed, the queue will never again produce values and should be discarded.
+ *
+ * @macro traced
+ * @since 1.0.0
+ * @category destructors
+ */
+exports.toQueueSliding = toQueueSliding;
+const toQueueUnbounded = internal.toQueueUnbounded;
+/**
+ * Applies the transducer to the stream and emits its outputs.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.toQueueUnbounded = toQueueUnbounded;
+const transduce = internal.transduce;
+/**
+ * Creates a stream by peeling off the "layers" of a value of type `S`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.transduce = transduce;
+const unfold = internal.unfold;
+/**
+ * Creates a stream by peeling off the "layers" of a value of type `S`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.unfold = unfold;
+const unfoldChunk = internal.unfoldChunk;
+/**
+ * Creates a stream by effectfully peeling off the "layers" of a value of type
+ * `S`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.unfoldChunk = unfoldChunk;
+const unfoldChunkEffect = internal.unfoldChunkEffect;
+/**
+ * Creates a stream by effectfully peeling off the "layers" of a value of type
+ * `S`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.unfoldChunkEffect = unfoldChunkEffect;
+const unfoldEffect = internal.unfoldEffect;
+/**
+ * A stream that contains a single `Unit` value.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.unfoldEffect = unfoldEffect;
+const unit = internal.unit;
+/**
+ * Creates a stream produced from an `Effect`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.unit = unit;
+const unwrap = internal.unwrap;
+/**
+ * Creates a stream produced from a scoped `Effect`.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.unwrap = unwrap;
+const unwrapScoped = internal.unwrapScoped;
+/**
+ * Updates the specified service within the context of the `Stream`.
+ *
+ * @since 1.0.0
+ * @category context
+ */
+exports.unwrapScoped = unwrapScoped;
+const updateService = internal.updateService;
+/**
+ * Returns the specified stream if the given condition is satisfied, otherwise
+ * returns an empty stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.updateService = updateService;
+const when = internal.when;
+/**
+ * Returns the resulting stream when the given `PartialFunction` is defined
+ * for the given value, otherwise returns an empty stream.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.when = when;
+const whenCase = internal.whenCase;
+/**
+ * Returns the stream when the given partial function is defined for the given
+ * effectful value, otherwise returns an empty stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.whenCase = whenCase;
+const whenCaseEffect = internal.whenCaseEffect;
+/**
+ * Returns the stream if the given effectful condition is satisfied, otherwise
+ * returns an empty stream.
+ *
+ * @since 1.0.0
+ * @category utils
+ */
+exports.whenCaseEffect = whenCaseEffect;
+const whenEffect = internal.whenEffect;
+/**
+ * Zips this stream with another point-wise and emits tuples of elements from
+ * both streams.
+ *
+ * The new stream will end when one of the sides ends.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.whenEffect = whenEffect;
+const zip = internal.zip;
+/**
+ * Zips this stream with another point-wise and emits tuples of elements from
+ * both streams.
+ *
+ * The new stream will end when one of the sides ends.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zip = zip;
+const zipFlatten = internal.zipFlatten;
+/**
+ * Zips this stream with another point-wise, creating a new stream of pairs of
+ * elements from both sides.
+ *
+ * The defaults `defaultLeft` and `defaultRight` will be used if the streams
+ * have different lengths and one of the streams has ended before the other.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipFlatten = zipFlatten;
+const zipAll = internal.zipAll;
+/**
+ * Zips this stream with another point-wise, and keeps only elements from this
+ * stream.
+ *
+ * The provided default value will be used if the other stream ends before
+ * this one.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipAll = zipAll;
+const zipAllLeft = internal.zipAllLeft;
+/**
+ * Zips this stream with another point-wise, and keeps only elements from the
+ * other stream.
+ *
+ * The provided default value will be used if this stream ends before the
+ * other one.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipAllLeft = zipAllLeft;
+const zipAllRight = internal.zipAllRight;
+/**
+ * Zips this stream that is sorted by distinct keys and the specified stream
+ * that is sorted by distinct keys to produce a new stream that is sorted by
+ * distinct keys. Combines values associated with each key into a tuple,
+ * using the specified values `defaultLeft` and `defaultRight` to fill in
+ * missing values.
+ *
+ * This allows zipping potentially unbounded streams of data by key in
+ * constant space but the caller is responsible for ensuring that the
+ * streams are sorted by distinct keys.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipAllRight = zipAllRight;
+const zipAllSortedByKey = internal.zipAllSortedByKey;
+/**
+ * Zips this stream that is sorted by distinct keys and the specified stream
+ * that is sorted by distinct keys to produce a new stream that is sorted by
+ * distinct keys. Keeps only values from this stream, using the specified
+ * value `default` to fill in missing values.
+ *
+ * This allows zipping potentially unbounded streams of data by key in
+ * constant space but the caller is responsible for ensuring that the
+ * streams are sorted by distinct keys.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipAllSortedByKey = zipAllSortedByKey;
+const zipAllSortedByKeyLeft = internal.zipAllSortedByKeyLeft;
+/**
+ * Zips this stream that is sorted by distinct keys and the specified stream
+ * that is sorted by distinct keys to produce a new stream that is sorted by
+ * distinct keys. Keeps only values from that stream, using the specified
+ * value `default` to fill in missing values.
+ *
+ * This allows zipping potentially unbounded streams of data by key in
+ * constant space but the caller is responsible for ensuring that the
+ * streams are sorted by distinct keys.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipAllSortedByKeyLeft = zipAllSortedByKeyLeft;
+const zipAllSortedByKeyRight = internal.zipAllSortedByKeyRight;
+/**
+ * Zips this stream that is sorted by distinct keys and the specified stream
+ * that is sorted by distinct keys to produce a new stream that is sorted by
+ * distinct keys. Uses the functions `left`, `right`, and `both` to handle
+ * the cases where a key and value exist in this stream, that stream, or
+ * both streams.
+ *
+ * This allows zipping potentially unbounded streams of data by key in
+ * constant space but the caller is responsible for ensuring that the
+ * streams are sorted by distinct keys.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipAllSortedByKeyRight = zipAllSortedByKeyRight;
+const zipAllSortedByKeyWith = internal.zipAllSortedByKeyWith;
+/**
+ * Zips this stream with another point-wise. The provided functions will be
+ * used to create elements for the composed stream.
+ *
+ * The functions `left` and `right` will be used if the streams have different
+ * lengths and one of the streams has ended before the other.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipAllSortedByKeyWith = zipAllSortedByKeyWith;
+const zipAllWith = internal.zipAllWith;
+/**
+ * Zips the two streams so that when a value is emitted by either of the two
+ * streams, it is combined with the latest value from the other stream to
+ * produce a result.
+ *
+ * Note: tracking the latest value is done on a per-chunk basis. That means
+ * that emitted elements that are not the last value in chunks will never be
+ * used for zipping.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipAllWith = zipAllWith;
+const zipLatest = internal.zipLatest;
+/**
+ * Zips the two streams so that when a value is emitted by either of the two
+ * streams, it is combined with the latest value from the other stream to
+ * produce a result.
+ *
+ * Note: tracking the latest value is done on a per-chunk basis. That means
+ * that emitted elements that are not the last value in chunks will never be
+ * used for zipping.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipLatest = zipLatest;
+const zipLatestWith = internal.zipLatestWith;
+/**
+ * Zips this stream with another point-wise, but keeps only the outputs of
+ * this stream.
+ *
+ * The new stream will end when one of the sides ends.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipLatestWith = zipLatestWith;
+const zipLeft = internal.zipLeft;
+/**
+ * Zips this stream with another point-wise, but keeps only the outputs of the
+ * other stream.
+ *
+ * The new stream will end when one of the sides ends.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipLeft = zipLeft;
+const zipRight = internal.zipRight;
+/**
+ * Zips this stream with another point-wise and applies the function to the
+ * paired elements.
+ *
+ * The new stream will end when one of the sides ends.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipRight = zipRight;
+const zipWith = internal.zipWith;
+/**
+ * Zips this stream with another point-wise and applies the function to the
+ * paired elements.
+ *
+ * The new stream will end when one of the sides ends.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipWith = zipWith;
+const zipWithChunks = internal.zipWithChunks;
+/**
+ * Zips each element with the next element if present.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipWithChunks = zipWithChunks;
+const zipWithNext = internal.zipWithNext;
+/**
+ * Zips each element with the previous element. Initially accompanied by
+ * `None`.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipWithNext = zipWithNext;
+const zipWithPrevious = internal.zipWithPrevious;
+/**
+ * Zips each element with both the previous and next element.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipWithPrevious = zipWithPrevious;
+const zipWithPreviousAndNext = internal.zipWithPreviousAndNext;
+/**
+ * Zips this stream together with the index of elements.
+ *
+ * @since 1.0.0
+ * @category zipping
+ */
+exports.zipWithPreviousAndNext = zipWithPreviousAndNext;
+const zipWithIndex = internal.zipWithIndex;
+exports.zipWithIndex = zipWithIndex;
+//# sourceMappingURL=Stream.js.map
+
+/***/ }),
+
+/***/ 9959:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.contextWith = exports.context = exports.concatOut = exports.concatMap = exports.collect = exports.catchAll = exports.bufferChunk = exports.buffer = exports.asUnit = exports.as = exports.acquireUseRelease = exports.ChannelExceptionTypeId = exports.ChannelException = void 0;
+exports.contextWithChannel = contextWithChannel;
+exports.zipRight = exports.zipParRight = exports.zipParLeft = exports.zipPar = exports.zipLeft = exports.zip = exports.writeChunk = exports.writeAll = exports.updateService = exports.unwrapScoped = exports.unwrap = exports.toQueue = exports.toPull = exports.toHub = exports.serviceWithEffect = exports.serviceWithChannel = exports.serviceWith = exports.service = exports.scoped = exports.runDrain = exports.runCollect = exports.run = exports.repeated = exports.read = exports.provideSomeLayer = exports.provideService = exports.provideLayer = exports.pipeToOrFail = exports.orElse = exports.orDieWith = exports.orDie = exports.never = exports.mergeWith = exports.mergeOutWith = exports.mergeOut = exports.mergeMap = exports.mergeAllWith = exports.mergeAllUnboundedWith = exports.mergeAllUnbounded = exports.mergeAll = exports.mapOutEffectPar = exports.mapOutEffect = exports.mapOut = exports.mapErrorCause = exports.mapError = exports.mapEffect = exports.map = exports.isChannelException = exports.interruptWhenDeferred = exports.interruptWhen = exports.identityChannel = exports.fromQueue = exports.fromOption = exports.fromInput = exports.fromHubScoped = exports.fromHub = exports.fromEither = exports.foldChannel = exports.flatten = exports.ensuring = exports.emitCollect = exports.drain = exports.doneCollect = exports.contramapInEffect = exports.contramapIn = exports.contramapErrorEffect = exports.contramapError = exports.contramapEffect = exports.contramapContext = exports.contramap = exports.contextWithEffect = void 0;
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Deferred = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3576));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var Fiber = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(439));
+var Hub = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6230));
+var Layer = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8983));
+var Queue = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9925));
+var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6607));
+var Scope = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6627));
+var executor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4222));
+var mergeDecision = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4674));
+var mergeState = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5482));
+var _mergeStrategy = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2889));
+var singleProducerAsyncInput = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6688));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7679));
+var ChannelStateOpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(586))));
+var MergeDecisionOpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7371))));
+var MergeStateOpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(302))));
+var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+var Context = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8364));
+var Equal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8826));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const acquireUseRelease = (acquire, use, release) => {
+  return (0, _Function.pipe)(Ref.make(() => Effect.unit()), core.fromEffect, core.flatMap(ref => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(acquire, Effect.tap(a => Ref.set(ref, exit => release(a, exit))), Effect.uninterruptible)), core.flatMap(use), core.ensuringWith(exit => (0, _Function.pipe)(Ref.get(ref), Effect.flatMap(f => f(exit)))))));
+};
+/** @internal */
+exports.acquireUseRelease = acquireUseRelease;
+const as = value => {
+  return self => (0, _Function.pipe)(self, map(() => value));
+};
+/** @internal */
+exports.as = as;
+const asUnit = self => (0, _Function.pipe)(self, map(_Function.constVoid));
+/** @internal */
+exports.asUnit = asUnit;
+const buffer = (empty, isEmpty, ref) => core.suspend(() => {
+  const doBuffer = (empty, isEmpty, ref) => (0, _Function.pipe)(Ref.modify(ref, inElem => isEmpty(inElem) ? [core.readWith(input => (0, _Function.pipe)(core.write(input), core.flatMap(() => doBuffer(empty, isEmpty, ref))), error => core.fail(error), done => core.succeedNow(done)), inElem] : [(0, _Function.pipe)(core.write(inElem), core.flatMap(() => doBuffer(empty, isEmpty, ref))), empty]), unwrap);
+  return doBuffer(empty, isEmpty, ref);
+});
+/** @internal */
+exports.buffer = buffer;
+const bufferChunk = ref => buffer(Chunk.empty(), Chunk.isEmpty, ref);
+/** @internal */
+exports.bufferChunk = bufferChunk;
+const catchAll = f => {
+  return self => (0, _Function.pipe)(self, core.catchAllCause(cause => (0, _Function.pipe)(Cause.failureOrCause(cause), Either.match(f, core.failCause))));
+};
+/** @internal */
+exports.catchAll = catchAll;
+const concatMap = f => {
+  return self => (0, _Function.pipe)(self, core.concatMapWith(f, () => void 0, () => void 0));
+};
+/** @internal */
+exports.concatMap = concatMap;
+const collect = pf => {
+  return self => {
+    const collector = core.readWith(out => (0, _Function.pipe)(pf(out), Option.match(() => collector, out2 => (0, _Function.pipe)(core.write(out2), core.flatMap(() => collector)))), core.fail, core.succeedNow);
+    return (0, _Function.pipe)(self, core.pipeTo(collector));
+  };
+};
+/** @internal */
+exports.collect = collect;
+const concatOut = self => core.concatAll(self);
+/** @internal */
+exports.concatOut = concatOut;
+const contramap = f => {
+  return self => {
+    const reader = core.readWith(inElem => (0, _Function.pipe)(core.write(inElem), core.flatMap(() => reader)), core.fail, done => core.succeedNow(f(done)));
+    return (0, _Function.pipe)(reader, core.pipeTo(self));
+  };
+};
+/** @internal */
+exports.contramap = contramap;
+const contramapEffect = f => {
+  return self => {
+    const reader = core.readWith(inElem => (0, _Function.pipe)(core.write(inElem), core.flatMap(() => reader)), core.fail, done => core.fromEffect(f(done)));
+    return (0, _Function.pipe)(reader, core.pipeTo(self));
+  };
+};
+/** @internal */
+exports.contramapEffect = contramapEffect;
+const contramapError = f => {
+  return self => {
+    const reader = core.readWith(inElem => (0, _Function.pipe)(core.write(inElem), core.flatMap(() => reader)), error => core.fail(f(error)), core.succeedNow);
+    return (0, _Function.pipe)(reader, core.pipeTo(self));
+  };
+};
+/** @internal */
+exports.contramapError = contramapError;
+const contramapErrorEffect = f => {
+  return self => {
+    const reader = core.readWith(inElem => (0, _Function.pipe)(core.write(inElem), core.flatMap(() => reader)), error => core.fromEffect(f(error)), core.succeedNow);
+    return (0, _Function.pipe)(reader, core.pipeTo(self));
+  };
+};
+/** @internal */
+exports.contramapErrorEffect = contramapErrorEffect;
+const contramapIn = f => {
+  return self => {
+    const reader = core.readWith(inElem => (0, _Function.pipe)(core.write(f(inElem)), core.flatMap(() => reader)), core.fail, core.succeedNow);
+    return (0, _Function.pipe)(reader, core.pipeTo(self));
+  };
+};
+exports.contramapIn = contramapIn;
+const contramapInEffect = f => {
+  return self => {
+    const reader = core.readWith(inElem => (0, _Function.pipe)(core.fromEffect(f(inElem)), core.flatMap(core.write), core.flatMap(() => reader)), core.fail, core.succeedNow);
+    return (0, _Function.pipe)(reader, core.pipeTo(self));
+  };
+};
+/** @internal */
+exports.contramapInEffect = contramapInEffect;
+const doneCollect = self => {
+  return core.suspend(() => {
+    const builder = [];
+    return (0, _Function.pipe)(self, core.pipeTo(doneCollectReader(builder)), core.flatMap(outDone => core.succeed([Chunk.unsafeFromArray(builder), outDone])));
+  });
+};
+/** @internal */
+exports.doneCollect = doneCollect;
+const doneCollectReader = builder => {
+  return core.readWith(outElem => (0, _Function.pipe)(core.sync(() => {
+    builder.push(outElem);
+  }), core.flatMap(() => doneCollectReader(builder))), core.fail, core.succeed);
+};
+/** @internal */
+const drain = self => {
+  const drainer = core.readWithCause(() => drainer, core.failCause, core.succeed);
+  return (0, _Function.pipe)(self, core.pipeTo(drainer));
+};
+/** @internal */
+exports.drain = drain;
+const emitCollect = self => {
+  return (0, _Function.pipe)(doneCollect(self), core.flatMap(core.write));
+};
+/** @internal */
+exports.emitCollect = emitCollect;
+const ensuring = finalizer => {
+  return self => (0, _Function.pipe)(self, core.ensuringWith(() => finalizer));
+};
+/** @internal */
+exports.ensuring = ensuring;
+const context = () => {
+  return core.fromEffect(Effect.context());
+};
+/** @internal */
+exports.context = context;
+const contextWith = f => {
+  return (0, _Function.pipe)(context(), map(f));
+};
+/** @internal */
+exports.contextWith = contextWith;
+function contextWithChannel(f) {
+  return (0, _Function.pipe)(context(), core.flatMap(f));
+}
+/** @internal */
+const contextWithEffect = f => {
+  return (0, _Function.pipe)(context(), mapEffect(f));
+};
+/** @internal */
+exports.contextWithEffect = contextWithEffect;
+const flatten = self => (0, _Function.pipe)(self, core.flatMap(_Function.identity));
+/** @internal */
+exports.flatten = flatten;
+const foldChannel = (onError, onSuccess) => {
+  return self => (0, _Function.pipe)(self, core.foldCauseChannel(cause => {
+    const either = Cause.failureOrCause(cause);
+    switch (either._tag) {
+      case "Left":
+        {
+          return onError(either.left);
+        }
+      case "Right":
+        {
+          return core.failCause(either.right);
+        }
+    }
+  }, onSuccess));
+};
+/** @internal */
+exports.foldChannel = foldChannel;
+const fromEither = either => core.suspend(() => (0, _Function.pipe)(either, Either.match(core.fail, core.succeed)));
+/** @internal */
+exports.fromEither = fromEither;
+const fromInput = input => {
+  return unwrap(input.takeWith(core.failCause, elem => (0, _Function.pipe)(core.write(elem), core.flatMap(() => fromInput(input))), core.succeed));
+};
+/** @internal */
+exports.fromInput = fromInput;
+const fromHub = hub => {
+  return unwrapScoped((0, _Function.pipe)(Hub.subscribe(hub), Effect.map(fromQueue)));
+};
+/** @internal */
+exports.fromHub = fromHub;
+const fromHubScoped = /*#__PURE__*/Debug.methodWithTrace(trace => hub => (0, _Function.pipe)(Hub.subscribe(hub), Effect.map(fromQueue)).traced(trace));
+/** @internal */
+exports.fromHubScoped = fromHubScoped;
+const fromOption = option => {
+  return core.suspend(() => (0, _Function.pipe)(option, Option.match(() => core.fail(Option.none()), core.succeed)));
+};
+/** @internal */
+exports.fromOption = fromOption;
+const fromQueue = queue => {
+  return core.suspend(() => fromQueueInternal(queue));
+};
+/** @internal */
+exports.fromQueue = fromQueue;
+const fromQueueInternal = queue => (0, _Function.pipe)(core.fromEffect(Queue.take(queue)), core.flatMap(Either.match(Exit.match(core.failCause, core.succeedNow), elem => (0, _Function.pipe)(core.write(elem), core.flatMap(() => fromQueueInternal(queue))))));
+/** @internal */
+const identityChannel = () => core.readWith(input => (0, _Function.pipe)(core.write(input), core.flatMap(() => identityChannel())), core.fail, core.succeedNow);
+/** @internal */
+exports.identityChannel = identityChannel;
+const interruptWhen = effect => {
+  return self => (0, _Function.pipe)(self, mergeWith(core.fromEffect(effect), selfDone => mergeDecision.Done(Effect.done(selfDone)), effectDone => mergeDecision.Done(Effect.done(effectDone))));
+};
+/** @internal */
+exports.interruptWhen = interruptWhen;
+const interruptWhenDeferred = deferred => {
+  return self => (0, _Function.pipe)(self, interruptWhen(Deferred.await(deferred)));
+};
+/** @internal */
+exports.interruptWhenDeferred = interruptWhenDeferred;
+const map = f => {
+  return self => (0, _Function.pipe)(self, core.flatMap(a => core.sync(() => f(a))));
+};
+/** @internal */
+exports.map = map;
+const mapEffect = f => {
+  return self => (0, _Function.pipe)(self, core.flatMap(z => core.fromEffect(f(z))));
+};
+/** @internal */
+exports.mapEffect = mapEffect;
+const mapError = f => {
+  return self => (0, _Function.pipe)(self, mapErrorCause(Cause.map(f)));
+};
+/** @internal */
+exports.mapError = mapError;
+const mapErrorCause = f => {
+  return self => (0, _Function.pipe)(self, core.catchAllCause(cause => core.failCause(f(cause))));
+};
+/** @internal */
+exports.mapErrorCause = mapErrorCause;
+const mapOut = f => {
+  return self => {
+    const reader = core.readWith(outElem => (0, _Function.pipe)(core.write(f(outElem)), core.flatMap(() => reader)), core.fail, core.succeedNow);
+    return (0, _Function.pipe)(self, core.pipeTo(reader));
+  };
+};
+/** @internal */
+exports.mapOut = mapOut;
+const mapOutEffect = f => {
+  return self => {
+    const reader = core.readWith(outElem => (0, _Function.pipe)(core.fromEffect(f(outElem)), core.flatMap(core.write), core.flatMap(() => reader)), core.fail, core.succeedNow);
+    return (0, _Function.pipe)(self, core.pipeTo(reader));
+  };
+};
+/** @internal */
+exports.mapOutEffect = mapOutEffect;
+const mapOutEffectPar = n => {
+  return f => {
+    return self => (0, _Function.pipe)(Effect.gen(function* ($) {
+      const queue = yield* $(Effect.acquireRelease(Queue.bounded(n), Queue.shutdown));
+      const errorSignal = yield* $(Deferred.make());
+      const withPermits = n === Number.POSITIVE_INFINITY ? _ => _Function.identity : (yield* $(Effect.makeSemaphore(n))).withPermits;
+      const pull = yield* $(toPull(self));
+      yield* $((0, _Function.pipe)(pull, Effect.matchCauseEffect(cause => Queue.offer(queue, Effect.failCause(cause)), either => (0, _Function.pipe)(either, Either.match(outDone => {
+        const lock = withPermits(n);
+        return (0, _Function.pipe)(lock(Effect.unit()), Effect.interruptible, Effect.zipRight((0, _Function.pipe)(Queue.offer(queue, Effect.succeed(Either.left(outDone))), Effect.asUnit)));
+      }, outElem => Effect.gen(function* ($) {
+        const deferred = yield* $(Deferred.make());
+        const latch = yield* $(Deferred.make());
+        yield* $((0, _Function.pipe)(Queue.offer(queue, (0, _Function.pipe)(Deferred.await(deferred), Effect.map(Either.right))), Effect.asUnit));
+        yield* $((0, _Function.pipe)(Deferred.succeed(latch, void 0), Effect.zipRight((0, _Function.pipe)(Effect.uninterruptibleMask(restore => (0, _Function.pipe)(restore(Deferred.await(errorSignal)), Effect.exit, Effect.raceFirst((0, _Function.pipe)(restore(f(outElem)), Effect.exit)), Effect.flatMap(Effect.done))), Effect.tapErrorCause(cause => Deferred.failCause(errorSignal, cause)), Effect.intoDeferred(deferred))), withPermits(1), Effect.forkScoped));
+        yield* $(Deferred.await(latch));
+      })))), Effect.forever, Effect.interruptible, Effect.forkScoped));
+      return queue;
+    }), Effect.map(queue => {
+      const consumer = (0, _Function.pipe)(Queue.take(queue), Effect.flatten, Effect.matchCause(core.failCause, Either.match(core.succeedNow, outElem => (0, _Function.pipe)(core.write(outElem), core.flatMap(() => consumer)))), unwrap);
+      return consumer;
+    }), unwrapScoped);
+  };
+};
+/**
+ * @tsplus static effect/core/stream/Channel.Ops mergeAll
+ */
+exports.mapOutEffectPar = mapOutEffectPar;
+const mergeAll = (n, bufferSize = 16, mergeStrategy = _mergeStrategy.BackPressure) => {
+  return channels => mergeAllWith(n, bufferSize, mergeStrategy)(channels, _Function.constVoid);
+};
+/** @internal */
+exports.mergeAll = mergeAll;
+const mergeAllUnbounded = channels => mergeAllWith(Number.POSITIVE_INFINITY)(channels, _Function.constVoid);
+/** @internal */
+exports.mergeAllUnbounded = mergeAllUnbounded;
+const mergeAllUnboundedWith = (channels, f) => mergeAllWith(Number.POSITIVE_INFINITY)(channels, f);
+/** @internal */
+exports.mergeAllUnboundedWith = mergeAllUnboundedWith;
+const mergeAllWith = (n, bufferSize = 16, mergeStrategy = _mergeStrategy.BackPressure) => {
+  return (channels, f) => (0, _Function.pipe)(Effect.gen(function* ($) {
+    const input = yield* $(singleProducerAsyncInput.make());
+    const queueReader = fromInput(input);
+    const queue = yield* $(Effect.acquireRelease(Queue.bounded(bufferSize), Queue.shutdown));
+    const cancelers = yield* $(Effect.acquireRelease(Queue.unbounded(), Queue.shutdown));
+    const lastDone = yield* $(Ref.make(Option.none()));
+    const errorSignal = yield* $(Deferred.make());
+    const withPermits = n === Number.POSITIVE_INFINITY ? _ => _Function.identity : (yield* $(Effect.makeSemaphore(n))).withPermits;
+    const pull = yield* $(toPull(channels));
+    const evaluatePull = pull => (0, _Function.pipe)(pull, Effect.flatMap(Either.match(done => Effect.succeed(Option.some(done)), outElem => (0, _Function.pipe)(Queue.offer(queue, Effect.succeed(Either.right(outElem))), Effect.as(Option.none())))), Effect.repeatUntil(Option.isSome), Effect.flatMap(Option.match(() => Effect.unit(), outDone => Ref.update(lastDone, Option.match(() => Option.some(outDone), lastDone => Option.some(f(lastDone, outDone)))))), Effect.catchAllCause(cause => Cause.isInterrupted(cause) ? Effect.failCause(cause) : (0, _Function.pipe)(Queue.offer(queue, Effect.failCause(cause)), Effect.zipRight(Deferred.succeed(errorSignal, void 0)), Effect.asUnit)));
+    yield* $((0, _Function.pipe)(pull, Effect.matchCauseEffect(cause => (0, _Function.pipe)(Queue.offer(queue, Effect.failCause(cause)), Effect.zipRight(Effect.succeed(false))), Either.match(outDone => (0, _Function.pipe)(Deferred.await(errorSignal), Effect.raceWith(withPermits(n)(Effect.unit()), (_, permitAcquisition) => (0, _Function.pipe)(Fiber.interrupt(permitAcquisition), Effect.as(false)), (_, failureAwait) => (0, _Function.pipe)(Fiber.interrupt(failureAwait), Effect.zipRight((0, _Function.pipe)(Ref.get(lastDone), Effect.flatMap(Option.match(() => Queue.offer(queue, Effect.succeed(Either.left(outDone))), lastDone => Queue.offer(queue, Effect.succeed(Either.left(f(lastDone, outDone)))))), Effect.as(false)))))), channel => (0, _Function.pipe)(mergeStrategy, _mergeStrategy.match(() => Effect.gen(function* ($) {
+      const latch = yield* $(Deferred.make());
+      const raceEffects = (0, _Function.pipe)(queueReader, core.pipeTo(channel), toPull, Effect.flatMap(pull => (0, _Function.pipe)(evaluatePull(pull), Effect.raceAwait(Deferred.await(errorSignal)))), Effect.scoped);
+      yield* $((0, _Function.pipe)(Deferred.succeed(latch, void 0), Effect.zipRight(raceEffects), withPermits(1), Effect.forkScoped));
+      yield* $(Deferred.await(latch));
+      const errored = yield* $(Deferred.isDone(errorSignal));
+      return !errored;
+    }), () => Effect.gen(function* ($) {
+      const canceler = yield* $(Deferred.make());
+      const latch = yield* $(Deferred.make());
+      const size = yield* $(Queue.size(cancelers));
+      yield* $((0, _Function.pipe)(Queue.take(cancelers), Effect.flatMap(_ => Deferred.succeed(_, void 0)), Effect.when(() => size >= n)));
+      yield* $(Queue.offer(cancelers, canceler));
+      const raceEffects = (0, _Function.pipe)(queueReader, core.pipeTo(channel), toPull, Effect.flatMap(pull => (0, _Function.pipe)(evaluatePull(pull), Effect.raceAwait(Deferred.await(errorSignal)), Effect.raceAwait(Deferred.await(canceler)))), Effect.scoped);
+      yield* $((0, _Function.pipe)(Deferred.succeed(latch, void 0), Effect.zipRight(raceEffects), withPermits(1), Effect.forkScoped));
+      yield* $(Deferred.await(latch));
+      const errored = yield* $(Deferred.isDone(errorSignal));
+      return !errored;
+    }))))), Effect.repeatWhileEquals(true), Effect.forkScoped));
+    return [queue, input];
+  }), Effect.map(([queue, input]) => {
+    const consumer = (0, _Function.pipe)(Queue.take(queue), Effect.flatten, Effect.matchCause(core.failCause, Either.match(core.succeedNow, outElem => (0, _Function.pipe)(core.write(outElem), core.flatMap(() => consumer)))), unwrap);
+    return (0, _Function.pipe)(consumer, core.embedInput(input));
+  }), unwrapScoped);
+};
+/** @internal */
+exports.mergeAllWith = mergeAllWith;
+const mergeMap = (n, bufferSize = 16, mergeStrategy = _mergeStrategy.BackPressure) => {
+  return f => {
+    return self => mergeAll(n, bufferSize, mergeStrategy)((0, _Function.pipe)(self, mapOut(f)));
+  };
+};
+/** @internal */
+exports.mergeMap = mergeMap;
+const mergeOut = n => {
+  return self => mergeAll(n)((0, _Function.pipe)(self, mapOut(_Function.identity)));
+};
+/** @internal */
+exports.mergeOut = mergeOut;
+const mergeOutWith = (n, f) => {
+  return self => mergeAllWith(n)((0, _Function.pipe)(self, mapOut(_Function.identity)), f);
+};
+/** @internal */
+exports.mergeOutWith = mergeOutWith;
+const mergeWith = (that, leftDone, rightDone) => {
+  return self => (0, _Function.pipe)(Effect.gen(function* ($) {
+    const input = yield* $(singleProducerAsyncInput.make());
+    const queueReader = fromInput(input);
+    const pullL = yield* $((0, _Function.pipe)(queueReader, core.pipeTo(self), toPull));
+    const pullR = yield* $((0, _Function.pipe)(queueReader, core.pipeTo(that), toPull));
+    const handleSide = (exit, fiber, pull) => (done, both, single) => {
+      const onDecision = decision => {
+        const op = decision;
+        if (op._tag === "Done") {
+          return Effect.succeed(core.fromEffect((0, _Function.pipe)(Fiber.interrupt(fiber), Effect.zipRight(op.effect))));
+        }
+        return (0, _Function.pipe)(Fiber.await(fiber), Effect.map(Exit.match(cause => core.fromEffect(op.f(Exit.failCause(cause))), Either.match(done => core.fromEffect(op.f(Exit.succeed(done))), elem => (0, _Function.pipe)(core.write(elem), zipRight(go(single(op.f))))))));
+      };
+      return (0, _Function.pipe)(exit, Exit.match(cause => onDecision(done(Exit.failCause(cause))), Either.match(z => onDecision(done(Exit.succeed(z))), elem => Effect.succeed((0, _Function.pipe)(core.write(elem), core.flatMap(() => (0, _Function.pipe)(core.fromEffect(Effect.forkDaemon(pull)), core.flatMap(leftFiber => go(both(leftFiber, fiber))))))))));
+    };
+    const go = state => {
+      switch (state._tag) {
+        case "BothRunning":
+          {
+            const leftJoin = Effect.interruptible(Fiber.join(state.left));
+            const rightJoin = Effect.interruptible(Fiber.join(state.right));
+            return unwrap((0, _Function.pipe)(leftJoin, Effect.raceWith(rightJoin, (leftExit, rf) => (0, _Function.pipe)(Fiber.interrupt(rf), Effect.zipRight(handleSide(leftExit, state.right, pullL)(leftDone, mergeState.BothRunning, f => mergeState.LeftDone(f)))), (rightExit, lf) => (0, _Function.pipe)(Fiber.interrupt(lf), Effect.zipRight(handleSide(rightExit, state.left, pullR)(rightDone, (left, right) => mergeState.BothRunning(right, left), f => mergeState.RightDone(f)))))));
+          }
+        case "LeftDone":
+          {
+            return unwrap((0, _Function.pipe)(Effect.exit(pullR), Effect.map(Exit.match(cause => core.fromEffect(state.f(Exit.failCause(cause))), Either.match(done => core.fromEffect(state.f(Exit.succeed(done))), elem => (0, _Function.pipe)(core.write(elem), core.flatMap(() => go(mergeState.LeftDone(state.f)))))))));
+          }
+        case "RightDone":
+          {
+            return unwrap((0, _Function.pipe)(Effect.exit(pullL), Effect.map(Exit.match(cause => core.fromEffect(state.f(Exit.failCause(cause))), Either.match(done => core.fromEffect(state.f(Exit.succeed(done))), elem => (0, _Function.pipe)(core.write(elem), core.flatMap(() => go(mergeState.RightDone(state.f)))))))));
+          }
+      }
+    };
+    return (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(Effect.forkDaemon(pullL), Effect.zipWith(Effect.forkDaemon(pullR), (left, right) => mergeState.BothRunning(left, right)))), core.flatMap(go), core.embedInput(input));
+  }), unwrapScoped);
+};
+/** @internal */
+exports.mergeWith = mergeWith;
+const never = () => core.fromEffect(Effect.never());
+/** @internal */
+exports.never = never;
+const orDie = error => {
+  return self => (0, _Function.pipe)(self, orDieWith(error));
+};
+/** @internal */
+exports.orDie = orDie;
+const orDieWith = f => {
+  return self => (0, _Function.pipe)(self, catchAll(e => {
+    throw f(e);
+  }));
+};
+/** @internal */
+exports.orDieWith = orDieWith;
+const orElse = that => {
+  return self => (0, _Function.pipe)(self, catchAll(that));
+};
+/** @internal */
+exports.orElse = orElse;
+const pipeToOrFail = that => {
+  return self => core.suspend(() => {
+    let channelException = undefined;
+    const reader = core.readWith(outElem => (0, _Function.pipe)(core.write(outElem), core.flatMap(() => reader)), outErr => {
+      channelException = ChannelException(outErr);
+      return (0, _Function.pipe)(core.failCause(Cause.die(channelException)));
+    }, core.succeedNow);
+    const writer = core.readWithCause(outElem => (0, _Function.pipe)(core.write(outElem), core.flatMap(() => writer)), cause => Cause.isDieType(cause) && isChannelException(cause.defect) && Equal.equals(cause.defect, channelException) ? core.fail(cause.defect.error) : core.failCause(cause), core.succeedNow);
+    return (0, _Function.pipe)(self, core.pipeTo(reader), core.pipeTo(that), core.pipeTo(writer));
+  });
+};
+/** @internal */
+exports.pipeToOrFail = pipeToOrFail;
+const provideService = tag => service => self => {
+  return (0, _Function.pipe)(context(), core.flatMap(context => (0, _Function.pipe)(self, core.provideContext((0, _Function.pipe)(context, Context.add(tag)(service))))));
+};
+/** @internal */
+exports.provideService = provideService;
+const provideLayer = layer => {
+  return self => unwrapScoped((0, _Function.pipe)(Layer.build(layer), Effect.map(env => (0, _Function.pipe)(self, core.provideContext(env)))));
+};
+/** @internal */
+exports.provideLayer = provideLayer;
+const contramapContext = f => {
+  return self => contextWithChannel(context => (0, _Function.pipe)(self, core.provideContext(f(context))));
+};
+/** @internal */
+exports.contramapContext = contramapContext;
+const provideSomeLayer = layer => {
+  return self => (0, _Function.pipe)(self,
+  // @ts-expect-error
+  provideLayer((0, _Function.pipe)(Layer.context(), Layer.merge(layer))));
+};
+/** @internal */
+exports.provideSomeLayer = provideSomeLayer;
+const read = () => core.readOrFail(Option.none());
+/** @internal */
+exports.read = read;
+const repeated = self => {
+  return (0, _Function.pipe)(self, core.flatMap(() => repeated(self)));
+};
+/** @internal */
+exports.repeated = repeated;
+const run = /*#__PURE__*/Debug.methodWithTrace(trace => self => Effect.scoped(executor.runScoped(self)).traced(trace));
+/** @internal */
+exports.run = run;
+const runCollect = /*#__PURE__*/Debug.methodWithTrace(trace => self => executor.run(core.collectElements(self)).traced(trace));
+/** @internal */
+exports.runCollect = runCollect;
+const runDrain = /*#__PURE__*/Debug.methodWithTrace(trace => self => executor.run(drain(self)).traced(trace));
+/** @internal */
+exports.runDrain = runDrain;
+const scoped = effect => {
+  return (0, _Function.pipe)(Effect.uninterruptibleMask(restore => (0, _Function.pipe)(Scope.make(), Effect.map(scope => core.acquireReleaseOut((0, _Function.pipe)(restore(Scope.extend(scope)(effect)), Effect.tapErrorCause(cause => Scope.close(scope, Exit.failCause(cause)))), (_, exit) => Scope.close(scope, exit))))), unwrap);
+};
+/** @internal */
+exports.scoped = scoped;
+const service = tag => {
+  return core.fromEffect(Effect.service(tag));
+};
+/** @internal */
+exports.service = service;
+const serviceWith = tag => {
+  return f => {
+    return (0, _Function.pipe)(service(tag), map(f));
+  };
+};
+/** @internal */
+exports.serviceWith = serviceWith;
+const serviceWithChannel = tag => {
+  return f => {
+    return (0, _Function.pipe)(service(tag), core.flatMap(f));
+  };
+};
+/** @internal */
+exports.serviceWithChannel = serviceWithChannel;
+const serviceWithEffect = tag => {
+  return f => {
+    return (0, _Function.pipe)(service(tag), mapEffect(f));
+  };
+};
+/** @internal */
+exports.serviceWithEffect = serviceWithEffect;
+const toHub = hub => {
+  return toQueue(hub);
+};
+/** @internal */
+exports.toHub = toHub;
+const toPull = self => {
+  return (0, _Function.pipe)(Effect.acquireRelease(Effect.sync(() => new executor.ChannelExecutor(self, void 0, _Function.identity)), (exec, exit) => {
+    const finalize = exec.close(exit);
+    return finalize === undefined ? Effect.unit() : finalize;
+  }), Effect.map(exec => Effect.suspendSucceed(() => interpretToPull(exec.run(), exec))));
+};
+/** @internal */
+exports.toPull = toPull;
+const interpretToPull = (channelState, exec) => {
+  const state = channelState;
+  switch (state._tag) {
+    case "Done":
+      {
+        return (0, _Function.pipe)(exec.getDone(), Exit.match(Effect.failCause, done => Effect.succeed(Either.left(done))));
+      }
+    case "Emit":
+      {
+        return Effect.succeed(Either.right(exec.getEmit()));
+      }
+    case "FromEffect":
+      {
+        return (0, _Function.pipe)(state.effect, Effect.flatMap(() => interpretToPull(exec.run(), exec)));
+      }
+    case "Read":
+      {
+        return executor.readUpstream(state, () => interpretToPull(exec.run(), exec), cause => Effect.failCause(cause));
+      }
+  }
+};
+/** @internal */
+const toQueue = queue => {
+  return core.suspend(() => toQueueInternal(queue));
+};
+/** @internal */
+exports.toQueue = toQueue;
+const toQueueInternal = queue => {
+  return core.readWithCause(elem => (0, _Function.pipe)(core.fromEffect(Queue.offer(queue, Either.right(elem))), core.flatMap(() => toQueueInternal(queue))), cause => core.fromEffect((0, _Function.pipe)(Queue.offer(queue, Either.left(Exit.failCause(cause))))), done => core.fromEffect((0, _Function.pipe)(Queue.offer(queue, Either.left(Exit.succeed(done))))));
+};
+/** @internal */
+const unwrap = channel => {
+  return flatten(core.fromEffect(channel));
+};
+/** @internal */
+exports.unwrap = unwrap;
+const unwrapScoped = self => {
+  return core.concatAllWith(scoped(self), (d, _) => d, (d, _) => d);
+};
+/** @internal */
+exports.unwrapScoped = unwrapScoped;
+const updateService = tag => {
+  return f => {
+    return self => (0, _Function.pipe)(self, contramapContext(context => (0, _Function.pipe)(context, Context.merge((0, _Function.pipe)(Context.empty(), Context.add(tag)(f((0, _Function.pipe)(context, Context.unsafeGet(tag)))))))));
+  };
+};
+/** @internal */
+exports.updateService = updateService;
+const writeAll = (...outs) => {
+  return writeChunk(Chunk.fromIterable(outs));
+};
+/** @internal */
+exports.writeAll = writeAll;
+const writeChunk = outs => {
+  return writeChunkWriter(0, outs.length, outs);
+};
+/** @internal */
+exports.writeChunk = writeChunk;
+const writeChunkWriter = (idx, len, chunk) => {
+  return idx === len ? core.unit() : (0, _Function.pipe)(core.write((0, _Function.pipe)(chunk, Chunk.unsafeGet(idx))), core.flatMap(() => writeChunkWriter(idx + 1, len, chunk)));
+};
+/** @internal */
+const zip = that => {
+  return self => (0, _Function.pipe)(self, core.flatMap(a => (0, _Function.pipe)(that, map(b => [a, b]))));
+};
+/** @internal */
+exports.zip = zip;
+const zipLeft = that => {
+  return self => (0, _Function.pipe)(self, core.flatMap(z => (0, _Function.pipe)(that, as(z))));
+};
+/** @internal */
+exports.zipLeft = zipLeft;
+const zipRight = that => {
+  return self => (0, _Function.pipe)(self, core.flatMap(() => that));
+};
+/** @internal */
+exports.zipRight = zipRight;
+const zipPar = that => {
+  return self => (0, _Function.pipe)(self, mergeWith(that, exit1 => mergeDecision.Await(exit2 => Effect.done((0, _Function.pipe)(exit1, Exit.zip(exit2)))), exit2 => mergeDecision.Await(exit1 => Effect.done((0, _Function.pipe)(exit1, Exit.zip(exit2))))));
+};
+/** @internal */
+exports.zipPar = zipPar;
+const zipParLeft = that => {
+  return self => (0, _Function.pipe)(self, zipPar(that), map(tuple => tuple[0]));
+};
+/** @internal */
+exports.zipParLeft = zipParLeft;
+const zipParRight = that => {
+  return self => (0, _Function.pipe)(self, zipPar(that), map(tuple => tuple[1]));
+};
+/** @internal */
+exports.zipParRight = zipParRight;
+const ChannelExceptionTypeId = /*#__PURE__*/Symbol.for("@effect/stream/Channel/errors/ChannelException");
+/** @internal */
+exports.ChannelExceptionTypeId = ChannelExceptionTypeId;
+const ChannelException = error => ({
+  _tag: "ChannelException",
+  [ChannelExceptionTypeId]: ChannelExceptionTypeId,
+  error
+});
+/** @internal */
+exports.ChannelException = ChannelException;
+const isChannelException = u => {
+  return typeof u === "object" && u != null && ChannelExceptionTypeId in u;
+};
+exports.isChannelException = isChannelException;
+//# sourceMappingURL=channel.js.map
+
+/***/ }),
+
+/***/ 4222:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.runScoped = exports.run = exports.readUpstream = exports.ChannelExecutor = void 0;
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var Fiber = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(439));
+var ChannelState = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2704));
+var Continuation = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1263));
+var Subexecutor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8478));
+var upstreamPullRequest = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(368));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7679));
+var ChannelOpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7677))));
+var ChannelStateOpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(586))));
+var ChildExecutorDecisionOpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3116))));
+var ContinuationOpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5664))));
+var UpstreamPullStrategyOpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6674))));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+class ChannelExecutor {
+  constructor(initialChannel, providedEnv, executeCloseLastSubstream) {
+    this._activeSubexecutor = undefined;
+    this._cancelled = undefined;
+    this._closeLastSubstream = undefined;
+    this._done = undefined;
+    this._doneStack = [];
+    this._emitted = undefined;
+    this._input = undefined;
+    this._inProgressFinalizer = undefined;
+    this._currentChannel = initialChannel;
+    this._executeCloseLastSubstream = executeCloseLastSubstream;
+    this._providedEnv = providedEnv;
+  }
+  run() {
+    let result = undefined;
+    while (result === undefined) {
+      if (this._cancelled !== undefined) {
+        result = this.processCancellation();
+      } else if (this._activeSubexecutor !== undefined) {
+        result = this.runSubexecutor();
+      } else {
+        try {
+          if (this._currentChannel === undefined) {
+            result = ChannelState.Done;
+          } else {
+            switch (this._currentChannel._tag) {
+              case "BracketOut":
+                {
+                  result = this.runBracketOut(this._currentChannel);
+                  break;
+                }
+              case "Bridge":
+                {
+                  const bridgeInput = this._currentChannel.input;
+                  // PipeTo(left, Bridge(queue, channel))
+                  // In a fiber: repeatedly run left and push its outputs to the queue
+                  // Add a finalizer to interrupt the fiber and close the executor
+                  this._currentChannel = this._currentChannel.channel;
+                  if (this._input !== undefined) {
+                    const inputExecutor = this._input;
+                    this._input = undefined;
+                    const drainer = (0, _Function.pipe)(bridgeInput.awaitRead(), Effect.flatMap(() => Effect.suspendSucceed(() => {
+                      const state = inputExecutor.run();
+                      switch (state._tag) {
+                        case "Done":
+                          {
+                            return (0, _Function.pipe)(inputExecutor.getDone(), Exit.match(cause => bridgeInput.error(cause), value => bridgeInput.done(value)));
+                          }
+                        case "Emit":
+                          {
+                            return (0, _Function.pipe)(bridgeInput.emit(inputExecutor.getEmit()), Effect.flatMap(() => drainer));
+                          }
+                        case "FromEffect":
+                          {
+                            return (0, _Function.pipe)(state.effect, Effect.matchCauseEffect(cause => bridgeInput.error(cause), () => drainer));
+                          }
+                        case "Read":
+                          {
+                            return readUpstream(state, () => drainer, cause => bridgeInput.error(cause));
+                          }
+                      }
+                    })));
+                    result = ChannelState.FromEffect((0, _Function.pipe)(Effect.fork(drainer), Effect.flatMap(fiber => Effect.sync(() => this.addFinalizer(exit => (0, _Function.pipe)(Fiber.interrupt(fiber), Effect.flatMap(() => Effect.suspendSucceed(() => {
+                      const effect = this.restorePipe(exit, inputExecutor);
+                      return effect !== undefined ? effect : Effect.unit();
+                    }))))))));
+                  }
+                  break;
+                }
+              case "ConcatAll":
+                {
+                  const executor = new ChannelExecutor(this._currentChannel.value(), this._providedEnv, effect => Effect.sync(() => {
+                    const prevLastClose = this._closeLastSubstream === undefined ? Effect.unit() : this._closeLastSubstream;
+                    this._closeLastSubstream = (0, _Function.pipe)(prevLastClose, Effect.zipRight(effect));
+                  }));
+                  executor._input = this._input;
+                  const channel = this._currentChannel;
+                  this._activeSubexecutor = new Subexecutor.PullFromUpstream(executor, value => channel.k(value), undefined, [], (x, y) => channel.combineInners(x, y), (x, y) => channel.combineAll(x, y), request => channel.onPull(request), value => channel.onEmit(value));
+                  this._closeLastSubstream = undefined;
+                  this._currentChannel = undefined;
+                  break;
+                }
+              case "Emit":
+                {
+                  this._emitted = this._currentChannel.out;
+                  this._currentChannel = this._activeSubexecutor !== undefined ? undefined : core.unit();
+                  result = ChannelState.Emit;
+                  break;
+                }
+              case "Ensuring":
+                {
+                  this.runEnsuring(this._currentChannel);
+                  break;
+                }
+              case "Fail":
+                {
+                  result = this.doneHalt(this._currentChannel.error());
+                  break;
+                }
+              case "Fold":
+                {
+                  this._doneStack.unshift(this._currentChannel.k);
+                  this._currentChannel = this._currentChannel.channel;
+                  break;
+                }
+              case "FromEffect":
+                {
+                  const effect = this._providedEnv === undefined ? this._currentChannel.effect() : (0, _Function.pipe)(this._currentChannel.effect(), Effect.provideContext(this._providedEnv));
+                  result = ChannelState.FromEffect((0, _Function.pipe)(effect, Effect.matchCauseEffect(cause => {
+                    const state = this.doneHalt(cause);
+                    return state !== undefined && ChannelState.isFromEffect(state) ? state.effect : Effect.unit();
+                  }, value => {
+                    const state = this.doneSucceed(value);
+                    return state !== undefined && ChannelState.isFromEffect(state) ? state.effect : Effect.unit();
+                  })));
+                  break;
+                }
+              case "PipeTo":
+                {
+                  const previousInput = this._input;
+                  const leftExec = new ChannelExecutor(this._currentChannel.left(), this._providedEnv, effect => this._executeCloseLastSubstream(effect));
+                  leftExec._input = previousInput;
+                  this._input = leftExec;
+                  this.addFinalizer(exit => {
+                    const effect = this.restorePipe(exit, previousInput);
+                    return effect !== undefined ? effect : Effect.unit();
+                  });
+                  this._currentChannel = this._currentChannel.right();
+                  break;
+                }
+              case "Provide":
+                {
+                  const previousEnv = this._providedEnv;
+                  this._providedEnv = this._currentChannel.context();
+                  this._currentChannel = this._currentChannel.inner;
+                  this.addFinalizer(() => Effect.sync(() => {
+                    this._providedEnv = previousEnv;
+                  }));
+                  break;
+                }
+              case "Read":
+                {
+                  const read = this._currentChannel;
+                  result = ChannelState.Read(this._input, _Function.identity, emitted => {
+                    this._currentChannel = read.more(emitted);
+                    return undefined;
+                  }, exit => {
+                    const onExit = exit => {
+                      return read.done.onExit(exit);
+                    };
+                    this._currentChannel = onExit(exit);
+                    return undefined;
+                  });
+                  break;
+                }
+              case "Succeed":
+                {
+                  result = this.doneSucceed(this._currentChannel.evaluate());
+                  break;
+                }
+              case "SucceedNow":
+                {
+                  result = this.doneSucceed(this._currentChannel.terminal);
+                  break;
+                }
+              case "Suspend":
+                {
+                  this._currentChannel = this._currentChannel.channel();
+                  break;
+                }
+            }
+          }
+        } catch (error) {
+          this._currentChannel = core.failCause(Cause.die(error));
+        }
+      }
+    }
+    return result;
+  }
+  getDone() {
+    return this._done;
+  }
+  getEmit() {
+    return this._emitted;
+  }
+  cancelWith(exit) {
+    this._cancelled = exit;
+  }
+  clearInProgressFinalizer() {
+    this._inProgressFinalizer = undefined;
+  }
+  storeInProgressFinalizer(finalizer) {
+    this._inProgressFinalizer = finalizer;
+  }
+  /** @macro traced */
+  popAllFinalizers(exit) {
+    return Debug.bodyWithTrace(trace => {
+      let effect = Effect.succeed(Exit.unit());
+      while (this._doneStack.length !== 0) {
+        const cont = this._doneStack.shift();
+        if (cont._tag === "ContinuationFinalizer") {
+          effect = (0, _Function.pipe)(effect, Effect.flatMap(() => Effect.exit(cont.finalizer(exit))));
+        }
+      }
+      this.storeInProgressFinalizer(effect);
+      return (0, _Function.pipe)(effect, Effect.flatMap(Effect.done)).traced(trace);
+    });
+  }
+  popNextFinalizers() {
+    const builder = [];
+    while (this._doneStack.length !== 0) {
+      const cont = this._doneStack[0];
+      if (cont._tag === "ContinuationK") {
+        return builder;
+      }
+      builder.push(cont);
+      this._doneStack.shift();
+    }
+    return builder;
+  }
+  /** @macro traced */
+  restorePipe(exit, prev) {
+    return Debug.bodyWithTrace(trace => {
+      const currInput = this._input;
+      this._input = prev;
+      if (currInput !== undefined) {
+        const effect = currInput.close(exit);
+        return effect === undefined ? effect : effect.traced(trace);
+      }
+      return Effect.unit().traced(trace);
+    });
+  }
+  /** @macro traced */
+  close(exit) {
+    return Debug.bodyWithTrace(trace => {
+      let runInProgressFinalizers = undefined;
+      const finalizer = this._inProgressFinalizer;
+      if (finalizer !== undefined) {
+        runInProgressFinalizers = (0, _Function.pipe)(finalizer, Effect.ensuring(Effect.sync(() => this.clearInProgressFinalizer())));
+      }
+      let closeSelf = undefined;
+      const selfFinalizers = this.popAllFinalizers(exit);
+      if (selfFinalizers !== undefined) {
+        closeSelf = (0, _Function.pipe)(selfFinalizers, Effect.ensuring(Effect.sync(() => this.clearInProgressFinalizer())));
+      }
+      const closeSubexecutors = this._activeSubexecutor === undefined ? undefined : this._activeSubexecutor.close(exit);
+      if (closeSubexecutors === undefined && runInProgressFinalizers === undefined && closeSelf === undefined) {
+        return undefined;
+      }
+      return (0, _Function.pipe)(Effect.exit(ifNotNull(closeSubexecutors)), Effect.zip(Effect.exit(ifNotNull(runInProgressFinalizers))), Effect.zip(Effect.exit(ifNotNull(closeSelf))), Effect.map(([[exit1, exit2], exit3]) => (0, _Function.pipe)(exit1, Exit.zipRight(exit2), Exit.zipRight(exit3))), Effect.uninterruptible, Effect.flatMap(Effect.done)).traced(trace);
+    });
+  }
+  doneSucceed(value) {
+    if (this._doneStack.length === 0) {
+      this._done = Exit.succeed(value);
+      this._currentChannel = undefined;
+      return ChannelState.Done;
+    }
+    const head = this._doneStack[0];
+    if (head._tag === "ContinuationK") {
+      this._doneStack.shift();
+      this._currentChannel = head.onSuccess(value);
+      return undefined;
+    }
+    const finalizers = this.popNextFinalizers();
+    if (this._doneStack.length === 0) {
+      this._doneStack = finalizers;
+      this._done = Exit.succeed(value);
+      this._currentChannel = undefined;
+      return ChannelState.Done;
+    }
+    const finalizerEffect = runFinalizers(finalizers, Exit.succeed(value));
+    this.storeInProgressFinalizer(finalizerEffect);
+    const effect = (0, _Function.pipe)(finalizerEffect, Effect.ensuring(Effect.sync(() => this.clearInProgressFinalizer())), Effect.uninterruptible, Effect.flatMap(() => Effect.sync(() => this.doneSucceed(value))));
+    return ChannelState.FromEffect(effect);
+  }
+  doneHalt(cause) {
+    if (this._doneStack.length === 0) {
+      this._done = Exit.failCause(cause);
+      this._currentChannel = undefined;
+      return ChannelState.Done;
+    }
+    const head = this._doneStack[0];
+    if (head._tag === "ContinuationK") {
+      this._doneStack.shift();
+      this._currentChannel = head.onHalt(cause);
+      return undefined;
+    }
+    const finalizers = this.popNextFinalizers();
+    if (this._doneStack.length === 0) {
+      this._doneStack = finalizers;
+      this._done = Exit.failCause(cause);
+      this._currentChannel = undefined;
+      return ChannelState.Done;
+    }
+    const finalizerEffect = runFinalizers(finalizers, Exit.failCause(cause));
+    this.storeInProgressFinalizer(finalizerEffect);
+    const effect = (0, _Function.pipe)(finalizerEffect, Effect.ensuring(Effect.sync(() => this.clearInProgressFinalizer())), Effect.uninterruptible, Effect.flatMap(() => Effect.sync(() => this.doneHalt(cause))));
+    return ChannelState.FromEffect(effect);
+  }
+  processCancellation() {
+    this._currentChannel = undefined;
+    this._done = this._cancelled;
+    this._cancelled = undefined;
+    return ChannelState.Done;
+  }
+  runBracketOut(bracketOut) {
+    const effect = (0, _Function.pipe)(this.provide(bracketOut.acquire()), Effect.matchCauseEffect(cause => Effect.sync(() => {
+      this._currentChannel = core.failCause(cause);
+    }), out => Effect.sync(() => {
+      this.addFinalizer(exit => this.provide(bracketOut.finalizer(out, exit)));
+      this._currentChannel = core.write(out);
+    })), Effect.uninterruptible);
+    return ChannelState.FromEffect(effect);
+  }
+  provide(effect) {
+    if (this._providedEnv === undefined) {
+      return effect;
+    }
+    return (0, _Function.pipe)(effect, Effect.provideContext(this._providedEnv));
+  }
+  runEnsuring(ensuring) {
+    this.addFinalizer(ensuring.finalizer);
+    this._currentChannel = ensuring.channel;
+  }
+  addFinalizer(f) {
+    this._doneStack.unshift(new Continuation.ContinuationFinalizerImpl(f));
+  }
+  runSubexecutor() {
+    const subexecutor = this._activeSubexecutor;
+    switch (subexecutor._tag) {
+      case "PullFromChild":
+        {
+          return this.pullFromChild(subexecutor.childExecutor, subexecutor.parentSubexecutor, subexecutor.onEmit, subexecutor);
+        }
+      case "PullFromUpstream":
+        {
+          return this.pullFromUpstream(subexecutor);
+        }
+      case "DrainChildExecutors":
+        {
+          return this.drainChildExecutors(subexecutor);
+        }
+      case "Emit":
+        {
+          this._emitted = subexecutor.value;
+          this._activeSubexecutor = subexecutor.next;
+          return ChannelState.Emit;
+        }
+    }
+  }
+  replaceSubexecutor(nextSubExec) {
+    this._currentChannel = undefined;
+    this._activeSubexecutor = nextSubExec;
+  }
+  /** @macro traced */
+  finishWithExit(exit) {
+    return Debug.bodyWithTrace(trace => {
+      const state = (0, _Function.pipe)(exit, Exit.match(cause => this.doneHalt(cause), value => this.doneSucceed(value)));
+      this._activeSubexecutor = undefined;
+      return state === undefined ? Effect.unit().traced(trace) : ChannelState.effect(state).traced(trace);
+    });
+  }
+  finishSubexecutorWithCloseEffect(subexecutorDone, ...closeFuncs) {
+    this.addFinalizer(() => (0, _Function.pipe)(closeFuncs, Effect.forEachDiscard(closeFunc => (0, _Function.pipe)(Effect.sync(() => closeFunc(subexecutorDone)), Effect.flatMap(closeEffect => closeEffect !== undefined ? closeEffect : Effect.unit())))));
+    const state = (0, _Function.pipe)(subexecutorDone, Exit.match(cause => this.doneHalt(cause), value => this.doneSucceed(value)));
+    this._activeSubexecutor = undefined;
+    return state;
+  }
+  applyUpstreamPullStrategy(upstreamFinished, queue, strategy) {
+    switch (strategy._tag) {
+      case "PullAfterNext":
+        {
+          const shouldPrepend = !upstreamFinished || queue.some(subexecutor => subexecutor !== undefined);
+          return [strategy.emitSeparator, shouldPrepend ? [undefined, ...queue] : queue];
+        }
+      case "PullAfterAllEnqueued":
+        {
+          const shouldEnqueue = !upstreamFinished || queue.some(subexecutor => subexecutor !== undefined);
+          return [strategy.emitSeparator, shouldEnqueue ? [...queue, undefined] : queue];
+        }
+    }
+  }
+  pullFromChild(childExecutor, parentSubexecutor, onEmitted, subexecutor) {
+    return ChannelState.Read(childExecutor, _Function.identity, emitted => {
+      const childExecutorDecision = onEmitted(emitted);
+      switch (childExecutorDecision._tag) {
+        case "Continue":
+          {
+            break;
+          }
+        case "Close":
+          {
+            this.finishWithDoneValue(childExecutor, parentSubexecutor, childExecutorDecision.value);
+            break;
+          }
+        case "Yield":
+          {
+            const modifiedParent = parentSubexecutor.enqueuePullFromChild(subexecutor);
+            this.replaceSubexecutor(modifiedParent);
+            break;
+          }
+      }
+      this._activeSubexecutor = new Subexecutor.Emit(emitted, this._activeSubexecutor);
+      return undefined;
+    }, Exit.match(cause => {
+      const state = this.handleSubexecutorFailure(childExecutor, parentSubexecutor, cause);
+      return state === undefined ? undefined : ChannelState.effectOrUndefinedIgnored(state);
+    }, doneValue => {
+      this.finishWithDoneValue(childExecutor, parentSubexecutor, doneValue);
+      return undefined;
+    }));
+  }
+  finishWithDoneValue(childExecutor, parentSubexecutor, doneValue) {
+    const subexecutor = parentSubexecutor;
+    switch (subexecutor._tag) {
+      case "PullFromUpstream":
+        {
+          const modifiedParent = new Subexecutor.PullFromUpstream(subexecutor.upstreamExecutor, subexecutor.createChild, subexecutor.lastDone !== undefined ? subexecutor.combineChildResults(subexecutor.lastDone, doneValue) : doneValue, subexecutor.activeChildExecutors, subexecutor.combineChildResults, subexecutor.combineWithChildResult, subexecutor.onPull, subexecutor.onEmit);
+          this._closeLastSubstream = childExecutor.close(Exit.succeed(doneValue));
+          this.replaceSubexecutor(modifiedParent);
+          break;
+        }
+      case "DrainChildExecutors":
+        {
+          const modifiedParent = new Subexecutor.DrainChildExecutors(subexecutor.upstreamExecutor, subexecutor.lastDone !== undefined ? subexecutor.combineChildResults(subexecutor.lastDone, doneValue) : doneValue, subexecutor.activeChildExecutors, subexecutor.upstreamDone, subexecutor.combineChildResults, subexecutor.combineWithChildResult, subexecutor.onPull);
+          this._closeLastSubstream = childExecutor.close(Exit.succeed(doneValue));
+          this.replaceSubexecutor(modifiedParent);
+          break;
+        }
+      default:
+        {
+          break;
+        }
+    }
+  }
+  handleSubexecutorFailure(childExecutor, parentSubexecutor, cause) {
+    return this.finishSubexecutorWithCloseEffect(Exit.failCause(cause), exit => parentSubexecutor.close(exit), exit => childExecutor.close(exit));
+  }
+  pullFromUpstream(subexecutor) {
+    if (subexecutor.activeChildExecutors.length === 0) {
+      return this.performPullFromUpstream(subexecutor);
+    }
+    const activeChild = subexecutor.activeChildExecutors[0];
+    const parentSubexecutor = new Subexecutor.PullFromUpstream(subexecutor.upstreamExecutor, subexecutor.createChild, subexecutor.lastDone, subexecutor.activeChildExecutors.slice(1), subexecutor.combineChildResults, subexecutor.combineWithChildResult, subexecutor.onPull, subexecutor.onEmit);
+    if (activeChild === undefined) {
+      return this.performPullFromUpstream(parentSubexecutor);
+    }
+    this.replaceSubexecutor(new Subexecutor.PullFromChild(activeChild.childExecutor, parentSubexecutor, activeChild.onEmit));
+    return undefined;
+  }
+  performPullFromUpstream(subexecutor) {
+    return ChannelState.Read(subexecutor.upstreamExecutor, effect => {
+      const closeLastSubstream = this._closeLastSubstream === undefined ? Effect.unit() : this._closeLastSubstream;
+      this._closeLastSubstream = undefined;
+      return (0, _Function.pipe)(this._executeCloseLastSubstream(closeLastSubstream), Effect.zipRight(effect));
+    }, emitted => {
+      if (this._closeLastSubstream !== undefined) {
+        const closeLastSubstream = this._closeLastSubstream;
+        this._closeLastSubstream = undefined;
+        return (0, _Function.pipe)(this._executeCloseLastSubstream(closeLastSubstream), Effect.map(() => {
+          const childExecutor = new ChannelExecutor(subexecutor.createChild(emitted), this._providedEnv, this._executeCloseLastSubstream);
+          childExecutor._input = this._input;
+          const [emitSeparator, updatedChildExecutors] = this.applyUpstreamPullStrategy(false, subexecutor.activeChildExecutors, subexecutor.onPull(upstreamPullRequest.Pulled(emitted)));
+          this._activeSubexecutor = new Subexecutor.PullFromChild(childExecutor, new Subexecutor.PullFromUpstream(subexecutor.upstreamExecutor, subexecutor.createChild, subexecutor.lastDone, updatedChildExecutors, subexecutor.combineChildResults, subexecutor.combineWithChildResult, subexecutor.onPull, subexecutor.onEmit), subexecutor.onEmit);
+          if (Option.isSome(emitSeparator)) {
+            this._activeSubexecutor = new Subexecutor.Emit(emitSeparator.value, this._activeSubexecutor);
+          }
+          return undefined;
+        }));
+      }
+      const childExecutor = new ChannelExecutor(subexecutor.createChild(emitted), this._providedEnv, this._executeCloseLastSubstream);
+      childExecutor._input = this._input;
+      const [emitSeparator, updatedChildExecutors] = this.applyUpstreamPullStrategy(false, subexecutor.activeChildExecutors, subexecutor.onPull(upstreamPullRequest.Pulled(emitted)));
+      this._activeSubexecutor = new Subexecutor.PullFromChild(childExecutor, new Subexecutor.PullFromUpstream(subexecutor.upstreamExecutor, subexecutor.createChild, subexecutor.lastDone, updatedChildExecutors, subexecutor.combineChildResults, subexecutor.combineWithChildResult, subexecutor.onPull, subexecutor.onEmit), subexecutor.onEmit);
+      if (Option.isSome(emitSeparator)) {
+        this._activeSubexecutor = new Subexecutor.Emit(emitSeparator.value, this._activeSubexecutor);
+      }
+      return undefined;
+    }, exit => {
+      if (subexecutor.activeChildExecutors.some(subexecutor => subexecutor !== undefined)) {
+        const drain = new Subexecutor.DrainChildExecutors(subexecutor.upstreamExecutor, subexecutor.lastDone, [undefined, ...subexecutor.activeChildExecutors], subexecutor.upstreamExecutor.getDone(), subexecutor.combineChildResults, subexecutor.combineWithChildResult, subexecutor.onPull);
+        if (this._closeLastSubstream !== undefined) {
+          const closeLastSubstream = this._closeLastSubstream;
+          this._closeLastSubstream = undefined;
+          return (0, _Function.pipe)(this._executeCloseLastSubstream(closeLastSubstream), Effect.map(() => this.replaceSubexecutor(drain)));
+        }
+        this.replaceSubexecutor(drain);
+        return undefined;
+      }
+      const closeLastSubstream = this._closeLastSubstream;
+      const state = this.finishSubexecutorWithCloseEffect((0, _Function.pipe)(exit, Exit.map(a => subexecutor.combineWithChildResult(subexecutor.lastDone, a))), () => closeLastSubstream, exit => subexecutor.upstreamExecutor.close(exit));
+      return state === undefined ? undefined :
+      // NOTE: assuming finalizers cannot fail
+      ChannelState.effectOrUndefinedIgnored(state);
+    });
+  }
+  drainChildExecutors(subexecutor) {
+    if (subexecutor.activeChildExecutors.length === 0) {
+      const lastClose = this._closeLastSubstream;
+      if (lastClose !== undefined) {
+        this.addFinalizer(() => Effect.succeed(lastClose));
+      }
+      return this.finishSubexecutorWithCloseEffect(subexecutor.upstreamDone, () => lastClose, exit => subexecutor.upstreamExecutor.close(exit));
+    }
+    const activeChild = subexecutor.activeChildExecutors[0];
+    const rest = subexecutor.activeChildExecutors.slice(1);
+    if (activeChild === undefined) {
+      const [emitSeparator, remainingExecutors] = this.applyUpstreamPullStrategy(true, rest, subexecutor.onPull(upstreamPullRequest.NoUpstream(rest.reduce((n, curr) => curr !== undefined ? n + 1 : n, 0))));
+      this.replaceSubexecutor(new Subexecutor.DrainChildExecutors(subexecutor.upstreamExecutor, subexecutor.lastDone, remainingExecutors, subexecutor.upstreamDone, subexecutor.combineChildResults, subexecutor.combineWithChildResult, subexecutor.onPull));
+      if (Option.isSome(emitSeparator)) {
+        this._emitted = emitSeparator.value;
+        return ChannelState.Emit;
+      }
+      return undefined;
+    }
+    const parentSubexecutor = new Subexecutor.DrainChildExecutors(subexecutor.upstreamExecutor, subexecutor.lastDone, rest, subexecutor.upstreamDone, subexecutor.combineChildResults, subexecutor.combineWithChildResult, subexecutor.onPull);
+    this.replaceSubexecutor(new Subexecutor.PullFromChild(activeChild.childExecutor, parentSubexecutor, activeChild.onEmit));
+    return undefined;
+  }
+}
+/**
+ * @macro traced
+ * @internal
+ */
+exports.ChannelExecutor = ChannelExecutor;
+const ifNotNull = /*#__PURE__*/Debug.methodWithTrace(trace => effect => effect !== undefined ? effect.traced(trace) : Effect.unit().traced(trace));
+/**
+ * @macro traced
+ * @internal
+ */
+const runFinalizers = /*#__PURE__*/Debug.methodWithTrace(trace => (finalizers, exit) => {
+  if (finalizers.length === 0) {
+    return undefined;
+  }
+  return (0, _Function.pipe)(finalizers.map(cont => cont.finalizer), Effect.forEach(fin => Effect.exit(fin(exit))), Effect.map(exits => (0, _Function.pipe)(Exit.collectAll(exits), Option.getOrElse(() => Exit.unit()))), Effect.flatMap(exit => Effect.done(exit))).traced(trace);
+});
+/**
+ * @macro traced
+ * @internal
+ */
+const readUpstream = /*#__PURE__*/Debug.methodWithTrace(trace => (r, onSuccess, onFailure) => {
+  const readStack = [r];
+  const read = () => {
+    const current = readStack.shift();
+    if (current === undefined || current.upstream === undefined) {
+      return Effect.dieMessage("Unexpected end of input for channel execution");
+    }
+    const state = current.upstream.run();
+    switch (state._tag) {
+      case "Emit":
+        {
+          const emitEffect = current.onEmit(current.upstream.getEmit());
+          if (readStack.length === 0) {
+            if (emitEffect === undefined) {
+              return Effect.suspendSucceed(onSuccess);
+            }
+            return (0, _Function.pipe)(emitEffect, Effect.matchCauseEffect(onFailure, onSuccess)).traced(trace);
+          }
+          if (emitEffect === undefined) {
+            return Effect.suspendSucceed(() => read()).traced(trace);
+          }
+          return (0, _Function.pipe)(emitEffect, Effect.matchCauseEffect(onFailure, () => read())).traced(trace);
+        }
+      case "Done":
+        {
+          const doneEffect = current.onDone(current.upstream.getDone());
+          if (readStack.length === 0) {
+            if (doneEffect === undefined) {
+              return Effect.suspendSucceed(onSuccess).traced(trace);
+            }
+            return (0, _Function.pipe)(doneEffect, Effect.matchCauseEffect(onFailure, () => onSuccess())).traced(trace);
+          }
+          if (doneEffect === undefined) {
+            return Effect.suspendSucceed(() => read()).traced(trace);
+          }
+          return (0, _Function.pipe)(doneEffect, Effect.matchCauseEffect(onFailure, () => read())).traced(trace);
+        }
+      case "FromEffect":
+        {
+          readStack.unshift(current);
+          return (0, _Function.pipe)(current.onEffect(state.effect), Effect.catchAllCause(cause => Effect.suspendSucceed(() => {
+            const doneEffect = current.onDone(Exit.failCause(cause));
+            return doneEffect === undefined ? Effect.unit() : doneEffect;
+          })), Effect.matchCauseEffect(onFailure, () => read())).traced(trace);
+        }
+      case "Read":
+        {
+          readStack.unshift(current);
+          readStack.unshift(state);
+          return Effect.suspendSucceed(() => read()).traced(trace);
+        }
+    }
+  };
+  return read();
+});
+/** @internal */
+exports.readUpstream = readUpstream;
+const run = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(runScoped(self), Effect.scoped).traced(trace));
+/** @internal */
+exports.run = run;
+const runScoped = self => {
+  return (0, _Function.pipe)(Effect.acquireRelease(Effect.sync(() => new ChannelExecutor(self, void 0, _Function.identity)), (exec, exit) => {
+    const finalize = exec.close(exit);
+    return finalize === undefined ? Effect.unit() : finalize;
+  }), Effect.flatMap(exec => Effect.suspendSucceed(() => runScopedInterpret(exec.run(), exec))));
+};
+/** @internal */
+exports.runScoped = runScoped;
+const runScopedInterpret = (channelState, exec) => {
+  const op = channelState;
+  switch (op._tag) {
+    case "FromEffect":
+      {
+        return (0, _Function.pipe)(op.effect, Effect.flatMap(() => runScopedInterpret(exec.run(), exec)));
+      }
+    case "Emit":
+      {
+        // Can't really happen because Out <:< Nothing. So just skip ahead.
+        return runScopedInterpret(exec.run(), exec);
+      }
+    case "Done":
+      {
+        return Effect.done(exec.getDone());
+      }
+    case "Read":
+      {
+        return readUpstream(op, () => runScopedInterpret(exec.run(), exec), Effect.failCause);
+      }
+  }
+};
+//# sourceMappingURL=channelExecutor.js.map
+
+/***/ }),
+
+/***/ 2704:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.isRead = exports.isFromEffect = exports.isEmit = exports.isDone = exports.isChannelState = exports.effectOrUndefinedIgnored = exports.effect = exports.Read = exports.FromEffect = exports.Emit = exports.Done = exports.ChannelStateTypeId = void 0;
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(586))));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const ChannelStateTypeId = /*#__PURE__*/Symbol.for("@effect/stream/Channel/State");
+/** @internal */
+exports.ChannelStateTypeId = ChannelStateTypeId;
+const channelStateVariance = {
+  _R: _ => _,
+  _E: _ => _
+};
+/** @internal */
+const proto = {
+  [ChannelStateTypeId]: channelStateVariance
+};
+/** @internal */
+const Done = /*#__PURE__*/Object.create(proto, {
+  _tag: {
+    value: "Done"
+  }
+});
+/** @internal */
+exports.Done = Done;
+const Emit = /*#__PURE__*/Object.create(proto, {
+  _tag: {
+    value: "Emit"
+  }
+});
+/** @internal */
+exports.Emit = Emit;
+const FromEffect = effect => Object.create(proto, {
+  _tag: {
+    value: "FromEffect"
+  },
+  effect: {
+    value: effect
+  }
+});
+/** @internal */
+exports.FromEffect = FromEffect;
+const Read = (upstream, onEffect, onEmit, onDone) => Object.create(proto, {
+  _tag: {
+    value: "Read"
+  },
+  upstream: {
+    value: upstream
+  },
+  onEffect: {
+    value: onEffect
+  },
+  onEmit: {
+    value: onEmit
+  },
+  onDone: {
+    value: onDone
+  }
+});
+/** @internal */
+exports.Read = Read;
+const isChannelState = u => {
+  return typeof u === "object" && u != null && ChannelStateTypeId in u;
+};
+/** @internal */
+exports.isChannelState = isChannelState;
+const isDone = self => {
+  return self._tag === "Done";
+};
+/** @internal */
+exports.isDone = isDone;
+const isEmit = self => {
+  return self._tag === "Emit";
+};
+/** @internal */
+exports.isEmit = isEmit;
+const isFromEffect = self => {
+  return self._tag === "FromEffect";
+};
+/** @internal */
+exports.isFromEffect = isFromEffect;
+const isRead = self => {
+  return self._tag === "Read";
+};
+/** @internal */
+exports.isRead = isRead;
+const effect = self => {
+  return isFromEffect(self) ? self.effect : Effect.unit();
+};
+/** @internal */
+exports.effect = effect;
+const effectOrUndefinedIgnored = self => {
+  return isFromEffect(self) ? Effect.ignore(self.effect) : undefined;
+};
+exports.effectOrUndefinedIgnored = effectOrUndefinedIgnored;
+//# sourceMappingURL=channelState.js.map
+
+/***/ }),
+
+/***/ 7798:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.match = exports.isYield = exports.isContinue = exports.isClose = exports.isChildExecutorDecision = exports.Yield = exports.Continue = exports.Close = exports.ChildExecutorDecisionTypeId = void 0;
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3116))));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const ChildExecutorDecisionSymbolKey = "@effect/stream/Channel/ChildExecutorDecision";
+/** @internal */
+const ChildExecutorDecisionTypeId = /*#__PURE__*/Symbol.for(ChildExecutorDecisionSymbolKey);
+/** @internal */
+exports.ChildExecutorDecisionTypeId = ChildExecutorDecisionTypeId;
+const proto = {
+  [ChildExecutorDecisionTypeId]: ChildExecutorDecisionTypeId
+};
+/** @internal */
+const Continue = /*#__PURE__*/Object.create(proto, {
+  _tag: {
+    value: "Continue"
+  }
+});
+/** @internal */
+exports.Continue = Continue;
+const Close = value => Object.create(proto, {
+  _tag: {
+    value: "Close"
+  },
+  value: {
+    value
+  }
+});
+/** @internal */
+exports.Close = Close;
+const Yield = /*#__PURE__*/Object.create(proto, {
+  _tag: {
+    value: "Yield"
+  }
+});
+/** @internal */
+exports.Yield = Yield;
+const isChildExecutorDecision = u => {
+  return typeof u === "object" && u != null && ChildExecutorDecisionTypeId in u;
+};
+/** @internal */
+exports.isChildExecutorDecision = isChildExecutorDecision;
+const isContinue = self => {
+  return self._tag === "Continue";
+};
+/** @internal */
+exports.isContinue = isContinue;
+const isClose = self => {
+  return self._tag === "Close";
+};
+/** @internal */
+exports.isClose = isClose;
+const isYield = self => {
+  return self._tag === "Yield";
+};
+/** @internal */
+exports.isYield = isYield;
+const match = (onContinue, onClose, onYield) => {
+  return self => {
+    switch (self._tag) {
+      case "Continue":
+        {
+          return onContinue();
+        }
+      case "Close":
+        {
+          return onClose(self.value);
+        }
+      case "Yield":
+        {
+          return onYield();
+        }
+    }
+  };
+};
+exports.match = match;
+//# sourceMappingURL=childExecutorDecision.js.map
+
+/***/ }),
+
+/***/ 1263:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.ContinuationTypeId = exports.ContinuationKImpl = exports.ContinuationFinalizerImpl = void 0;
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5664))));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+var _a, _b;
+/** @internal */
+const ContinuationTypeId = /*#__PURE__*/Symbol.for("@effect/stream/Channel/Continuation");
+/** @internal */
+exports.ContinuationTypeId = ContinuationTypeId;
+const continuationVariance = {
+  _Env: _ => _,
+  _InErr: _ => _,
+  _InElem: _ => _,
+  _InDone: _ => _,
+  _OutErr: _ => _,
+  _OutDone: _ => _,
+  _OutErr2: _ => _,
+  _OutElem: _ => _,
+  _OutDone2: _ => _
+};
+/** @internal */
+class ContinuationKImpl {
+  constructor(onSuccess, onHalt) {
+    this.onSuccess = onSuccess;
+    this.onHalt = onHalt;
+    this._tag = "ContinuationK";
+    this[_a] = continuationVariance;
+  }
+  onExit(exit) {
+    return Exit.isFailure(exit) ? this.onHalt(exit.cause) : this.onSuccess(exit.value);
+  }
+}
+exports.ContinuationKImpl = ContinuationKImpl;
+_a = ContinuationTypeId;
+/** @internal */
+class ContinuationFinalizerImpl {
+  constructor(finalizer) {
+    this.finalizer = finalizer;
+    this._tag = "ContinuationFinalizer";
+    this[_b] = continuationVariance;
+  }
+}
+exports.ContinuationFinalizerImpl = ContinuationFinalizerImpl;
+_b = ContinuationTypeId;
+//# sourceMappingURL=continuation.js.map
+
+/***/ }),
+
+/***/ 4674:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.match = exports.isMergeDecision = exports.MergeDecisionTypeId = exports.Done = exports.AwaitConst = exports.Await = void 0;
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7371))));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const MergeDecisionSymbolKey = "@effect/stream/Channel/MergeDecision";
+/** @internal */
+const MergeDecisionTypeId = /*#__PURE__*/Symbol.for(MergeDecisionSymbolKey);
+/** @internal */
+exports.MergeDecisionTypeId = MergeDecisionTypeId;
+const proto = {
+  [MergeDecisionTypeId]: {
+    _R: _ => _,
+    _E0: _ => _,
+    _Z0: _ => _,
+    _E: _ => _,
+    _Z: _ => _
+  }
+};
+/** @internal */
+const Done = effect => Object.create(proto, {
+  _tag: {
+    value: "Done"
+  },
+  effect: {
+    value: effect
+  }
+});
+/** @internal */
+exports.Done = Done;
+const Await = f => Object.create(proto, {
+  _tag: {
+    value: "Await"
+  },
+  f: {
+    value: f
+  }
+});
+/** @internal */
+exports.Await = Await;
+const AwaitConst = effect => Await(() => effect);
+/** @internal */
+exports.AwaitConst = AwaitConst;
+const isMergeDecision = u => {
+  return typeof u === "object" && u != null && MergeDecisionTypeId in u;
+};
+/** @internal */
+exports.isMergeDecision = isMergeDecision;
+const match = (onDone, onAwait) => {
+  return self => {
+    const op = self;
+    switch (op._tag) {
+      case "Done":
+        {
+          return onDone(op.effect);
+        }
+      case "Await":
+        {
+          return onAwait(op.f);
+        }
+    }
+  };
+};
+exports.match = match;
+//# sourceMappingURL=mergeDecision.js.map
+
+/***/ }),
+
+/***/ 5482:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.match = exports.isRightDone = exports.isMergeState = exports.isLeftDone = exports.isBothRunning = exports.RightDone = exports.MergeStateTypeId = exports.LeftDone = exports.BothRunning = void 0;
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(302))));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const MergeStateSymbolKey = "@effect/stream/Channel/MergeState";
+/** @internal */
+const MergeStateTypeId = /*#__PURE__*/Symbol.for(MergeStateSymbolKey);
+/** @internal */
+exports.MergeStateTypeId = MergeStateTypeId;
+const proto = {
+  [MergeStateTypeId]: MergeStateTypeId
+};
+/** @internal */
+const BothRunning = (left, right) => Object.create(proto, {
+  _tag: {
+    value: "BothRunning"
+  },
+  left: {
+    value: left
+  },
+  right: {
+    value: right
+  }
+});
+/** @internal */
+exports.BothRunning = BothRunning;
+const LeftDone = f => Object.create(proto, {
+  _tag: {
+    value: "LeftDone"
+  },
+  f: {
+    value: f
+  }
+});
+/** @internal */
+exports.LeftDone = LeftDone;
+const RightDone = f => Object.create(proto, {
+  op: {
+    value: "RightDone",
+    enumerable: true
+  },
+  f: {
+    value: f,
+    enumerable: true
+  }
+});
+/** @internal */
+exports.RightDone = RightDone;
+const isMergeState = u => {
+  return typeof u === "object" && u != null && MergeStateTypeId in u;
+};
+/** @internal */
+exports.isMergeState = isMergeState;
+const isBothRunning = self => {
+  return self._tag === "BothRunning";
+};
+/** @internal */
+exports.isBothRunning = isBothRunning;
+const isLeftDone = self => {
+  return self._tag === "LeftDone";
+};
+/** @internal */
+exports.isLeftDone = isLeftDone;
+const isRightDone = self => {
+  return self._tag === "RightDone";
+};
+/** @internal */
+exports.isRightDone = isRightDone;
+const match = (onBothRunning, onLeftDone, onRightDone) => {
+  return self => {
+    switch (self._tag) {
+      case "BothRunning":
+        {
+          return onBothRunning(self.left, self.right);
+        }
+      case "LeftDone":
+        {
+          return onLeftDone(self.f);
+        }
+      case "RightDone":
+        {
+          return onRightDone(self.f);
+        }
+    }
+  };
+};
+exports.match = match;
+//# sourceMappingURL=mergeState.js.map
+
+/***/ }),
+
+/***/ 2889:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.match = exports.isMergeStrategy = exports.isBufferSliding = exports.isBackPressure = exports.MergeStrategyTypeId = exports.BufferSliding = exports.BackPressure = void 0;
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2296))));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const MergeStrategySymbolKey = "@effect/stream/Channel/MergeStrategy";
+/** @internal */
+const MergeStrategyTypeId = /*#__PURE__*/Symbol.for(MergeStrategySymbolKey);
+/** @internal */
+exports.MergeStrategyTypeId = MergeStrategyTypeId;
+const proto = {
+  [MergeStrategyTypeId]: MergeStrategyTypeId
+};
+/** @internal */
+const BackPressure = /*#__PURE__*/Object.create(proto, {
+  _tag: {
+    value: "BackPressure"
+  }
+});
+/** @internal */
+exports.BackPressure = BackPressure;
+const BufferSliding = /*#__PURE__*/Object.create(proto, {
+  _tag: {
+    value: "BufferSliding"
+  }
+});
+/** @internal */
+exports.BufferSliding = BufferSliding;
+const isMergeStrategy = u => {
+  return typeof u === "object" && u != null && MergeStrategyTypeId in u;
+};
+/** @internal */
+exports.isMergeStrategy = isMergeStrategy;
+const isBackPressure = self => {
+  return self._tag === "BackPressure";
+};
+/** @internal */
+exports.isBackPressure = isBackPressure;
+const isBufferSliding = self => {
+  return self._tag === "BufferSliding";
+};
+/** @internal */
+exports.isBufferSliding = isBufferSliding;
+const match = (onBackPressure, onBufferSliding) => {
+  return self => {
+    switch (self._tag) {
+      case "BackPressure":
+        {
+          return onBackPressure();
+        }
+      case "BufferSliding":
+        {
+          return onBufferSliding();
+        }
+    }
+  };
+};
+exports.match = match;
+//# sourceMappingURL=mergeStrategy.js.map
+
+/***/ }),
+
+/***/ 6688:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.make = void 0;
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Deferred = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3576));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6607));
+var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const OP_STATE_EMPTY = "Empty";
+/** @internal */
+const OP_STATE_EMIT = "Emit";
+/** @internal */
+const OP_STATE_ERROR = "Error";
+/** @internal */
+const OP_STATE_DONE = "Done";
+/** @internal */
+const stateEmpty = notifyProducer => ({
+  _tag: OP_STATE_EMPTY,
+  notifyProducer
+});
+/** @internal */
+const stateEmit = notifyConsumers => ({
+  _tag: OP_STATE_EMIT,
+  notifyConsumers
+});
+/** @internal */
+const stateError = cause => ({
+  _tag: OP_STATE_ERROR,
+  cause
+});
+/** @internal */
+const stateDone = done => ({
+  _tag: OP_STATE_DONE,
+  done
+});
+/** @internal */
+class SingleProducerAsyncInputImpl {
+  constructor(ref) {
+    this.ref = ref;
+  }
+  awaitRead() {
+    return Debug.bodyWithTrace(trace => {
+      return (0, _Function.pipe)(Ref.modify(this.ref, state => state._tag === OP_STATE_EMPTY ? [Deferred.await(state.notifyProducer), state] : [Effect.unit(), state]), Effect.flatten).traced(trace);
+    });
+  }
+  close() {
+    return Debug.bodyWithTrace(trace => {
+      return Effect.fiberIdWith(fiberId => this.error(Cause.interrupt(fiberId))).traced(trace);
+    });
+  }
+  done(value) {
+    return Debug.bodyWithTrace(trace => {
+      return (0, _Function.pipe)(Ref.modify(this.ref, state => {
+        switch (state._tag) {
+          case OP_STATE_EMPTY:
+            {
+              return [Deferred.await(state.notifyProducer), state];
+            }
+          case OP_STATE_EMIT:
+            {
+              return [(0, _Function.pipe)(state.notifyConsumers, Effect.forEachDiscard(deferred => Deferred.succeed(deferred, Either.left(value)))), stateDone(value)];
+            }
+          case OP_STATE_ERROR:
+            {
+              return [Effect.interrupt(), state];
+            }
+          case OP_STATE_DONE:
+            {
+              return [Effect.interrupt(), state];
+            }
+        }
+      }), Effect.flatten).traced(trace);
+    });
+  }
+  emit(element) {
+    return Debug.bodyWithTrace(trace => {
+      return (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => (0, _Function.pipe)(Ref.modify(this.ref, state => {
+        switch (state._tag) {
+          case OP_STATE_EMPTY:
+            {
+              return [Deferred.await(state.notifyProducer), state];
+            }
+          case OP_STATE_EMIT:
+            {
+              const notifyConsumer = state.notifyConsumers[0];
+              const notifyConsumers = state.notifyConsumers.slice(1);
+              if (notifyConsumer !== undefined) {
+                return [Deferred.succeed(notifyConsumer, Either.right(element)), notifyConsumers.length === 0 ? stateEmpty(deferred) : stateEmit(notifyConsumers)];
+              }
+              throw new Error("Bug: Channel.SingleProducerAsyncInput.emit - Queue was empty! Please report an issue at https://github.com/Effect-TS/stream/issues");
+            }
+          case OP_STATE_ERROR:
+            {
+              return [Effect.interrupt(), state];
+            }
+          case OP_STATE_DONE:
+            {
+              return [Effect.interrupt(), state];
+            }
+        }
+      }), Effect.flatten))).traced(trace);
+    });
+  }
+  error(cause) {
+    return Debug.bodyWithTrace(trace => {
+      return (0, _Function.pipe)(Ref.modify(this.ref, state => {
+        switch (state._tag) {
+          case OP_STATE_EMPTY:
+            {
+              return [Deferred.await(state.notifyProducer), state];
+            }
+          case OP_STATE_EMIT:
+            {
+              return [(0, _Function.pipe)(state.notifyConsumers, Effect.forEachDiscard(deferred => Deferred.failCause(deferred, cause))), stateError(cause)];
+            }
+          case OP_STATE_ERROR:
+            {
+              return [Effect.interrupt(), state];
+            }
+          case OP_STATE_DONE:
+            {
+              return [Effect.interrupt(), state];
+            }
+        }
+      }), Effect.flatten).traced(trace);
+    });
+  }
+  take() {
+    return Debug.bodyWithTrace(trace => {
+      return this.takeWith(cause => Exit.failCause((0, _Function.pipe)(cause, Cause.map(Either.left))), elem => Exit.succeed(elem), done => Exit.fail(Either.right(done))).traced(trace);
+    });
+  }
+  takeWith(onError, onElement, onDone) {
+    return Debug.bodyWithTrace(trace => {
+      return (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => (0, _Function.pipe)(Ref.modify(this.ref, state => {
+        switch (state._tag) {
+          case OP_STATE_EMPTY:
+            {
+              return [(0, _Function.pipe)(Deferred.succeed(state.notifyProducer, void 0), Effect.zipRight((0, _Function.pipe)(Deferred.await(deferred), Effect.matchCause(onError, Either.match(onDone, onElement))))), stateEmit([deferred])];
+            }
+          case OP_STATE_EMIT:
+            {
+              return [(0, _Function.pipe)(Deferred.await(deferred), Effect.matchCause(onError, Either.match(onDone, onElement))), stateEmit([...state.notifyConsumers, deferred])];
+            }
+          case OP_STATE_ERROR:
+            {
+              return [Effect.succeed(onError(state.cause)), state];
+            }
+          case OP_STATE_DONE:
+            {
+              return [Effect.succeed(onDone(state.done)), state];
+            }
+        }
+      }), Effect.flatten))).traced(trace);
+    });
+  }
+}
+/** @internal */
+const make = /*#__PURE__*/Debug.methodWithTrace(trace => () => (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => Ref.make(stateEmpty(deferred))), Effect.map(ref => new SingleProducerAsyncInputImpl(ref))).traced(trace));
+exports.make = make;
+//# sourceMappingURL=singleProducerAsyncInput.js.map
+
+/***/ }),
+
+/***/ 8478:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.PullFromUpstream = exports.PullFromChild = exports.OP_PULL_FROM_UPSTREAM = exports.OP_PULL_FROM_CHILD = exports.OP_EMIT = exports.OP_DRAIN_CHILD_EXECUTORS = exports.Emit = exports.DrainChildExecutors = void 0;
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const OP_PULL_FROM_CHILD = "PullFromChild";
+/** @internal */
+exports.OP_PULL_FROM_CHILD = OP_PULL_FROM_CHILD;
+const OP_PULL_FROM_UPSTREAM = "PullFromUpstream";
+/** @internal */
+exports.OP_PULL_FROM_UPSTREAM = OP_PULL_FROM_UPSTREAM;
+const OP_DRAIN_CHILD_EXECUTORS = "DrainChildExecutors";
+/** @internal */
+exports.OP_DRAIN_CHILD_EXECUTORS = OP_DRAIN_CHILD_EXECUTORS;
+const OP_EMIT = "Emit";
+/**
+ * Execute the `childExecutor` and on each emitted value, decide what to do by
+ * `onEmit`.
+ *
+ * @internal
+ */
+exports.OP_EMIT = OP_EMIT;
+class PullFromChild {
+  constructor(childExecutor, parentSubexecutor, onEmit) {
+    this.childExecutor = childExecutor;
+    this.parentSubexecutor = parentSubexecutor;
+    this.onEmit = onEmit;
+    this._tag = OP_PULL_FROM_CHILD;
+  }
+  close(exit) {
+    return Debug.bodyWithTrace(trace => {
+      const fin1 = this.childExecutor.close(exit);
+      const fin2 = this.parentSubexecutor.close(exit);
+      if (fin1 !== undefined && fin2 !== undefined) {
+        return (0, _Function.pipe)(Effect.exit(fin1), Effect.zipWith(Effect.exit(fin2), (exit1, exit2) => (0, _Function.pipe)(exit1, Exit.zipRight(exit2)))).traced(trace);
+      } else if (fin1 !== undefined) {
+        return fin1.traced(trace);
+      } else if (fin2 !== undefined) {
+        return fin2.traced(trace);
+      } else {
+        return undefined;
+      }
+    });
+  }
+  enqueuePullFromChild(_child) {
+    return this;
+  }
+}
+/**
+ * Execute `upstreamExecutor` and for each emitted element, spawn a child
+ * channel and continue with processing it by `PullFromChild`.
+ *
+ * @internal
+ */
+exports.PullFromChild = PullFromChild;
+class PullFromUpstream {
+  constructor(upstreamExecutor, createChild, lastDone, activeChildExecutors, combineChildResults, combineWithChildResult, onPull, onEmit) {
+    this.upstreamExecutor = upstreamExecutor;
+    this.createChild = createChild;
+    this.lastDone = lastDone;
+    this.activeChildExecutors = activeChildExecutors;
+    this.combineChildResults = combineChildResults;
+    this.combineWithChildResult = combineWithChildResult;
+    this.onPull = onPull;
+    this.onEmit = onEmit;
+    this._tag = OP_PULL_FROM_UPSTREAM;
+  }
+  close(exit) {
+    return Debug.bodyWithTrace(trace => {
+      const fin1 = this.upstreamExecutor.close(exit);
+      const fins = [...this.activeChildExecutors.map(child => child !== undefined ? child.childExecutor.close(exit) : undefined), fin1];
+      const result = fins.reduce((acc, next) => {
+        if (acc !== undefined && next !== undefined) {
+          return (0, _Function.pipe)(acc, Effect.zipWith(Effect.exit(next), (exit1, exit2) => (0, _Function.pipe)(exit1, Exit.zipRight(exit2))));
+        } else if (acc !== undefined) {
+          return acc;
+        } else if (next !== undefined) {
+          return Effect.exit(next);
+        } else {
+          return undefined;
+        }
+      }, undefined);
+      return result === undefined ? result : result.traced(trace);
+    });
+  }
+  enqueuePullFromChild(child) {
+    return new PullFromUpstream(this.upstreamExecutor, this.createChild, this.lastDone, [...this.activeChildExecutors, child], this.combineChildResults, this.combineWithChildResult, this.onPull, this.onEmit);
+  }
+}
+/**
+ * Transformed from `PullFromUpstream` when upstream has finished but there
+ * are still active child executors.
+ *
+ * @internal
+ */
+exports.PullFromUpstream = PullFromUpstream;
+class DrainChildExecutors {
+  constructor(upstreamExecutor, lastDone, activeChildExecutors, upstreamDone, combineChildResults, combineWithChildResult, onPull) {
+    this.upstreamExecutor = upstreamExecutor;
+    this.lastDone = lastDone;
+    this.activeChildExecutors = activeChildExecutors;
+    this.upstreamDone = upstreamDone;
+    this.combineChildResults = combineChildResults;
+    this.combineWithChildResult = combineWithChildResult;
+    this.onPull = onPull;
+    this._tag = OP_DRAIN_CHILD_EXECUTORS;
+  }
+  close(exit) {
+    return Debug.bodyWithTrace(trace => {
+      const fin1 = this.upstreamExecutor.close(exit);
+      const fins = [...this.activeChildExecutors.map(child => child !== undefined ? child.childExecutor.close(exit) : undefined), fin1];
+      const result = fins.reduce((acc, next) => {
+        if (acc !== undefined && next !== undefined) {
+          return (0, _Function.pipe)(acc, Effect.zipWith(Effect.exit(next), (exit1, exit2) => (0, _Function.pipe)(exit1, Exit.zipRight(exit2))));
+        } else if (acc !== undefined) {
+          return acc;
+        } else if (next !== undefined) {
+          return Effect.exit(next);
+        } else {
+          return undefined;
+        }
+      }, undefined);
+      return result === undefined ? result : result.traced(trace);
+    });
+  }
+  enqueuePullFromChild(child) {
+    return new DrainChildExecutors(this.upstreamExecutor, this.lastDone, [...this.activeChildExecutors, child], this.upstreamDone, this.combineChildResults, this.combineWithChildResult, this.onPull);
+  }
+}
+/** @internal */
+exports.DrainChildExecutors = DrainChildExecutors;
+class Emit {
+  constructor(value, next) {
+    this.value = value;
+    this.next = next;
+    this._tag = OP_EMIT;
+  }
+  close(exit) {
+    return Debug.bodyWithTrace(trace => {
+      const result = this.next.close(exit);
+      return result === undefined ? result : result.traced(trace);
+    });
+  }
+  enqueuePullFromChild(_child) {
+    return this;
+  }
+}
+exports.Emit = Emit;
+//# sourceMappingURL=subexecutor.js.map
+
+/***/ }),
+
+/***/ 368:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.match = exports.isUpstreamPullRequest = exports.isPulled = exports.isNoUpstream = exports.UpstreamPullRequestTypeId = exports.Pulled = exports.NoUpstream = void 0;
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2813))));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const UpstreamPullRequestSymbolKey = "@effect/stream/Channel/UpstreamPullRequest";
+/** @internal */
+const UpstreamPullRequestTypeId = /*#__PURE__*/Symbol.for(UpstreamPullRequestSymbolKey);
+/** @internal */
+exports.UpstreamPullRequestTypeId = UpstreamPullRequestTypeId;
+const upstreamPullRequestVariance = {
+  _A: _ => _
+};
+/** @internal */
+const proto = {
+  [UpstreamPullRequestTypeId]: upstreamPullRequestVariance
+};
+/** @internal */
+const Pulled = value => Object.create(proto, {
+  _tag: {
+    value: "Pulled"
+  },
+  value: {
+    value
+  }
+});
+/** @internal */
+exports.Pulled = Pulled;
+const NoUpstream = activeDownstreamCount => Object.create(proto, {
+  _tag: {
+    value: "NoUpstream"
+  },
+  activeDownstreamCount: {
+    value: activeDownstreamCount
+  }
+});
+/** @internal */
+exports.NoUpstream = NoUpstream;
+const isUpstreamPullRequest = u => {
+  return typeof u === "object" && u != null && UpstreamPullRequestTypeId in u;
+};
+/** @internal */
+exports.isUpstreamPullRequest = isUpstreamPullRequest;
+const isPulled = self => {
+  return self._tag === "Pulled";
+};
+/** @internal */
+exports.isPulled = isPulled;
+const isNoUpstream = self => {
+  return self._tag === "NoUpstream";
+};
+/** @internal */
+exports.isNoUpstream = isNoUpstream;
+const match = (onPulled, onNoUpstream) => {
+  return self => {
+    switch (self._tag) {
+      case "Pulled":
+        {
+          return onPulled(self.value);
+        }
+      case "NoUpstream":
+        {
+          return onNoUpstream(self.activeDownstreamCount);
+        }
+    }
+  };
+};
+exports.match = match;
+//# sourceMappingURL=upstreamPullRequest.js.map
+
+/***/ }),
+
+/***/ 245:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.match = exports.isUpstreamPullStrategy = exports.isPullAfterNext = exports.isPullAfterAllEnqueued = exports.UpstreamPullStrategyTypeId = exports.PullAfterNext = exports.PullAfterAllEnqueued = void 0;
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6674))));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const UpstreamPullStrategySymbolKey = "@effect/stream/Channel/UpstreamPullStrategy";
+/** @internal */
+const UpstreamPullStrategyTypeId = /*#__PURE__*/Symbol.for(UpstreamPullStrategySymbolKey);
+/** @internal */
+exports.UpstreamPullStrategyTypeId = UpstreamPullStrategyTypeId;
+const upstreamPullStrategyVariance = {
+  _A: _ => _
+};
+/** @internal */
+const proto = {
+  [UpstreamPullStrategyTypeId]: upstreamPullStrategyVariance
+};
+/** @internal */
+const PullAfterNext = emitSeparator => Object.create(proto, {
+  _tag: {
+    value: "PullAfterNext"
+  },
+  emitSeparator: {
+    value: emitSeparator
+  }
+});
+/** @internal */
+exports.PullAfterNext = PullAfterNext;
+const PullAfterAllEnqueued = emitSeparator => Object.create(proto, {
+  _tag: {
+    value: "PullAfterAllEnqueued"
+  },
+  emitSeparator: {
+    value: emitSeparator
+  }
+});
+/** @internal */
+exports.PullAfterAllEnqueued = PullAfterAllEnqueued;
+const isUpstreamPullStrategy = u => {
+  return typeof u === "object" && u != null && UpstreamPullStrategyTypeId in u;
+};
+/** @internal */
+exports.isUpstreamPullStrategy = isUpstreamPullStrategy;
+const isPullAfterNext = self => {
+  return self._tag === "PullAfterNext";
+};
+/** @internal */
+exports.isPullAfterNext = isPullAfterNext;
+const isPullAfterAllEnqueued = self => {
+  return self._tag === "PullAfterAllEnqueued";
+};
+/** @internal */
+exports.isPullAfterAllEnqueued = isPullAfterAllEnqueued;
+const match = (onPullAfterNext, onPullAfterAllEnqueued) => {
+  return self => {
+    switch (self._tag) {
+      case "PullAfterNext":
+        {
+          return onPullAfterNext(self.emitSeparator);
+        }
+      case "PullAfterAllEnqueued":
+        {
+          return onPullAfterAllEnqueued(self.emitSeparator);
+        }
+    }
+  };
+};
+exports.match = match;
+//# sourceMappingURL=upstreamPullStrategy.js.map
+
+/***/ }),
+
+/***/ 7679:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.write = exports.unit = exports.sync = exports.suspend = exports.succeedNow = exports.succeed = exports.readWithCause = exports.readWith = exports.readOrFail = exports.provideContext = exports.pipeTo = exports.fromEffect = exports.foldCauseChannel = exports.flatMap = exports.failSync = exports.failCauseSync = exports.failCause = exports.fail = exports.ensuringWith = exports.embedInput = exports.concatMapWithCustom = exports.concatMapWith = exports.concatAllWith = exports.concatAll = exports.collectElements = exports.catchAllCause = exports.acquireReleaseOut = exports.ChannelTypeId = void 0;
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var childExecutorDecision = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7798));
+var _continuation = /*#__PURE__*/__nccwpck_require__(1263);
+var upstreamPullStrategy = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(245));
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7677))));
+var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const ChannelSymbolKey = "@effect/stream/Channel";
+/** @internal */
+const ChannelTypeId = /*#__PURE__*/Symbol.for(ChannelSymbolKey);
+/** @internal */
+exports.ChannelTypeId = ChannelTypeId;
+const channelVariance = {
+  _Env: _ => _,
+  _InErr: _ => _,
+  _InElem: _ => _,
+  _InDone: _ => _,
+  _OutErr: _ => _,
+  _OutElem: _ => _,
+  _OutDone: _ => _
+};
+/** @internal */
+const proto = {
+  [ChannelTypeId]: channelVariance
+};
+/** @internal */
+const acquireReleaseOut = (self, release) => Object.create(proto, {
+  _tag: {
+    value: "BracketOut"
+  },
+  acquire: {
+    value: () => self
+  },
+  finalizer: {
+    value: release
+  }
+});
+/** @internal */
+exports.acquireReleaseOut = acquireReleaseOut;
+const catchAllCause = f => {
+  return self => Object.create(proto, {
+    _tag: {
+      value: "Fold"
+    },
+    channel: {
+      value: self
+    },
+    k: {
+      value: new _continuation.ContinuationKImpl(succeed, f)
+    }
+  });
+};
+/** @internal */
+exports.catchAllCause = catchAllCause;
+const collectElements = self => {
+  return suspend(() => {
+    const builder = [];
+    return (0, _Function.pipe)(self, pipeTo(collectElementsReader(builder)), flatMap(value => sync(() => [Chunk.fromIterable(builder), value])));
+  });
+};
+/** @internal */
+exports.collectElements = collectElements;
+const collectElementsReader = builder => {
+  return readWith(outElem => (0, _Function.pipe)(sync(() => {
+    builder.push(outElem);
+  }), flatMap(() => collectElementsReader(builder))), fail, succeedNow);
+};
+/** @internal */
+const concatAll = channels => {
+  return concatAllWith(channels, _Function.constVoid, _Function.constVoid);
+};
+/** @internal */
+exports.concatAll = concatAll;
+const concatAllWith = (channels, f, g) => Object.create(proto, {
+  _tag: {
+    value: "ConcatAll"
+  },
+  combineInners: {
+    value: f
+  },
+  combineAll: {
+    value: g
+  },
+  onPull: {
+    value: () => upstreamPullStrategy.PullAfterNext(Option.none())
+  },
+  onEmit: {
+    value: () => childExecutorDecision.Continue
+  },
+  value: {
+    value: () => channels
+  },
+  k: {
+    value: _Function.identity
+  }
+});
+/** @internal */
+exports.concatAllWith = concatAllWith;
+const concatMapWith = (f, g, h) => {
+  return self => Object.create(proto, {
+    _tag: {
+      value: "ConcatAll"
+    },
+    combineInners: {
+      value: g
+    },
+    combineAll: {
+      value: h
+    },
+    onPull: {
+      value: () => upstreamPullStrategy.PullAfterNext(Option.none())
+    },
+    onEmit: {
+      value: () => childExecutorDecision.Continue
+    },
+    value: {
+      value: () => self
+    },
+    k: {
+      value: f
+    }
+  });
+};
+/** @internal */
+exports.concatMapWith = concatMapWith;
+const concatMapWithCustom = (f, g, h, onPull, onEmit) => {
+  return self => Object.create(proto, {
+    _tag: {
+      value: "ConcatAll"
+    },
+    combineInners: {
+      value: g
+    },
+    combineAll: {
+      value: h
+    },
+    onPull: {
+      value: onPull
+    },
+    onEmit: {
+      value: onEmit
+    },
+    value: {
+      value: () => self
+    },
+    k: {
+      value: f
+    }
+  });
+};
+/** @internal */
+exports.concatMapWithCustom = concatMapWithCustom;
+const embedInput = input => {
+  return self => Object.create(proto, {
+    _tag: {
+      value: "Bridge"
+    },
+    input: {
+      value: input
+    },
+    channel: {
+      value: self
+    }
+  });
+};
+/** @internal */
+exports.embedInput = embedInput;
+const ensuringWith = finalizer => {
+  return self => Object.create(proto, {
+    _tag: {
+      value: "Ensuring"
+    },
+    channel: {
+      value: self
+    },
+    finalizer: {
+      value: finalizer
+    }
+  });
+};
+/** @internal */
+exports.ensuringWith = ensuringWith;
+const fail = error => {
+  return failCause(Cause.fail(error));
+};
+/** @internal */
+exports.fail = fail;
+const failSync = evaluate => {
+  return failCauseSync(() => Cause.fail(evaluate()));
+};
+/** @internal */
+exports.failSync = failSync;
+const failCause = cause => {
+  return failCauseSync(() => cause);
+};
+/** @internal */
+exports.failCause = failCause;
+const failCauseSync = evaluate => Object.create(proto, {
+  _tag: {
+    value: "Fail"
+  },
+  error: {
+    value: evaluate
+  }
+});
+exports.failCauseSync = failCauseSync;
+const flatMap = f => {
+  return self => Object.create(proto, {
+    _tag: {
+      value: "Fold"
+    },
+    channel: {
+      value: self
+    },
+    k: {
+      value: new _continuation.ContinuationKImpl(f, failCause)
+    }
+  });
+};
+/** @internal */
+exports.flatMap = flatMap;
+const foldCauseChannel = (onError, onSuccess) => {
+  return self => Object.create(proto, {
+    _tag: {
+      value: "Fold"
+    },
+    channel: {
+      value: self
+    },
+    k: {
+      value: new _continuation.ContinuationKImpl(onSuccess, onError)
+    }
+  });
+};
+/** @internal */
+exports.foldCauseChannel = foldCauseChannel;
+const fromEffect = effect => Object.create(proto, {
+  _tag: {
+    value: "FromEffect"
+  },
+  effect: {
+    value: () => effect
+  }
+});
+/** @internal */
+exports.fromEffect = fromEffect;
+const pipeTo = that => {
+  return self => Object.create(proto, {
+    _tag: {
+      value: "PipeTo"
+    },
+    left: {
+      value: () => self
+    },
+    right: {
+      value: () => that
+    }
+  });
+};
+/** @internal */
+exports.pipeTo = pipeTo;
+const provideContext = env => {
+  return self => Object.create(proto, {
+    _tag: {
+      value: "Provide"
+    },
+    context: {
+      value: () => env
+    },
+    inner: {
+      value: self
+    }
+  });
+};
+/** @internal */
+exports.provideContext = provideContext;
+const readOrFail = error => Object.create(proto, {
+  _tag: {
+    value: "Read"
+  },
+  more: {
+    value: succeed
+  },
+  done: {
+    value: new _continuation.ContinuationKImpl(() => fail(error), () => fail(error))
+  }
+});
+/** @internal */
+exports.readOrFail = readOrFail;
+const readWith = (input, error, done) => {
+  return readWithCause(input, cause => (0, _Function.pipe)(Cause.failureOrCause(cause), Either.match(error, failCause)), done);
+};
+/** @internal */
+exports.readWith = readWith;
+const readWithCause = (input, halt, done) => Object.create(proto, {
+  _tag: {
+    value: "Read"
+  },
+  more: {
+    value: input
+  },
+  done: {
+    value: new _continuation.ContinuationKImpl(done, halt)
+  }
+});
+/** @internal */
+exports.readWithCause = readWithCause;
+const succeed = value => {
+  return sync(() => value);
+};
+/** @internal */
+exports.succeed = succeed;
+const succeedNow = result => Object.create(proto, {
+  _tag: {
+    value: "SucceedNow"
+  },
+  terminal: {
+    value: result
+  }
+});
+/** @internal */
+exports.succeedNow = succeedNow;
+const suspend = evaluate => Object.create(proto, {
+  _tag: {
+    value: "Suspend"
+  },
+  channel: {
+    value: evaluate
+  }
+});
+exports.suspend = suspend;
+const sync = evaluate => Object.create(proto, {
+  _tag: {
+    value: "Succeed"
+  },
+  evaluate: {
+    value: evaluate
+  }
+});
+/** @internal */
+exports.sync = sync;
+const unit = () => succeedNow(undefined);
+/** @internal */
+exports.unit = unit;
+const write = out => Object.create(proto, {
+  _tag: {
+    value: "Emit"
+  },
+  out: {
+    value: out
+  }
+});
+exports.write = write;
+//# sourceMappingURL=core.js.map
+
+/***/ }),
+
+/***/ 3203:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.mapEffectParByKey = exports.make = exports.groupByKey = exports.groupByIterable = exports.groupBy = exports.first = exports.filter = exports.evaluate = exports.GroupByTypeId = void 0;
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var Deferred = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3576));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var Queue = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9925));
+var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6607));
+var channel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9959));
+var channelExecutor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4222));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7679));
+var stream = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5416));
+var take = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2978));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+var _a;
+/** @internal */
+const GroupBySymbolKey = "@effect/stream/GroupBy";
+/** @internal */
+const GroupByTypeId = /*#__PURE__*/Symbol.for(GroupBySymbolKey);
+/** @internal */
+exports.GroupByTypeId = GroupByTypeId;
+const groupByVariance = {
+  _R: _ => _,
+  _E: _ => _,
+  _K: _ => _,
+  _V: _ => _
+};
+/** @internal */
+const evaluate = (f, bufferSize = 16) => {
+  return self => (0, _Function.pipe)(self.grouped, stream.flatMapPar(Number.POSITIVE_INFINITY, bufferSize)(([key, queue]) => f(key, stream.flattenTake(stream.fromQueueWithShutdown(queue)))));
+};
+/** @internal */
+exports.evaluate = evaluate;
+const filter = predicate => {
+  return self => make((0, _Function.pipe)(self.grouped, stream.filterEffect(tuple => {
+    if (predicate(tuple[0])) {
+      return (0, _Function.pipe)(Effect.succeed(tuple), Effect.as(true));
+    }
+    return (0, _Function.pipe)(Queue.shutdown(tuple[1]), Effect.as(false));
+  })));
+};
+/** @internal */
+exports.filter = filter;
+const first = n => {
+  return self => make((0, _Function.pipe)(stream.zipWithIndex(self.grouped), stream.filterEffect(tuple => {
+    const index = tuple[1];
+    const queue = tuple[0][1];
+    if (index < n) {
+      return (0, _Function.pipe)(Effect.succeed(tuple), Effect.as(true));
+    }
+    return (0, _Function.pipe)(Queue.shutdown(queue), Effect.as(false));
+  }), stream.map(tuple => tuple[0])));
+};
+/** @internal */
+exports.first = first;
+const make = grouped => ({
+  [GroupByTypeId]: groupByVariance,
+  grouped
+});
+// Circular with Stream
+/** @internal */
+exports.make = make;
+const groupBy = (f, bufferSize = 16) => {
+  return self => make(stream.unwrapScoped(Effect.gen(function* ($) {
+    const decider = yield* $(Deferred.make());
+    const output = yield* $(Effect.acquireRelease(Queue.bounded(bufferSize), queue => Queue.shutdown(queue)));
+    const ref = yield* $(Ref.make(new Map()));
+    const add = yield* $((0, _Function.pipe)(self, stream.mapEffect(f), stream.distributedWithDynamic(bufferSize, ([key, value]) => (0, _Function.pipe)(Deferred.await(decider), Effect.flatMap(f => f(key, value))), exit => Queue.offer(output, exit))));
+    yield* $((0, _Function.pipe)(Deferred.succeed(decider, (key, _) => (0, _Function.pipe)(Ref.get(ref), Effect.map(map => Option.fromNullable(map.get(key))), Effect.flatMap(Option.match(() => (0, _Function.pipe)(add, Effect.flatMap(([index, queue]) => (0, _Function.pipe)(Ref.update(ref, map => map.set(key, index)), Effect.zipRight((0, _Function.pipe)(Queue.offer(output, Exit.succeed([key, mapDequeue(queue, exit => new take.TakeImpl((0, _Function.pipe)(exit, Exit.map(tuple => Chunk.of(tuple[1])))))])), Effect.as(n => n === index)))))), index => Effect.succeed(n => n === index)))))));
+    return stream.flattenExitOption(stream.fromQueueWithShutdown(output));
+  })));
+};
+exports.groupBy = groupBy;
+const mapDequeue = (dequeue, f) => new MapDequeue(dequeue, f);
+class MapDequeue {
+  constructor(dequeue, f) {
+    this.dequeue = dequeue;
+    this.f = f;
+    this[_a] = {
+      _Out: _ => _
+    };
+  }
+  capacity() {
+    return Queue.capacity(this.dequeue);
+  }
+  size() {
+    return Queue.size(this.dequeue);
+  }
+  awaitShutdown() {
+    return Queue.awaitShutdown(this.dequeue);
+  }
+  isShutdown() {
+    return Queue.isShutdown(this.dequeue);
+  }
+  shutdown() {
+    return Queue.shutdown(this.dequeue);
+  }
+  isFull() {
+    return Queue.isFull(this.dequeue);
+  }
+  isEmpty() {
+    return Queue.isEmpty(this.dequeue);
+  }
+  take() {
+    return (0, _Function.pipe)(Queue.take(this.dequeue), Effect.map(a => this.f(a)));
+  }
+  takeAll() {
+    return (0, _Function.pipe)(Queue.takeAll(this.dequeue), Effect.map(Chunk.map(a => this.f(a))));
+  }
+  takeUpTo(max) {
+    return (0, _Function.pipe)(Queue.takeUpTo(this.dequeue, max), Effect.map(Chunk.map(a => this.f(a))));
+  }
+  takeBetween(min, max) {
+    return (0, _Function.pipe)(Queue.takeBetween(this.dequeue, min, max), Effect.map(Chunk.map(a => this.f(a))));
+  }
+  takeN(n) {
+    return (0, _Function.pipe)(Queue.takeN(this.dequeue, n), Effect.map(Chunk.map(a => this.f(a))));
+  }
+  poll() {
+    return (0, _Function.pipe)(Queue.poll(this.dequeue), Effect.map(Option.map(a => this.f(a))));
+  }
+}
+_a = Queue.DequeueTypeId;
+/** @internal */
+const groupByKey = (f, bufferSize = 16) => {
+  return self => {
+    const loop = (map, outerQueue) => core.readWithCause(input => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(input, groupByIterable(f), Effect.forEachDiscard(([key, values]) => {
+      const innerQueue = map.get(key);
+      if (innerQueue === undefined) {
+        return (0, _Function.pipe)(Queue.bounded(bufferSize), Effect.flatMap(innerQueue => (0, _Function.pipe)(Effect.sync(() => {
+          map.set(key, innerQueue);
+        }), Effect.zipRight(Queue.offer(outerQueue, take.of([key, innerQueue]))), Effect.zipRight((0, _Function.pipe)(Queue.offer(innerQueue, take.chunk(values)), Effect.catchSomeCause(cause => Cause.isInterruptedOnly(cause) ? Option.some(Effect.unit()) : Option.none()))))));
+      }
+      return (0, _Function.pipe)(Queue.offer(innerQueue, take.chunk(values)), Effect.catchSomeCause(cause => Cause.isInterruptedOnly(cause) ? Option.some(Effect.unit()) : Option.none()));
+    }))), core.flatMap(() => loop(map, outerQueue))), cause => core.fromEffect(Queue.offer(outerQueue, take.failCause(cause))), () => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(map.entries(), Effect.forEachDiscard(([_, innerQueue]) => (0, _Function.pipe)(Queue.offer(innerQueue, take.end), Effect.catchSomeCause(cause => Cause.isInterruptedOnly(cause) ? Option.some(Effect.unit()) : Option.none()))), Effect.zipRight(Queue.offer(outerQueue, take.end))))));
+    return make(stream.unwrapScoped((0, _Function.pipe)(Effect.sync(() => new Map()), Effect.flatMap(map => (0, _Function.pipe)(Effect.acquireRelease(Queue.unbounded(), queue => Queue.shutdown(queue)), Effect.flatMap(queue => (0, _Function.pipe)(self.channel, core.pipeTo(loop(map, queue)), channel.drain, channelExecutor.runScoped, Effect.forkScoped, Effect.as(stream.flattenTake(stream.fromQueueWithShutdown(queue))))))))));
+  };
+};
+/** @internal */
+exports.groupByKey = groupByKey;
+const mapEffectParByKey = (keyBy, bufferSize = 16) => {
+  return f => {
+    return self => (0, _Function.pipe)(self, groupByKey(keyBy, bufferSize), evaluate((_, s) => (0, _Function.pipe)(s, stream.mapEffect(f))));
+  };
+};
+/**
+ * A variant of `groupBy` that retains the insertion order of keys.
+ *
+ * @internal
+ */
+exports.mapEffectParByKey = mapEffectParByKey;
+const groupByIterable = f => {
+  return iterable => {
+    const builder = [];
+    const iterator = iterable[Symbol.iterator]();
+    const map = new Map();
+    let next;
+    while ((next = iterator.next()) && !next.done) {
+      const value = next.value;
+      const key = f(value);
+      if (map.has(key)) {
+        const innerBuilder = map.get(key);
+        innerBuilder.push(value);
+      } else {
+        const innerBuilder = [value];
+        builder.push([key, innerBuilder]);
+        map.set(key, innerBuilder);
+      }
+    }
+    return Chunk.unsafeFromArray(builder.map(tuple => [tuple[0], Chunk.unsafeFromArray(tuple[1])]));
+  };
+};
+exports.groupByIterable = groupByIterable;
+//# sourceMappingURL=groupBy.js.map
+
+/***/ }),
+
+/***/ 7677:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_SUSPEND = exports.OP_SUCCEED_NOW = exports.OP_SUCCEED = exports.OP_READ = exports.OP_PROVIDE = exports.OP_PIPE_TO = exports.OP_FROM_EFFECT = exports.OP_FOLD = exports.OP_FAIL = exports.OP_ENSURING = exports.OP_EMIT = exports.OP_CONCAT_ALL = exports.OP_BRIDGE = exports.OP_BRACKET_OUT = void 0;
+/** @internal */
+const OP_BRACKET_OUT = "BracketOut";
+/** @internal */
+exports.OP_BRACKET_OUT = OP_BRACKET_OUT;
+const OP_BRIDGE = "Bridge";
+/** @internal */
+exports.OP_BRIDGE = OP_BRIDGE;
+const OP_CONCAT_ALL = "ConcatAll";
+/** @internal */
+exports.OP_CONCAT_ALL = OP_CONCAT_ALL;
+const OP_EMIT = "Emit";
+/** @internal */
+exports.OP_EMIT = OP_EMIT;
+const OP_ENSURING = "Ensuring";
+/** @internal */
+exports.OP_ENSURING = OP_ENSURING;
+const OP_FAIL = "Fail";
+/** @internal */
+exports.OP_FAIL = OP_FAIL;
+const OP_FOLD = "Fold";
+/** @internal */
+exports.OP_FOLD = OP_FOLD;
+const OP_FROM_EFFECT = "FromEffect";
+/** @internal */
+exports.OP_FROM_EFFECT = OP_FROM_EFFECT;
+const OP_PIPE_TO = "PipeTo";
+/** @internal */
+exports.OP_PIPE_TO = OP_PIPE_TO;
+const OP_PROVIDE = "Provide";
+/** @internal */
+exports.OP_PROVIDE = OP_PROVIDE;
+const OP_READ = "Read";
+/** @internal */
+exports.OP_READ = OP_READ;
+const OP_SUCCEED = "Succeed";
+/** @internal */
+exports.OP_SUCCEED = OP_SUCCEED;
+const OP_SUCCEED_NOW = "SucceedNow";
+/** @internal */
+exports.OP_SUCCEED_NOW = OP_SUCCEED_NOW;
+const OP_SUSPEND = "Suspend";
+exports.OP_SUSPEND = OP_SUSPEND;
+//# sourceMappingURL=channel.js.map
+
+/***/ }),
+
+/***/ 586:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_READ = exports.OP_FROM_EFFECT = exports.OP_EMIT = exports.OP_DONE = void 0;
+/** @internal */
+const OP_DONE = "Done";
+/** @internal */
+exports.OP_DONE = OP_DONE;
+const OP_EMIT = "Emit";
+/** @internal */
+exports.OP_EMIT = OP_EMIT;
+const OP_FROM_EFFECT = "FromEffect";
+/** @internal */
+exports.OP_FROM_EFFECT = OP_FROM_EFFECT;
+const OP_READ = "Read";
+exports.OP_READ = OP_READ;
+//# sourceMappingURL=channelState.js.map
+
+/***/ }),
+
+/***/ 3116:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_YIELD = exports.OP_CONTINUE = exports.OP_CLOSE = void 0;
+/** @internal */
+const OP_CONTINUE = "Continue";
+/** @internal */
+exports.OP_CONTINUE = OP_CONTINUE;
+const OP_CLOSE = "Close";
+/** @internal */
+exports.OP_CLOSE = OP_CLOSE;
+const OP_YIELD = "Yield";
+exports.OP_YIELD = OP_YIELD;
+//# sourceMappingURL=childExecutorDecision.js.map
+
+/***/ }),
+
+/***/ 5664:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_CONTINUATION_K = exports.OP_CONTINUATION_FINALIZER = void 0;
+/** @internal */
+const OP_CONTINUATION_K = "ContinuationK";
+/** @internal */
+exports.OP_CONTINUATION_K = OP_CONTINUATION_K;
+const OP_CONTINUATION_FINALIZER = "ContinuationFinalizer";
+exports.OP_CONTINUATION_FINALIZER = OP_CONTINUATION_FINALIZER;
+//# sourceMappingURL=continuation.js.map
+
+/***/ }),
+
+/***/ 7544:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_RIGHT = exports.OP_LEFT = exports.OP_EITHER = exports.OP_BOTH = void 0;
+/** @internal */
+const OP_LEFT = "Left";
+/** @internal */
+exports.OP_LEFT = OP_LEFT;
+const OP_RIGHT = "Right";
+/** @internal */
+exports.OP_RIGHT = OP_RIGHT;
+const OP_BOTH = "Both";
+/** @internal */
+exports.OP_BOTH = OP_BOTH;
+const OP_EITHER = "Either";
+exports.OP_EITHER = OP_EITHER;
+//# sourceMappingURL=haltStrategy.js.map
+
+/***/ }),
+
+/***/ 7371:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_DONE = exports.OP_AWAIT = void 0;
+/** @internal */
+const OP_DONE = "Done";
+/** @internal */
+exports.OP_DONE = OP_DONE;
+const OP_AWAIT = "Await";
+exports.OP_AWAIT = OP_AWAIT;
+//# sourceMappingURL=mergeDecision.js.map
+
+/***/ }),
+
+/***/ 302:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_RIGHT_DONE = exports.OP_LEFT_DONE = exports.OP_BOTH_RUNNING = void 0;
+/** @internal */
+const OP_BOTH_RUNNING = "BothRunning";
+/** @internal */
+exports.OP_BOTH_RUNNING = OP_BOTH_RUNNING;
+const OP_LEFT_DONE = "LeftDone";
+/** @internal */
+exports.OP_LEFT_DONE = OP_LEFT_DONE;
+const OP_RIGHT_DONE = "RightDone";
+exports.OP_RIGHT_DONE = OP_RIGHT_DONE;
+//# sourceMappingURL=mergeState.js.map
+
+/***/ }),
+
+/***/ 2296:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_BUFFER_SLIDING = exports.OP_BACK_PRESSURE = void 0;
+/** @internal */
+const OP_BACK_PRESSURE = "BackPressure";
+/** @internal */
+exports.OP_BACK_PRESSURE = OP_BACK_PRESSURE;
+const OP_BUFFER_SLIDING = "BufferSliding";
+exports.OP_BUFFER_SLIDING = OP_BUFFER_SLIDING;
+//# sourceMappingURL=mergeStrategy.js.map
+
+/***/ }),
+
+/***/ 2813:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_PULLED = exports.OP_NO_UPSTREAM = void 0;
+/** @internal */
+const OP_PULLED = "Pulled";
+/** @internal */
+exports.OP_PULLED = OP_PULLED;
+const OP_NO_UPSTREAM = "NoUpstream";
+exports.OP_NO_UPSTREAM = OP_NO_UPSTREAM;
+//# sourceMappingURL=upstreamPullRequest.js.map
+
+/***/ }),
+
+/***/ 6674:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.OP_PULL_AFTER_NEXT = exports.OP_PULL_AFTER_ALL_ENQUEUED = void 0;
+/** @internal */
+const OP_PULL_AFTER_NEXT = "PullAfterNext";
+/** @internal */
+exports.OP_PULL_AFTER_NEXT = OP_PULL_AFTER_NEXT;
+const OP_PULL_AFTER_ALL_ENQUEUED = "PullAfterAllEnqueued";
+exports.OP_PULL_AFTER_ALL_ENQUEUED = OP_PULL_AFTER_ALL_ENQUEUED;
+//# sourceMappingURL=upstreamPullStrategy.js.map
+
+/***/ }),
+
+/***/ 9901:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.map = exports.logWarningCauseMessage = exports.logWarningCause = exports.logWarning = exports.logTraceCauseMessage = exports.logTraceCause = exports.logTrace = exports.logInfoCauseMessage = exports.logInfoCause = exports.logInfo = exports.logFatalCauseMessage = exports.logFatalCause = exports.logFatal = exports.logErrorCauseMessage = exports.logErrorCause = exports.logError = exports.logDebugCauseMessage = exports.logDebugCause = exports.logDebug = exports.log = exports.leftover = exports.last = exports.ignoreLeftover = exports.head = exports.fromQueueWithShutdown = exports.fromQueue = exports.fromPush = exports.fromHubWithShutdown = exports.fromHub = exports.fromEffect = exports.fromChannel = exports.forEachWhile = exports.forEachChunkWhile = exports.forEachChunk = exports.forEach = exports.foldWeightedEffect = exports.foldWeightedDecomposeEffect = exports.foldWeightedDecompose = exports.foldWeighted = exports.foldUntilEffect = exports.foldUntil = exports.foldSink = exports.foldLeftEffect = exports.foldLeftChunksEffect = exports.foldLeftChunks = exports.foldLeft = exports.foldEffect = exports.foldChunksEffect = exports.foldChunks = exports.fold = exports.flatMap = exports.findEffect = exports.filterInputEffect = exports.filterInput = exports.failSync = exports.failCauseSync = exports.failCause = exports.fail = exports.every = exports.ensuringWith = exports.ensuring = exports.dropWhileEffect = exports.dropWhile = exports.dropUntilEffect = exports.dropUntil = exports.drop = exports.drain = exports.dimapEffect = exports.dimapChunksEffect = exports.dimapChunks = exports.dimap = exports.dieSync = exports.dieMessage = exports.die = exports.count = exports.contramapEffect = exports.contramapChunksEffect = exports.contramapChunks = exports.contramap = exports.contextWithSink = exports.contextWithEffect = exports.contextWith = exports.context = exports.collectLeftover = exports.collectAllWhileWith = exports.collectAllWhileEffect = exports.collectAllWhile = exports.collectAllUntilEffect = exports.collectAllUntil = exports.collectAllToSetN = exports.collectAllToSet = exports.collectAllToMapN = exports.collectAllToMap = exports.collectAllN = exports.collectAllFrom = exports.collectAll = exports.channelToSink = exports.as = exports.SinkTypeId = exports.SinkImpl = void 0;
+exports.zipWithPar = exports.zipWith = exports.zipRight = exports.zipParRight = exports.zipParLeft = exports.zipPar = exports.zipLeft = exports.zip = exports.withDuration = exports.unwrapScoped = exports.unwrap = exports.toChannel = exports.timed = exports.take = exports.sync = exports.suspend = exports.summarized = exports.sum = exports.succeed = exports.splitWhere = exports.some = exports.serviceWithSink = exports.serviceWithEffect = exports.serviceWith = exports.service = exports.refineOrDieWith = exports.refineOrDie = exports.raceWith = exports.raceBoth = exports.race = exports.provideContext = exports.orElse = exports.never = exports.mkString = exports.mapLeftover = exports.mapError = exports.mapEffect = void 0;
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3932));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var Hub = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6230));
+var Queue = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9925));
+var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6607));
+var channel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9959));
+var mergeDecision = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4674));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7679));
+var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+var ReadonlyArray = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2483));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+var Duration = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2095));
+var HashMap = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5542));
+var HashSet = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1470));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+var _a;
+/** @internal */
+const SinkSymbolKey = "@effect/stream/Sink";
+/** @internal */
+const SinkTypeId = /*#__PURE__*/Symbol.for(SinkSymbolKey);
+/** @internal */
+exports.SinkTypeId = SinkTypeId;
+const sinkVariance = {
+  _R: _ => _,
+  _E: _ => _,
+  _In: _ => _,
+  _L: _ => _,
+  _Z: _ => _
+};
+/** @internal */
+class SinkImpl {
+  constructor(channel) {
+    this.channel = channel;
+    this[_a] = sinkVariance;
+  }
+}
+exports.SinkImpl = SinkImpl;
+_a = SinkTypeId;
+/** @internal */
+const as = z => {
+  return self => (0, _Function.pipe)(self, map(() => z));
+};
+/** @internal */
+exports.as = as;
+const collectAll = () => new SinkImpl(collectAllLoop(Chunk.empty()));
+/** @internal */
+exports.collectAll = collectAll;
+const collectAllLoop = acc => core.readWithCause(chunk => collectAllLoop((0, _Function.pipe)(acc, Chunk.concat(chunk))), core.failCause, () => core.succeed(acc));
+/** @internal */
+const collectAllN = n => {
+  return (0, _Function.pipe)(fromEffect(Effect.sync(() => Chunk.empty())), flatMap(builder => foldUntil(builder, n, (chunk, input) => (0, _Function.pipe)(chunk, Chunk.append(input)))));
+};
+/** @internal */
+exports.collectAllN = collectAllN;
+const collectAllFrom = self => (0, _Function.pipe)(self, collectAllWhileWith(Chunk.empty(), _Function.constTrue, (chunk, z) => (0, _Function.pipe)(chunk, Chunk.append(z))));
+/** @internal */
+exports.collectAllFrom = collectAllFrom;
+const collectAllToMap = (key, merge) => {
+  return (0, _Function.pipe)(foldLeftChunks(HashMap.empty(), (map, chunk) => (0, _Function.pipe)(chunk, Chunk.reduce(map, (map, input) => {
+    const k = key(input);
+    const v = (0, _Function.pipe)(map, HashMap.has(k)) ? merge((0, _Function.pipe)(map, HashMap.unsafeGet(k)), input) : input;
+    return (0, _Function.pipe)(map, HashMap.set(k, v));
+  }))));
+};
+/** @internal */
+exports.collectAllToMap = collectAllToMap;
+const collectAllToMapN = (n, key, merge) => {
+  return foldWeighted(HashMap.empty(), n, (acc, input) => (0, _Function.pipe)(acc, HashMap.has(key(input))) ? 0 : 1, (acc, input) => {
+    const k = key(input);
+    const v = (0, _Function.pipe)(acc, HashMap.has(k)) ? merge((0, _Function.pipe)(acc, HashMap.unsafeGet(k)), input) : input;
+    return (0, _Function.pipe)(acc, HashMap.set(k, v));
+  });
+};
+/** @internal */
+exports.collectAllToMapN = collectAllToMapN;
+const collectAllToSet = () => foldLeftChunks(HashSet.empty(), (acc, chunk) => (0, _Function.pipe)(chunk, Chunk.reduce(acc, (acc, input) => (0, _Function.pipe)(acc, HashSet.add(input)))));
+/** @internal */
+exports.collectAllToSet = collectAllToSet;
+const collectAllToSetN = n => foldWeighted(HashSet.empty(), n, (acc, input) => (0, _Function.pipe)(acc, HashSet.has(input)) ? 0 : 1, (acc, input) => (0, _Function.pipe)(acc, HashSet.add(input)));
+/** @internal */
+exports.collectAllToSetN = collectAllToSetN;
+const collectAllUntil = p => {
+  return (0, _Function.pipe)(fold([Chunk.empty(), true], tuple => tuple[1], ([chunk, _], input) => [(0, _Function.pipe)(chunk, Chunk.append(input)), !p(input)]), map(tuple => tuple[0]));
+};
+/** @internal */
+exports.collectAllUntil = collectAllUntil;
+const collectAllUntilEffect = p => {
+  return (0, _Function.pipe)(foldEffect([Chunk.empty(), true], tuple => tuple[1], ([chunk, _], input) => (0, _Function.pipe)(p(input), Effect.map(bool => [(0, _Function.pipe)(chunk, Chunk.append(input)), !bool]))), map(tuple => tuple[0]));
+};
+/** @internal */
+exports.collectAllUntilEffect = collectAllUntilEffect;
+const collectAllWhile = predicate => fromChannel(collectAllWhileReader(predicate, Chunk.empty()));
+/** @internal */
+exports.collectAllWhile = collectAllWhile;
+const collectAllWhileReader = (predicate, done) => core.readWith(input => {
+  const [collected, leftovers] = (0, _Function.pipe)(Chunk.toReadonlyArray(input), ReadonlyArray.span(predicate));
+  if (leftovers.length === 0) {
+    return collectAllWhileReader(predicate, (0, _Function.pipe)(done, Chunk.concat(Chunk.unsafeFromArray(collected))));
+  }
+  return (0, _Function.pipe)(core.write(Chunk.unsafeFromArray(leftovers)), channel.zipRight(core.succeed((0, _Function.pipe)(done, Chunk.concat(Chunk.unsafeFromArray(collected))))));
+}, core.fail, () => core.succeed(done));
+/** @internal */
+const collectAllWhileEffect = predicate => fromChannel(collectAllWhileEffectReader(predicate, Chunk.empty()));
+/** @internal */
+exports.collectAllWhileEffect = collectAllWhileEffect;
+const collectAllWhileEffectReader = (predicate, done) => core.readWith(input => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(input, Effect.takeWhile(predicate))), core.flatMap(collected => {
+  const leftovers = (0, _Function.pipe)(input, Chunk.drop(collected.length));
+  if (Chunk.isEmpty(leftovers)) {
+    return collectAllWhileEffectReader(predicate, (0, _Function.pipe)(done, Chunk.concat(collected)));
+  }
+  return (0, _Function.pipe)(core.write(leftovers), channel.zipRight(core.succeed((0, _Function.pipe)(done, Chunk.concat(collected)))));
+})), core.fail, () => core.succeed(done));
+/** @internal */
+const collectAllWhileWith = (z, p, f) => {
+  return self => {
+    const refs = (0, _Function.pipe)(Ref.make(Chunk.empty()), Effect.zip(Ref.make(false)));
+    const newChannel = (0, _Function.pipe)(core.fromEffect(refs), core.flatMap(([leftoversRef, upstreamDoneRef]) => {
+      const upstreamMarker = core.readWith(input => (0, _Function.pipe)(core.write(input), core.flatMap(() => upstreamMarker)), core.fail, done => (0, _Function.pipe)(core.fromEffect(Ref.set(upstreamDoneRef, true)), channel.as(done)));
+      return (0, _Function.pipe)(upstreamMarker, core.pipeTo(channel.bufferChunk(leftoversRef)), core.pipeTo(collectAllWhileWithLoop(self, leftoversRef, upstreamDoneRef, z, p, f)));
+    }));
+    return new SinkImpl(newChannel);
+  };
+};
+/** @internal */
+exports.collectAllWhileWith = collectAllWhileWith;
+const collectAllWhileWithLoop = (self, leftoversRef, upstreamDoneRef, currentResult, p, f) => {
+  return (0, _Function.pipe)(self.channel, channel.doneCollect, channel.foldChannel(core.fail, ([leftovers, doneValue]) => p(doneValue) ? (0, _Function.pipe)(core.fromEffect(Ref.set(leftoversRef, Chunk.flatten(leftovers))), core.flatMap(() => (0, _Function.pipe)(core.fromEffect(Ref.get(upstreamDoneRef)), core.flatMap(upstreamDone => {
+    const accumulatedResult = f(currentResult, doneValue);
+    return upstreamDone ? (0, _Function.pipe)(core.write(Chunk.flatten(leftovers)), channel.as(accumulatedResult)) : collectAllWhileWithLoop(self, leftoversRef, upstreamDoneRef, accumulatedResult, p, f);
+  })))) : (0, _Function.pipe)(core.write(Chunk.flatten(leftovers)), channel.as(currentResult))));
+};
+/** @internal */
+const collectLeftover = self => new SinkImpl((0, _Function.pipe)(core.collectElements(self.channel), channel.map(([chunks, z]) => [z, Chunk.flatten(chunks)])));
+/** @internal */
+exports.collectLeftover = collectLeftover;
+const contramap = f => {
+  return self => (0, _Function.pipe)(self, contramapChunks(Chunk.map(f)));
+};
+/** @internal */
+exports.contramap = contramap;
+const contramapEffect = f => {
+  return self => (0, _Function.pipe)(self, contramapChunksEffect(Effect.forEach(f)));
+};
+/** @internal */
+exports.contramapEffect = contramapEffect;
+const contramapChunks = f => {
+  return self => {
+    const loop = core.readWith(chunk => (0, _Function.pipe)(core.write(f(chunk)), core.flatMap(() => loop)), core.fail, core.succeed);
+    return new SinkImpl((0, _Function.pipe)(loop, core.pipeTo(self.channel)));
+  };
+};
+/** @internal */
+exports.contramapChunks = contramapChunks;
+const contramapChunksEffect = f => {
+  return self => {
+    const loop = core.readWith(chunk => (0, _Function.pipe)(core.fromEffect(f(chunk)), core.flatMap(core.write), core.flatMap(() => loop)), core.fail, core.succeed);
+    return new SinkImpl((0, _Function.pipe)(loop, channel.pipeToOrFail(self.channel)));
+  };
+};
+/** @internal */
+exports.contramapChunksEffect = contramapChunksEffect;
+const count = () => foldLeft(0, (s, _) => s + 1);
+/** @internal */
+exports.count = count;
+const die = defect => failCause(Cause.die(defect));
+/** @internal */
+exports.die = die;
+const dieMessage = message => failCause(Cause.die(Cause.RuntimeException(message)));
+/** @internal */
+exports.dieMessage = dieMessage;
+const dieSync = evaluate => failCauseSync(() => Cause.die(evaluate()));
+/** @internal */
+exports.dieSync = dieSync;
+const dimap = (f, g) => {
+  return self => (0, _Function.pipe)(self, contramap(f), map(g));
+};
+/** @internal */
+exports.dimap = dimap;
+const dimapEffect = (f, g) => {
+  return self => (0, _Function.pipe)(self, contramapEffect(f), mapEffect(g));
+};
+/** @internal */
+exports.dimapEffect = dimapEffect;
+const dimapChunks = (f, g) => {
+  return self => (0, _Function.pipe)(self, contramapChunks(f), map(g));
+};
+/** @internal */
+exports.dimapChunks = dimapChunks;
+const dimapChunksEffect = (f, g) => {
+  return self => (0, _Function.pipe)(self, contramapChunksEffect(f), mapEffect(g));
+};
+/** @internal */
+exports.dimapChunksEffect = dimapChunksEffect;
+const drain = () => new SinkImpl(channel.drain(channel.identityChannel()));
+/** @internal */
+exports.drain = drain;
+const drop = n => suspend(() => new SinkImpl(dropLoop(n)));
+/** @internal */
+exports.drop = drop;
+const dropLoop = n => core.readWith(input => {
+  const dropped = (0, _Function.pipe)(input, Chunk.drop(n));
+  const leftover = Math.max(n - input.length, 0);
+  const more = Chunk.isEmpty(input) || leftover > 0;
+  if (more) {
+    return dropLoop(leftover);
+  }
+  return (0, _Function.pipe)(core.write(dropped), channel.zipRight(channel.identityChannel()));
+}, core.fail, core.unit);
+/** @internal */
+const dropUntil = predicate => new SinkImpl((0, _Function.pipe)(dropWhile(input => !predicate(input)).channel, channel.pipeToOrFail(drop(1).channel)));
+/** @internal */
+exports.dropUntil = dropUntil;
+const dropUntilEffect = predicate => suspend(() => new SinkImpl(dropUntilEffectReader(predicate)));
+/** @internal */
+exports.dropUntilEffect = dropUntilEffect;
+const dropUntilEffectReader = predicate => core.readWith(input => (0, _Function.pipe)(input, Effect.dropUntil(predicate), Effect.map(leftover => {
+  const more = Chunk.isEmpty(leftover);
+  return more ? dropUntilEffectReader(predicate) : (0, _Function.pipe)(core.write(leftover), channel.zipRight(channel.identityChannel()));
+}), channel.unwrap), core.fail, core.unit);
+/** @internal */
+const dropWhile = predicate => new SinkImpl(dropWhileReader(predicate));
+/** @internal */
+exports.dropWhile = dropWhile;
+const dropWhileReader = predicate => core.readWith(input => {
+  const out = (0, _Function.pipe)(input, Chunk.dropWhile(predicate));
+  if (Chunk.isEmpty(out)) {
+    return dropWhileReader(predicate);
+  }
+  return (0, _Function.pipe)(core.write(out), channel.zipRight(channel.identityChannel()));
+}, core.fail, core.succeedNow);
+/** @internal */
+const dropWhileEffect = predicate => suspend(() => new SinkImpl(dropWhileEffectReader(predicate)));
+/** @internal */
+exports.dropWhileEffect = dropWhileEffect;
+const dropWhileEffectReader = predicate => core.readWith(input => (0, _Function.pipe)(input, Effect.dropWhile(predicate), Effect.map(leftover => {
+  const more = Chunk.isEmpty(leftover);
+  return more ? dropWhileEffectReader(predicate) : (0, _Function.pipe)(core.write(leftover), channel.zipRight(channel.identityChannel()));
+}), channel.unwrap), core.fail, core.unit);
+/** @internal */
+const ensuring = finalizer => {
+  return self => new SinkImpl((0, _Function.pipe)(self.channel, channel.ensuring(finalizer)));
+};
+/** @internal */
+exports.ensuring = ensuring;
+const ensuringWith = finalizer => {
+  return self => new SinkImpl((0, _Function.pipe)(self.channel, core.ensuringWith(finalizer)));
+};
+/** @internal */
+exports.ensuringWith = ensuringWith;
+const context = () => fromEffect(Effect.context());
+/** @internal */
+exports.context = context;
+const contextWith = f => (0, _Function.pipe)(context(), map(f));
+/** @internal */
+exports.contextWith = contextWith;
+const contextWithEffect = f => (0, _Function.pipe)(context(), mapEffect(f));
+/** @internal */
+exports.contextWithEffect = contextWithEffect;
+const contextWithSink = f => new SinkImpl(channel.unwrap((0, _Function.pipe)(Effect.contextWith(context => f(context).channel))));
+/** @internal */
+exports.contextWithSink = contextWithSink;
+const every = predicate => fold(true, _Function.identity, (acc, input) => acc && predicate(input));
+/** @internal */
+exports.every = every;
+const fail = e => new SinkImpl(core.fail(e));
+/** @internal */
+exports.fail = fail;
+const failSync = evaluate => new SinkImpl(core.failSync(evaluate));
+/** @internal */
+exports.failSync = failSync;
+const failCause = cause => new SinkImpl(core.failCause(cause));
+/** @internal */
+exports.failCause = failCause;
+const failCauseSync = evaluate => new SinkImpl(core.failCauseSync(evaluate));
+/** @internal */
+exports.failCauseSync = failCauseSync;
+const filterInput = f => {
+  return self => (0, _Function.pipe)(self, contramapChunks(Chunk.filter(f)));
+};
+/** @internal */
+exports.filterInput = filterInput;
+const filterInputEffect = f => {
+  return self => (0, _Function.pipe)(self, contramapChunksEffect(Effect.filter(f)));
+};
+/** @internal */
+exports.filterInputEffect = filterInputEffect;
+const findEffect = f => {
+  return self => {
+    const newChannel = (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(Ref.make(Chunk.empty()), Effect.zip(Ref.make(false)))), core.flatMap(([leftoversRef, upstreamDoneRef]) => {
+      const upstreamMarker = core.readWith(input => (0, _Function.pipe)(core.write(input), core.flatMap(() => upstreamMarker)), core.fail, done => (0, _Function.pipe)(core.fromEffect(Ref.set(upstreamDoneRef, true)), channel.as(done)));
+      const loop = (0, _Function.pipe)(core.collectElements(self.channel), channel.foldChannel(core.fail, ([leftovers, doneValue]) => (0, _Function.pipe)(core.fromEffect(f(doneValue)), core.flatMap(satisfied => (0, _Function.pipe)(core.fromEffect(Ref.set(leftoversRef, Chunk.flatten(leftovers))), channel.zipRight((0, _Function.pipe)(core.fromEffect(Ref.get(upstreamDoneRef)), core.flatMap(upstreamDone => {
+        if (satisfied) {
+          return (0, _Function.pipe)(core.write(Chunk.flatten(leftovers)), channel.as(Option.some(doneValue)));
+        }
+        if (upstreamDone) {
+          return (0, _Function.pipe)(core.write(Chunk.flatten(leftovers)), channel.as(Option.none()));
+        }
+        return loop;
+      }))))))));
+      return (0, _Function.pipe)(upstreamMarker, core.pipeTo(channel.bufferChunk(leftoversRef)), core.pipeTo(loop));
+    }));
+    return new SinkImpl(newChannel);
+  };
+};
+/** @internal */
+exports.findEffect = findEffect;
+const fold = (s, contFn, f) => suspend(() => new SinkImpl(foldReader(s, contFn, f)));
+/** @internal */
+exports.fold = fold;
+const foldReader = (s, contFn, f) => {
+  if (!contFn(s)) {
+    return core.succeedNow(s);
+  }
+  return core.readWith(input => {
+    const [nextS, leftovers] = foldChunkSplit(s, input, contFn, f, 0, input.length);
+    if (Chunk.isNonEmpty(leftovers)) {
+      return (0, _Function.pipe)(core.write(leftovers), channel.as(nextS));
+    }
+    return foldReader(nextS, contFn, f);
+  }, core.fail, () => core.succeedNow(s));
+};
+/** @internal */
+const foldChunkSplit = (s, chunk, contFn, f, index, length) => {
+  if (index === length) {
+    return [s, Chunk.empty()];
+  }
+  const s1 = f(s, (0, _Function.pipe)(chunk, Chunk.unsafeGet(index)));
+  if (contFn(s1)) {
+    return foldChunkSplit(s1, chunk, contFn, f, index + 1, length);
+  }
+  return [s1, (0, _Function.pipe)(chunk, Chunk.drop(index + 1))];
+};
+/** @internal */
+const foldSink = (onFailure, onSuccess) => {
+  return self => {
+    const newChannel = (0, _Function.pipe)(self.channel, core.collectElements, channel.foldChannel(error => onFailure(error).channel, ([leftovers, z]) => core.suspend(() => {
+      const leftoversRef = {
+        ref: (0, _Function.pipe)(leftovers, Chunk.filter(Chunk.isNonEmpty))
+      };
+      const refReader = (0, _Function.pipe)(core.sync(() => {
+        const ref = leftoversRef.ref;
+        leftoversRef.ref = Chunk.empty();
+        return ref;
+      }),
+      // This cast is safe because of the L1 >: L <: In1 bound. It follows that
+      // L <: In1 and therefore Chunk[L] can be safely cast to Chunk[In1].
+      core.flatMap(chunk => channel.writeChunk(chunk)));
+      const passthrough = channel.identityChannel();
+      const continuationSink = (0, _Function.pipe)(refReader, channel.zipRight(passthrough), core.pipeTo(onSuccess(z).channel));
+      return (0, _Function.pipe)(continuationSink, core.collectElements, core.flatMap(([newLeftovers, z1]) => (0, _Function.pipe)(core.succeed(leftoversRef.ref), core.flatMap(channel.writeChunk), channel.zipRight(channel.writeChunk(newLeftovers)), channel.as(z1))));
+    })));
+    return new SinkImpl(newChannel);
+  };
+};
+/** @internal */
+exports.foldSink = foldSink;
+const foldChunks = (s, contFn, f) => suspend(() => new SinkImpl(foldChunksReader(s, contFn, f)));
+/** @internal */
+exports.foldChunks = foldChunks;
+const foldChunksReader = (s, contFn, f) => {
+  if (!contFn(s)) {
+    return core.succeedNow(s);
+  }
+  return core.readWith(input => foldChunksReader(f(s, input), contFn, f), core.fail, () => core.succeedNow(s));
+};
+/** @internal */
+const foldChunksEffect = (s, contFn, f) => suspend(() => new SinkImpl(foldChunksEffectReader(s, contFn, f)));
+/** @internal */
+exports.foldChunksEffect = foldChunksEffect;
+const foldChunksEffectReader = (s, contFn, f) => {
+  if (!contFn(s)) {
+    return core.succeedNow(s);
+  }
+  return core.readWith(input => (0, _Function.pipe)(core.fromEffect(f(s, input)), core.flatMap(s => foldChunksEffectReader(s, contFn, f))), core.fail, () => core.succeedNow(s));
+};
+/** @internal */
+const foldEffect = (s, contFn, f) => suspend(() => new SinkImpl(foldEffectReader(s, contFn, f)));
+/** @internal */
+exports.foldEffect = foldEffect;
+const foldEffectReader = (s, contFn, f) => {
+  if (!contFn(s)) {
+    return core.succeedNow(s);
+  }
+  return core.readWith(input => (0, _Function.pipe)(core.fromEffect(foldChunkSplitEffect(s, input, contFn, f)), core.flatMap(([nextS, leftovers]) => (0, _Function.pipe)(leftovers, Option.match(() => foldEffectReader(nextS, contFn, f), leftover => (0, _Function.pipe)(core.write(leftover), channel.as(nextS)))))), core.fail, () => core.succeedNow(s));
+};
+/** @internal */
+const foldChunkSplitEffect = (s, chunk, contFn, f) => foldChunkSplitEffectInternal(s, chunk, 0, chunk.length, contFn, f);
+/** @internal */
+const foldChunkSplitEffectInternal = (s, chunk, index, length, contFn, f) => {
+  if (index === length) {
+    return Effect.succeed([s, Option.none()]);
+  }
+  return (0, _Function.pipe)(f(s, (0, _Function.pipe)(chunk, Chunk.unsafeGet(index))), Effect.flatMap(s1 => contFn(s1) ? foldChunkSplitEffectInternal(s1, chunk, index + 1, length, contFn, f) : Effect.succeed([s1, Option.some((0, _Function.pipe)(chunk, Chunk.drop(index + 1)))])));
+};
+/** @internal */
+const foldLeft = (s, f) => ignoreLeftover(fold(s, _Function.constTrue, f));
+/** @internal */
+exports.foldLeft = foldLeft;
+const foldLeftChunks = (s, f) => foldChunks(s, _Function.constTrue, f);
+/** @internal */
+exports.foldLeftChunks = foldLeftChunks;
+const foldLeftChunksEffect = (s, f) => ignoreLeftover(foldChunksEffect(s, _Function.constTrue, f));
+/** @internal */
+exports.foldLeftChunksEffect = foldLeftChunksEffect;
+const foldLeftEffect = (s, f) => foldEffect(s, _Function.constTrue, f);
+/** @internal */
+exports.foldLeftEffect = foldLeftEffect;
+const foldUntil = (s, max, f) => (0, _Function.pipe)(fold([s, 0], tuple => tuple[1] < max, ([output, count], input) => [f(output, input), count + 1]), map(tuple => tuple[0]));
+/** @internal */
+exports.foldUntil = foldUntil;
+const foldUntilEffect = (s, max, f) => (0, _Function.pipe)(foldEffect([s, 0], tuple => tuple[1] < max, ([output, count], input) => (0, _Function.pipe)(f(output, input), Effect.map(s => [s, count + 1]))), map(tuple => tuple[0]));
+/** @internal */
+exports.foldUntilEffect = foldUntilEffect;
+const foldWeighted = (s, max, costFn, f) => foldWeightedDecompose(s, max, costFn, Chunk.of, f);
+/** @internal */
+exports.foldWeighted = foldWeighted;
+const foldWeightedDecompose = (s, max, costFn, decompose, f) => suspend(() => new SinkImpl(foldWeightedDecomposeLoop(s, 0, false, max, costFn, decompose, f)));
+/** @internal */
+exports.foldWeightedDecompose = foldWeightedDecompose;
+const foldWeightedDecomposeLoop = (s, cost, dirty, max, costFn, decompose, f) => core.readWith(input => {
+  const [nextS, nextCost, nextDirty, leftovers] = foldWeightedDecomposeFold(input, 0, s, cost, dirty, max, costFn, decompose, f);
+  if (Chunk.isNonEmpty(leftovers)) {
+    return (0, _Function.pipe)(core.write(leftovers), channel.zipRight(core.succeedNow(nextS)));
+  }
+  if (cost > max) {
+    return core.succeedNow(nextS);
+  }
+  return foldWeightedDecomposeLoop(nextS, nextCost, nextDirty, max, costFn, decompose, f);
+}, core.fail, () => core.succeedNow(s));
+/** @internal */
+const foldWeightedDecomposeFold = (input, index, s, cost, dirty, max, costFn, decompose, f) => {
+  if (index === input.length) {
+    return [s, cost, dirty, Chunk.empty()];
+  }
+  const elem = (0, _Function.pipe)(input, Chunk.unsafeGet(index));
+  const total = cost + costFn(s, elem);
+  if (total <= max) {
+    return foldWeightedDecomposeFold(input, index + 1, f(s, elem), total, true, max, costFn, decompose, f);
+  }
+  const decomposed = decompose(elem);
+  if (decomposed.length <= 1 && !dirty) {
+    // If `elem` cannot be decomposed, we need to cross the `max` threshold. To
+    // minimize "injury", we only allow this when we haven't added anything else
+    // to the aggregate (dirty = false).
+    return [f(s, elem), total, true, (0, _Function.pipe)(input, Chunk.drop(index + 1))];
+  }
+  if (decomposed.length <= 1 && dirty) {
+    // If the state is dirty and `elem` cannot be decomposed, we stop folding
+    // and include `elem` in the leftovers.
+    return [s, cost, dirty, (0, _Function.pipe)(input, Chunk.drop(index))];
+  }
+  // `elem` got decomposed, so we will recurse with the decomposed elements pushed
+  // into the chunk we're processing and see if we can aggregate further.
+  const next = (0, _Function.pipe)(decomposed, Chunk.concat((0, _Function.pipe)(input, Chunk.drop(index + 1))));
+  return foldWeightedDecomposeFold(next, 0, s, cost, dirty, max, costFn, decompose, f);
+};
+/** @internal */
+const foldWeightedDecomposeEffect = (s, max, costFn, decompose, f) => suspend(() => new SinkImpl(foldWeightedDecomposeEffectLoop(s, max, costFn, decompose, f, 0, false)));
+/** @internal */
+exports.foldWeightedDecomposeEffect = foldWeightedDecomposeEffect;
+const foldWeightedEffect = (s, max, costFn, f) => foldWeightedDecomposeEffect(s, max, costFn, input => Effect.succeed(Chunk.of(input)), f);
+/** @internal */
+exports.foldWeightedEffect = foldWeightedEffect;
+const foldWeightedDecomposeEffectLoop = (s, max, costFn, decompose, f, cost, dirty) => core.readWith(input => (0, _Function.pipe)(core.fromEffect(foldWeightedDecomposeEffectFold(s, max, costFn, decompose, f, input, dirty, cost, 0)), core.flatMap(([nextS, nextCost, nextDirty, leftovers]) => {
+  if (Chunk.isNonEmpty(leftovers)) {
+    return (0, _Function.pipe)(core.write(leftovers), channel.zipRight(core.succeedNow(nextS)));
+  }
+  if (cost > max) {
+    return core.succeedNow(nextS);
+  }
+  return foldWeightedDecomposeEffectLoop(nextS, max, costFn, decompose, f, nextCost, nextDirty);
+})), core.fail, () => core.succeedNow(s));
+/** @internal */
+const foldWeightedDecomposeEffectFold = (s, max, costFn, decompose, f, input, dirty, cost, index) => {
+  if (index === input.length) {
+    return Effect.succeed([s, cost, dirty, Chunk.empty()]);
+  }
+  const elem = (0, _Function.pipe)(input, Chunk.unsafeGet(index));
+  return (0, _Function.pipe)(costFn(s, elem), Effect.map(newCost => cost + newCost), Effect.flatMap(total => {
+    if (total <= max) {
+      return (0, _Function.pipe)(f(s, elem), Effect.flatMap(s => foldWeightedDecomposeEffectFold(s, max, costFn, decompose, f, input, true, total, index + 1)));
+    }
+    return (0, _Function.pipe)(decompose(elem), Effect.flatMap(decomposed => {
+      if (decomposed.length <= 1 && !dirty) {
+        // If `elem` cannot be decomposed, we need to cross the `max` threshold. To
+        // minimize "injury", we only allow this when we haven't added anything else
+        // to the aggregate (dirty = false).
+        return (0, _Function.pipe)(f(s, elem), Effect.map(s => [s, total, true, (0, _Function.pipe)(input, Chunk.drop(index + 1))]));
+      }
+      if (decomposed.length <= 1 && dirty) {
+        // If the state is dirty and `elem` cannot be decomposed, we stop folding
+        // and include `elem` in th leftovers.
+        return Effect.succeed([s, cost, dirty, (0, _Function.pipe)(input, Chunk.drop(index))]);
+      }
+      // `elem` got decomposed, so we will recurse with the decomposed elements pushed
+      // into the chunk we're processing and see if we can aggregate further.
+      const next = (0, _Function.pipe)(decomposed, Chunk.concat((0, _Function.pipe)(input, Chunk.drop(index + 1))));
+      return foldWeightedDecomposeEffectFold(s, max, costFn, decompose, f, next, dirty, cost, 0);
+    }));
+  }));
+};
+/** @internal */
+const flatMap = f => {
+  return self => (0, _Function.pipe)(self, foldSink(fail, f));
+};
+/** @internal */
+exports.flatMap = flatMap;
+const forEach = f => {
+  const process = core.readWithCause(input => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(input, Effect.forEachDiscard(f))), core.flatMap(() => process)), core.failCause, core.unit);
+  return new SinkImpl(process);
+};
+/** @internal */
+exports.forEach = forEach;
+const forEachChunk = f => {
+  const process = core.readWithCause(input => (0, _Function.pipe)(core.fromEffect(f(input)), core.flatMap(() => process)), core.failCause, core.unit);
+  return new SinkImpl(process);
+};
+/** @internal */
+exports.forEachChunk = forEachChunk;
+const forEachWhile = f => {
+  const process = core.readWithCause(input => forEachWhileReader(f, input, 0, input.length, process), core.failCause, core.unit);
+  return new SinkImpl(process);
+};
+/** @internal */
+exports.forEachWhile = forEachWhile;
+const forEachWhileReader = (f, input, index, length, cont) => {
+  if (index === length) {
+    return cont;
+  }
+  return (0, _Function.pipe)(core.fromEffect(f((0, _Function.pipe)(input, Chunk.unsafeGet(index)))), core.flatMap(bool => bool ? forEachWhileReader(f, input, index + 1, length, cont) : core.write((0, _Function.pipe)(input, Chunk.drop(index)))), channel.catchAll(error => (0, _Function.pipe)(core.write((0, _Function.pipe)(input, Chunk.drop(index))), channel.zipRight(core.fail(error)))));
+};
+/** @internal */
+const forEachChunkWhile = f => {
+  const reader = core.readWith(input => (0, _Function.pipe)(core.fromEffect(f(input)), core.flatMap(cont => cont ? reader : core.unit())), core.fail, core.unit);
+  return new SinkImpl(reader);
+};
+/** @internal */
+exports.forEachChunkWhile = forEachChunkWhile;
+const fromChannel = channel => new SinkImpl(channel);
+/** @internal */
+exports.fromChannel = fromChannel;
+const fromEffect = effect => new SinkImpl(core.fromEffect(effect));
+/** @internal */
+exports.fromEffect = fromEffect;
+const fromHub = hub => fromQueue(hub);
+/** @internal */
+exports.fromHub = fromHub;
+const fromHubWithShutdown = hub => fromQueueWithShutdown(hub);
+/** @internal */
+exports.fromHubWithShutdown = fromHubWithShutdown;
+const fromPush = push => new SinkImpl(channel.unwrapScoped((0, _Function.pipe)(push, Effect.map(fromPushPull))));
+exports.fromPush = fromPush;
+const fromPushPull = push => core.readWith(input => (0, _Function.pipe)(core.fromEffect(push(Option.some(input))), channel.foldChannel(([either, leftovers]) => (0, _Function.pipe)(either, Either.match(error => (0, _Function.pipe)(core.write(leftovers), channel.zipRight(core.fail(error))), z => (0, _Function.pipe)(core.write(leftovers), channel.zipRight(core.succeedNow(z))))), () => fromPushPull(push))), core.fail, () => (0, _Function.pipe)(core.fromEffect(push(Option.none())), channel.foldChannel(([either, leftovers]) => (0, _Function.pipe)(either, Either.match(error => (0, _Function.pipe)(core.write(leftovers), channel.zipRight(core.fail(error))), z => (0, _Function.pipe)(core.write(leftovers), channel.zipRight(core.succeedNow(z))))), () => (0, _Function.pipe)(core.fromEffect(Effect.dieMessage("BUG: Sink.fromPush - please report an issue at https://github.com/Effect-TS/stream/issues"))))));
+/** @internal */
+const fromQueue = queue => forEachChunk(input => (0, _Function.pipe)(Queue.offerAll(queue, input)));
+/** @internal */
+exports.fromQueue = fromQueue;
+const fromQueueWithShutdown = queue => (0, _Function.pipe)(Effect.acquireRelease(Effect.succeed(queue), Queue.shutdown), Effect.map(fromQueue), unwrapScoped);
+/** @internal */
+exports.fromQueueWithShutdown = fromQueueWithShutdown;
+const head = () => fold(Option.none(), Option.isNone, (option, input) => (0, _Function.pipe)(option, Option.match(() => Option.some(input), () => option)));
+/** @internal */
+exports.head = head;
+const ignoreLeftover = self => new SinkImpl(channel.drain(self.channel));
+/** @internal */
+exports.ignoreLeftover = ignoreLeftover;
+const last = () => foldLeft(Option.none(), (_, input) => Option.some(input));
+/** @internal */
+exports.last = last;
+const leftover = chunk => new SinkImpl(core.suspend(() => core.write(chunk)));
+/** @internal */
+exports.leftover = leftover;
+const log = message => fromEffect(Effect.log(message));
+/** @internal */
+exports.log = log;
+const logDebug = message => fromEffect(Effect.logDebug(message));
+/** @internal */
+exports.logDebug = logDebug;
+const logDebugCause = cause => fromEffect(Effect.logDebugCause(cause));
+/** @internal */
+exports.logDebugCause = logDebugCause;
+const logDebugCauseMessage = (message, cause) => fromEffect(Effect.logDebugCauseMessage(message, cause));
+/** @internal */
+exports.logDebugCauseMessage = logDebugCauseMessage;
+const logError = message => fromEffect(Effect.logError(message));
+/** @internal */
+exports.logError = logError;
+const logErrorCause = cause => fromEffect(Effect.logErrorCause(cause));
+/** @internal */
+exports.logErrorCause = logErrorCause;
+const logErrorCauseMessage = (message, cause) => fromEffect(Effect.logErrorCauseMessage(message, cause));
+/** @internal */
+exports.logErrorCauseMessage = logErrorCauseMessage;
+const logFatal = message => fromEffect(Effect.logFatal(message));
+/** @internal */
+exports.logFatal = logFatal;
+const logFatalCause = cause => fromEffect(Effect.logFatalCause(cause));
+/** @internal */
+exports.logFatalCause = logFatalCause;
+const logFatalCauseMessage = (message, cause) => fromEffect(Effect.logFatalCauseMessage(message, cause));
+/** @internal */
+exports.logFatalCauseMessage = logFatalCauseMessage;
+const logInfo = message => fromEffect(Effect.logInfo(message));
+/** @internal */
+exports.logInfo = logInfo;
+const logInfoCause = cause => fromEffect(Effect.logInfoCause(cause));
+/** @internal */
+exports.logInfoCause = logInfoCause;
+const logInfoCauseMessage = (message, cause) => fromEffect(Effect.logInfoCauseMessage(message, cause));
+/** @internal */
+exports.logInfoCauseMessage = logInfoCauseMessage;
+const logWarning = message => fromEffect(Effect.logWarning(message));
+/** @internal */
+exports.logWarning = logWarning;
+const logWarningCause = cause => fromEffect(Effect.logWarningCause(cause));
+/** @internal */
+exports.logWarningCause = logWarningCause;
+const logWarningCauseMessage = (message, cause) => fromEffect(Effect.logWarningCauseMessage(message, cause));
+/** @internal */
+exports.logWarningCauseMessage = logWarningCauseMessage;
+const logTrace = message => fromEffect(Effect.logTrace(message));
+/** @internal */
+exports.logTrace = logTrace;
+const logTraceCause = cause => fromEffect(Effect.logTraceCause(cause));
+/** @internal */
+exports.logTraceCause = logTraceCause;
+const logTraceCauseMessage = (message, cause) => fromEffect(Effect.logTraceCauseMessage(message, cause));
+/** @internal */
+exports.logTraceCauseMessage = logTraceCauseMessage;
+const map = f => {
+  return self => {
+    return new SinkImpl((0, _Function.pipe)(self.channel, channel.map(f)));
+  };
+};
+/** @internal */
+exports.map = map;
+const mapEffect = f => {
+  return self => new SinkImpl((0, _Function.pipe)(self.channel, channel.mapEffect(f)));
+};
+/** @internal */
+exports.mapEffect = mapEffect;
+const mapError = f => {
+  return self => new SinkImpl((0, _Function.pipe)(self.channel, channel.mapError(f)));
+};
+/** @internal */
+exports.mapError = mapError;
+const mapLeftover = f => {
+  return self => new SinkImpl((0, _Function.pipe)(self.channel, channel.mapOut(Chunk.map(f))));
+};
+/** @internal */
+exports.mapLeftover = mapLeftover;
+const mkString = () => suspend(() => {
+  const strings = [];
+  return (0, _Function.pipe)(foldLeftChunks(void 0, (_, elems) => elems.forEach(elem => {
+    strings.push(String(elem));
+  })), map(() => strings.join("")));
+});
+/** @internal */
+exports.mkString = mkString;
+const never = () => fromEffect(Effect.never());
+/** @internal */
+exports.never = never;
+const orElse = that => {
+  return self => new SinkImpl((0, _Function.pipe)(self.channel, channel.orElse(() => that().channel)));
+};
+/** @internal */
+exports.orElse = orElse;
+const provideContext = context => {
+  return self => new SinkImpl((0, _Function.pipe)(self.channel, core.provideContext(context)));
+};
+/** @internal */
+exports.provideContext = provideContext;
+const race = that => {
+  return self => (0, _Function.pipe)(self, raceBoth(that), map(Either.merge));
+};
+/** @internal */
+exports.race = race;
+const raceBoth = (that, capacity = 16) => {
+  return self => {
+    return (0, _Function.pipe)(self, raceWith(that, selfDone => mergeDecision.Done((0, _Function.pipe)(Effect.done(selfDone), Effect.map(Either.left))), thatDone => mergeDecision.Done((0, _Function.pipe)(Effect.done(thatDone), Effect.map(Either.right))), capacity));
+  };
+};
+/** @internal */
+exports.raceBoth = raceBoth;
+const raceWith = (that, leftDone, rightDone, capacity = 16) => {
+  return self => {
+    const scoped = Effect.gen(function* ($) {
+      const hub = yield* $(Hub.bounded(capacity));
+      const channel1 = yield* $(channel.fromHubScoped(hub));
+      const channel2 = yield* $(channel.fromHubScoped(hub));
+      const reader = channel.toHub(hub);
+      const writer = (0, _Function.pipe)(channel1, core.pipeTo(self.channel), channel.mergeWith((0, _Function.pipe)(channel2, core.pipeTo(that.channel)), leftDone, rightDone));
+      const racedChannel = (0, _Function.pipe)(reader, channel.mergeWith(writer, () => mergeDecision.Await(exit => Effect.done(exit)), done => mergeDecision.Done(Effect.done(done))));
+      return new SinkImpl(racedChannel);
+    });
+    return unwrapScoped(scoped);
+  };
+};
+/** @internal */
+exports.raceWith = raceWith;
+const refineOrDie = pf => {
+  return self => (0, _Function.pipe)(self, refineOrDieWith(pf, _Function.identity));
+};
+/** @internal */
+exports.refineOrDie = refineOrDie;
+const refineOrDieWith = (pf, f) => {
+  return self => {
+    const newChannel = (0, _Function.pipe)(self.channel, channel.catchAll(error => (0, _Function.pipe)(pf(error), Option.match(() => core.failCauseSync(() => Cause.die(f(error))), core.fail))));
+    return new SinkImpl(newChannel);
+  };
+};
+/** @internal */
+exports.refineOrDieWith = refineOrDieWith;
+const service = tag => serviceWith(tag)(_Function.identity);
+/** @internal */
+exports.service = service;
+const serviceWith = tag => {
+  return f => fromEffect(Effect.serviceWith(tag, f));
+};
+/** @internal */
+exports.serviceWith = serviceWith;
+const serviceWithEffect = tag => {
+  return f => fromEffect(Effect.serviceWithEffect(tag, f));
+};
+/** @internal */
+exports.serviceWithEffect = serviceWithEffect;
+const serviceWithSink = tag => {
+  return f => new SinkImpl((0, _Function.pipe)(Effect.serviceWith(tag, service => f(service).channel), channel.unwrap));
+};
+/** @internal */
+exports.serviceWithSink = serviceWithSink;
+const some = predicate => fold(false, bool => !bool, (acc, input) => acc || predicate(input));
+/** @internal */
+exports.some = some;
+const splitWhere = f => {
+  return self => {
+    const newChannel = (0, _Function.pipe)(core.fromEffect(Ref.make(Chunk.empty())), core.flatMap(ref => (0, _Function.pipe)(splitWhereSplitter(false, ref, f), channel.pipeToOrFail(self.channel), core.collectElements, core.flatMap(([leftovers, z]) => (0, _Function.pipe)(core.fromEffect(Ref.get(ref)), core.flatMap(leftover => (0, _Function.pipe)(core.write((0, _Function.pipe)(leftover, Chunk.concat(Chunk.flatten(leftovers)))), channel.zipRight(core.succeed(z)))))))));
+    return new SinkImpl(newChannel);
+  };
+};
+/** @internal */
+exports.splitWhere = splitWhere;
+const splitWhereSplitter = (written, leftovers, f) => core.readWithCause(input => {
+  if (Chunk.isEmpty(input)) {
+    return splitWhereSplitter(written, leftovers, f);
+  }
+  if (written) {
+    const index = indexWhere(input, f);
+    if (index === -1) {
+      return (0, _Function.pipe)(core.write(input), channel.zipRight(splitWhereSplitter(true, leftovers, f)));
+    }
+    const [left, right] = (0, _Function.pipe)(input, Chunk.splitAt(index));
+    return (0, _Function.pipe)(core.write(left), channel.zipRight(core.fromEffect(Ref.set(leftovers, right))));
+  }
+  const index = indexWhere(input, f, 1);
+  if (index === -1) {
+    return (0, _Function.pipe)(core.write(input), channel.zipRight(splitWhereSplitter(true, leftovers, f)));
+  }
+  const [left, right] = (0, _Function.pipe)(input, Chunk.splitAt(Math.max(index, 1)));
+  return (0, _Function.pipe)(core.write(left), channel.zipRight(core.fromEffect(Ref.set(leftovers, right))));
+}, core.failCause, core.succeed);
+/** @internal */
+const indexWhere = (self, predicate, from = 0) => {
+  const iterator = self[Symbol.iterator]();
+  let index = 0;
+  let result = -1;
+  let next;
+  while (result < 0 && (next = iterator.next()) && !next.done) {
+    const a = next.value;
+    if (index >= from && predicate(a)) {
+      result = index;
+    }
+    index = index + 1;
+  }
+  return result;
+};
+/** @internal */
+const succeed = z => new SinkImpl(core.succeed(z));
+/** @internal */
+exports.succeed = succeed;
+const sum = () => foldLeft(0, (a, b) => a + b);
+/** @internal */
+exports.sum = sum;
+const summarized = (summary, f) => {
+  return self => {
+    const newChannel = (0, _Function.pipe)(core.fromEffect(summary), core.flatMap(start => (0, _Function.pipe)(self.channel, core.flatMap(done => (0, _Function.pipe)(core.fromEffect(summary), channel.map(end => [done, f(start, end)]))))));
+    return new SinkImpl(newChannel);
+  };
+};
+/** @internal */
+exports.summarized = summarized;
+const suspend = evaluate => new SinkImpl(core.suspend(() => evaluate().channel));
+/** @internal */
+exports.suspend = suspend;
+const sync = evaluate => new SinkImpl(core.sync(evaluate));
+/** @internal */
+exports.sync = sync;
+const take = n => (0, _Function.pipe)(foldChunks(Chunk.empty(), chunk => chunk.length < n, (acc, chunk) => (0, _Function.pipe)(acc, Chunk.concat(chunk))), flatMap(acc => {
+  const [taken, leftover] = (0, _Function.pipe)(acc, Chunk.splitAt(n));
+  return new SinkImpl((0, _Function.pipe)(core.write(leftover), channel.zipRight(core.succeedNow(taken))));
+}));
+/** @internal */
+exports.take = take;
+const timed = () => (0, _Function.pipe)(withDuration(drain()), map(tuple => tuple[1]));
+/** @internal */
+exports.timed = timed;
+const toChannel = self => self.channel;
+/** @internal */
+exports.toChannel = toChannel;
+const unwrap = effect => new SinkImpl(channel.unwrap((0, _Function.pipe)(effect, Effect.map(sink => sink.channel))));
+/** @internal */
+exports.unwrap = unwrap;
+const unwrapScoped = effect => {
+  return new SinkImpl(channel.unwrapScoped((0, _Function.pipe)(effect, Effect.map(sink => sink.channel))));
+};
+/** @internal */
+exports.unwrapScoped = unwrapScoped;
+const withDuration = self => (0, _Function.pipe)(self, summarized(Clock.currentTimeMillis(), (start, end) => Duration.millis(end - start)));
+/** @internal */
+exports.withDuration = withDuration;
+const zip = that => {
+  return self => (0, _Function.pipe)(self, zipWith(that, (z, z2) => [z, z2]));
+};
+/** @internal */
+exports.zip = zip;
+const zipLeft = that => {
+  return self => (0, _Function.pipe)(self, zipWith(that, (z, _) => z));
+};
+/** @internal */
+exports.zipLeft = zipLeft;
+const zipRight = that => {
+  return self => (0, _Function.pipe)(self, zipWith(that, (_, z2) => z2));
+};
+/** @internal */
+exports.zipRight = zipRight;
+const zipWith = (that, f) => {
+  return self => (0, _Function.pipe)(self, flatMap(z => (0, _Function.pipe)(that, map(z2 => f(z, z2)))));
+};
+/** @internal */
+exports.zipWith = zipWith;
+const zipPar = that => {
+  return self => (0, _Function.pipe)(self, zipWithPar(that, (z, z2) => [z, z2]));
+};
+/** @internal */
+exports.zipPar = zipPar;
+const zipParLeft = that => {
+  return self => (0, _Function.pipe)(self, zipWithPar(that, (z, _) => z));
+};
+/** @internal */
+exports.zipParLeft = zipParLeft;
+const zipParRight = that => {
+  return self => (0, _Function.pipe)(self, zipWithPar(that, (_, z2) => z2));
+};
+/** @internal */
+exports.zipParRight = zipParRight;
+const zipWithPar = (that, f) => {
+  return self => {
+    return (0, _Function.pipe)(self, raceWith(that, Exit.match(cause => mergeDecision.Done(Effect.failCause(cause)), leftZ => mergeDecision.Await(Exit.match(Effect.failCause, rightZ => Effect.succeed(f(leftZ, rightZ))))), Exit.match(cause => mergeDecision.Done(Effect.failCause(cause)), rightZ => mergeDecision.Await(Exit.match(Effect.failCause, leftZ => Effect.succeed(f(leftZ, rightZ)))))));
+  };
+};
+// Circular with Channel
+/** @internal */
+exports.zipWithPar = zipWithPar;
+const channelToSink = self => new SinkImpl(self);
+exports.channelToSink = channelToSink;
+//# sourceMappingURL=sink.js.map
+
+/***/ }),
+
+/***/ 5416:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.flattenParUnbounded = exports.flattenPar = exports.flattenIterables = exports.flattenExitOption = exports.flattenExit = exports.flattenEffect = exports.flattenChunks = exports.flatten = exports.flatMapParSwitch = exports.flatMapPar = exports.flatMap = exports.findEffect = exports.find = exports.finalizer = exports.filterEffect = exports.filter = exports.failSync = exports.failCauseSync = exports.failCause = exports.fail = exports.execute = exports.ensuring = exports.empty = exports.either = exports.dropWhileEffect = exports.dropWhile = exports.dropUntilEffect = exports.dropUntil = exports.dropRight = exports.drop = exports.drainFork = exports.drain = exports.done = exports.distributedWithDynamic = exports.distributedWith = exports.dieSync = exports.dieMessage = exports.die = exports.debounce = exports.crossWith = exports.crossRight = exports.crossLeft = exports.cross = exports.contramapContext = exports.contextWithStream = exports.contextWithEffect = exports.contextWith = exports.context = exports.concatAll = exports.concat = exports.combineChunks = exports.combine = exports.collectWhileSuccess = exports.collectWhileSome = exports.collectWhileRight = exports.collectWhileLeft = exports.collectWhileEffect = exports.collectWhile = exports.collectSuccess = exports.collectSome = exports.collectRight = exports.collectLeft = exports.collectEffect = exports.collect = exports.chunksWith = exports.chunks = exports.channelToStream = exports.changesWithEffect = exports.changesWith = exports.changes = exports.catchSomeCause = exports.catchSome = exports.catchAllCause = exports.catchAll = exports.bufferUnbounded = exports.bufferSliding = exports.bufferDropping = exports.bufferChunksSliding = exports.bufferChunksDropping = exports.bufferChunks = exports.buffer = exports.broadcastedQueuesDynamic = exports.broadcastedQueues = exports.broadcastDynamic = exports.broadcast = exports.branchAfter = exports.asyncScoped = exports.asyncOption = exports.asyncInterrupt = exports.asyncEffect = exports.as = exports.aggregateWithinEither = exports.aggregateWithin = exports.aggregate = exports.acquireRelease = exports.absolve = exports._async = exports.StreamTypeId = exports.StreamImpl = exports.DefaultChunkSize = void 0;
+exports.paginateChunk = exports.paginate = exports.orElseSucceed = exports.orElseOptional = exports.orElseIfEmptyStream = exports.orElseIfEmptyChunk = exports.orElseIfEmpty = exports.orElseFail = exports.orElseEither = exports.orElse = exports.orDieWith = exports.orDie = exports.onError = exports.onDone = exports.never = exports.mkString = exports.mergeWith = exports.mergeRight = exports.mergeLeft = exports.mergeHaltRight = exports.mergeHaltLeft = exports.mergeHaltEither = exports.mergeEither = exports.mergeAllUnbounded = exports.mergeAll = exports.merge = exports.mapErrorCause = exports.mapError = exports.mapEffectParUnordered = exports.mapEffectPar = exports.mapEffect = exports.mapConcatEffect = exports.mapConcatChunkEffect = exports.mapConcatChunk = exports.mapConcat = exports.mapChunksEffect = exports.mapChunks = exports.mapBoth = exports.mapAccumEffect = exports.mapAccum = exports.map = exports.make = exports.logWarningCauseMessage = exports.logWarningCause = exports.logWarning = exports.logTraceCauseMessage = exports.logTraceCause = exports.logTrace = exports.logInfoCauseMessage = exports.logInfoCause = exports.logInfo = exports.logFatalCauseMessage = exports.logFatalCause = exports.logFatal = exports.logErrorCauseMessage = exports.logErrorCause = exports.logError = exports.logDebugCauseMessage = exports.logDebugCause = exports.logDebug = exports.log = exports.iterate = exports.intersperseAffixes = exports.intersperse = exports.interruptWhenDeferred = exports.interruptWhen = exports.interruptAfter = exports.interleaveWith = exports.interleave = exports.identityStream = exports.haltWhenDeferred = exports.haltWhen = exports.haltAfter = exports.groupedWithin = exports.grouped = exports.groupAdjacentBy = exports.fromSchedule = exports.fromQueueWithShutdown = exports.fromQueue = exports.fromPull = exports.fromIteratorSucceed = exports.fromIterableEffect = exports.fromIterable = exports.fromHubWithShutdown = exports.fromHubScopedWithShutdown = exports.fromHubScoped = exports.fromHub = exports.fromEffectOption = exports.fromEffect = exports.fromChunks = exports.fromChunkQueueWithShutdown = exports.fromChunkQueue = exports.fromChunkHubWithShutdown = exports.fromChunkHubScopedWithShutdown = exports.fromChunkHubScoped = exports.fromChunkHub = exports.fromChunk = exports.fromChannel = exports.forever = exports.flattenTake = void 0;
+exports.timeoutFailCause = exports.timeoutFail = exports.timeout = exports.tick = exports.throttleShapeEffect = exports.throttleShape = exports.throttleEnforceEffect = exports.throttleEnforce = exports.tapSink = exports.tapErrorCause = exports.tapError = exports.tap = exports.takeWhile = exports.takeUntilEffect = exports.takeUntil = exports.takeRight = exports.take = exports.sync = exports.suspend = exports.succeed = exports.splitOnChunk = exports.split = exports.someOrFail = exports.someOrElse = exports.some = exports.sliding = exports.serviceWithStream = exports.serviceWithEffect = exports.serviceWith = exports.service = exports.scoped = exports.scheduleWith = exports.scheduleEither = exports.schedule = exports.scanReduceEffect = exports.scanReduce = exports.scanEffect = exports.scan = exports.runSum = exports.runScoped = exports.runLast = exports.runIntoQueueScoped = exports.runIntoQueueElementsScoped = exports.runIntoQueue = exports.runIntoHubScoped = exports.runIntoHub = exports.runHead = exports.runForEachWhileScoped = exports.runForEachWhile = exports.runForEachScoped = exports.runForEachChunkScoped = exports.runForEachChunk = exports.runForEach = exports.runFoldWhileScopedEffect = exports.runFoldWhileScoped = exports.runFoldWhileEffect = exports.runFoldWhile = exports.runFoldScopedEffect = exports.runFoldScoped = exports.runFoldEffect = exports.runFold = exports.runDrain = exports.runCount = exports.runCollect = exports.run = exports.rightOrFail = exports.right = exports.retry = exports.repeatWithSchedule = exports.repeatWith = exports.repeatForever = exports.repeatElementsWith = exports.repeatElementsEither = exports.repeatElements = exports.repeatEither = exports.repeatEffectWithSchedule = exports.repeatEffectOption = exports.repeatEffectChunkOption = exports.repeatEffectChunk = exports.repeatEffect = exports.repeat = exports.refineOrDieWith = exports.refineOrDie = exports.rechunk = exports.range = exports.provideSomeLayer = exports.provideServiceStream = exports.provideServiceEffect = exports.provideService = exports.provideLayer = exports.provideContext = exports.prepend = exports.pipeThroughChannelOrFail = exports.pipeThroughChannel = exports.pipeThrough = exports.peel = exports.partitionEither = exports.partition = exports.paginateEffect = exports.paginateChunkEffect = void 0;
+exports.zipWithPreviousAndNext = exports.zipWithPrevious = exports.zipWithNext = exports.zipWithIndex = exports.zipWithChunks = exports.zipWith = exports.zipRight = exports.zipLeft = exports.zipLatestWith = exports.zipLatest = exports.zipFlatten = exports.zipAllWith = exports.zipAllSortedByKeyWith = exports.zipAllSortedByKeyRight = exports.zipAllSortedByKeyLeft = exports.zipAllSortedByKey = exports.zipAllRight = exports.zipAllLeft = exports.zipAll = exports.zip = exports.whenEffect = exports.whenCaseEffect = exports.whenCase = exports.when = exports.updateService = exports.unwrapScoped = exports.unwrap = exports.unit = exports.unfoldEffect = exports.unfoldChunkEffect = exports.unfoldChunk = exports.unfold = exports.transduce = exports.toQueueUnbounded = exports.toQueueSliding = exports.toQueueOfElements = exports.toQueueDropping = exports.toQueue = exports.toPull = exports.toHub = exports.timeoutTo = void 0;
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var Clock = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3932));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Deferred = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3576));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var Fiber = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(439));
+var Hub = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6230));
+var Layer = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8983));
+var Queue = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9925));
+var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6607));
+var Runtime = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1210));
+var Schedule = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5131));
+var channel = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9959));
+var channelExecutor = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4222));
+var mergeDecision = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(4674));
+var mergeStrategy = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2889));
+var singleProducerAsyncInput = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6688));
+var core = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7679));
+var _sink = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9901));
+var DebounceState = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1262));
+var emit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6656));
+var haltStrategy = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6963));
+var Handoff = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9355));
+var HandoffSignal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5129));
+var pull = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8550));
+var SinkEndReason = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7246));
+var ZipAllState = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(257));
+var ZipChunksState = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6911));
+var _support = /*#__PURE__*/__nccwpck_require__(7691);
+var _take = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2978));
+var Either = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3869));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+var Context = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8364));
+var Duration = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2095));
+var Equal = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8826));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+var _a;
+/** @internal */
+const StreamSymbolKey = "@effect/stream/Stream";
+/** @internal */
+const StreamTypeId = /*#__PURE__*/Symbol.for(StreamSymbolKey);
+/** @internal */
+exports.StreamTypeId = StreamTypeId;
+const streamVariance = {
+  _R: _ => _,
+  _E: _ => _,
+  _A: _ => _
+};
+/** @internal */
+class StreamImpl {
+  constructor(channel) {
+    this.channel = channel;
+    this[_a] = streamVariance;
+  }
+}
+exports.StreamImpl = StreamImpl;
+_a = StreamTypeId;
+/** @internal */
+const DefaultChunkSize = 4096;
+/** @internal */
+exports.DefaultChunkSize = DefaultChunkSize;
+const absolve = self => (0, _Function.pipe)(self, mapEffect(Effect.fromEither));
+/** @internal */
+exports.absolve = absolve;
+const acquireRelease = (acquire, release) => scoped(Effect.acquireRelease(acquire, release));
+/** @internal */
+exports.acquireRelease = acquireRelease;
+const aggregate = sink => {
+  return self => (0, _Function.pipe)(self, aggregateWithin(sink, Schedule.forever()));
+};
+/** @internal */
+exports.aggregate = aggregate;
+const aggregateWithin = (sink, schedule) => {
+  return self => (0, _Function.pipe)(self, aggregateWithinEither(sink, schedule), collectRight);
+};
+/** @internal */
+exports.aggregateWithin = aggregateWithin;
+const aggregateWithinEither = (sink, schedule) => {
+  return self => {
+    const layer = Effect.tuple(Handoff.make(), Ref.make(SinkEndReason.SchedulEnd), Ref.make(Chunk.empty()), Schedule.driver(schedule), Ref.make(false), Ref.make(false));
+    return (0, _Function.pipe)(fromEffect(layer), flatMap(([handoff, sinkEndReason, sinkLeftovers, scheduleDriver, consumed, endAfterEmit]) => {
+      const handoffProducer = core.readWithCause(input => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(HandoffSignal.emit(input)), Effect.when(() => Chunk.isNonEmpty(input)))), core.flatMap(() => handoffProducer)), cause => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(HandoffSignal.halt(cause))))), () => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(HandoffSignal.end(SinkEndReason.UpstreamEnd))))));
+      const handoffConsumer = (0, _Function.pipe)(Ref.getAndSet(sinkLeftovers, Chunk.empty()), Effect.flatMap(leftovers => {
+        if (Chunk.isNonEmpty(leftovers)) {
+          return (0, _Function.pipe)(Ref.set(consumed, true), Effect.zipRight(Effect.succeed((0, _Function.pipe)(core.write(leftovers), core.flatMap(() => handoffConsumer)))));
+        }
+        return (0, _Function.pipe)(Handoff.take(handoff), Effect.map(signal => {
+          switch (signal._tag) {
+            case "Emit":
+              {
+                return (0, _Function.pipe)(core.fromEffect(Ref.set(consumed, true)), channel.zipRight(core.write(signal.elements)), channel.zipRight(core.fromEffect(Ref.get(endAfterEmit))), core.flatMap(bool => bool ? core.unit() : handoffConsumer));
+              }
+            case "Halt":
+              {
+                return core.failCause(signal.cause);
+              }
+            case "End":
+              {
+                if (signal.reason._tag === "ScheduleEnd") {
+                  return (0, _Function.pipe)(Ref.get(consumed), Effect.map(bool => bool ? core.fromEffect((0, _Function.pipe)(Ref.set(sinkEndReason, SinkEndReason.SchedulEnd), Effect.zipRight(Ref.set(endAfterEmit, true)))) : (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(Ref.set(sinkEndReason, SinkEndReason.SchedulEnd), Effect.zipRight(Ref.set(endAfterEmit, true)))), core.flatMap(() => handoffConsumer))), channel.unwrap);
+                }
+                return (0, _Function.pipe)(Ref.set(sinkEndReason, signal.reason), Effect.zipRight(Ref.set(endAfterEmit, true)), core.fromEffect);
+              }
+          }
+        }));
+      }), channel.unwrap);
+      const timeout = lastB => scheduleDriver.next(lastB);
+      const scheduledAggregator = (sinkFiber, scheduleFiber, scope) => {
+        const forkSink = (0, _Function.pipe)(Ref.set(consumed, false), Effect.zipRight(Ref.set(endAfterEmit, false)), Effect.zipRight((0, _Function.pipe)(handoffConsumer, channel.pipeToOrFail(sink.channel), core.collectElements, channelExecutor.run, Effect.forkIn(scope))));
+        const handleSide = (leftovers, b, c) => (0, _Function.pipe)(Ref.set(sinkLeftovers, Chunk.flatten(leftovers)), Effect.zipRight((0, _Function.pipe)(Ref.get(sinkEndReason), Effect.map(reason => {
+          switch (reason._tag) {
+            case "ScheduleEnd":
+              {
+                return (0, _Function.pipe)(Effect.tuple(Ref.get(consumed), forkSink, (0, _Function.pipe)(timeout(Option.some(b)), Effect.forkIn(scope))), Effect.map(([wasConsumed, sinkFiber, scheduleFiber]) => {
+                  const toWrite = (0, _Function.pipe)(c, Option.match(() => Chunk.of(Either.right(b)), c => Chunk.make(Either.right(b), Either.left(c))));
+                  if (wasConsumed) {
+                    return (0, _Function.pipe)(core.write(toWrite), core.flatMap(() => scheduledAggregator(sinkFiber, scheduleFiber, scope)));
+                  }
+                  return scheduledAggregator(sinkFiber, scheduleFiber, scope);
+                }), channel.unwrap);
+              }
+            case "UpstreamEnd":
+              {
+                return (0, _Function.pipe)(Ref.get(consumed), Effect.map(wasConsumed => wasConsumed ? core.write(Chunk.of(Either.right(b))) : core.unit()), channel.unwrap);
+              }
+          }
+        }))), channel.unwrap);
+        return (0, _Function.pipe)(Fiber.join(sinkFiber), Effect.raceWith(Fiber.join(scheduleFiber), (sinkExit, _) => (0, _Function.pipe)(Fiber.interrupt(scheduleFiber), Effect.zipRight((0, _Function.pipe)(Effect.done(sinkExit), Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))))), (scheduleExit, _) => (0, _Function.pipe)(Effect.done(scheduleExit), Effect.matchCauseEffect(cause => (0, _Function.pipe)(Cause.failureOrCause(cause), Either.match(() => (0, _Function.pipe)(handoff, Handoff.offer(HandoffSignal.end(SinkEndReason.SchedulEnd)), Effect.forkDaemon, Effect.zipRight((0, _Function.pipe)(Fiber.join(sinkFiber), Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))))), cause => (0, _Function.pipe)(handoff, Handoff.offer(HandoffSignal.halt(cause)), Effect.forkDaemon, Effect.zipRight((0, _Function.pipe)(Fiber.join(sinkFiber), Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.none()))))))), c => (0, _Function.pipe)(handoff, Handoff.offer(HandoffSignal.end(SinkEndReason.SchedulEnd)), Effect.forkDaemon, Effect.zipRight((0, _Function.pipe)(Fiber.join(sinkFiber), Effect.map(([leftovers, b]) => handleSide(leftovers, b, Option.some(c))))))))), channel.unwrap);
+      };
+      return unwrapScoped((0, _Function.pipe)(self.channel, core.pipeTo(handoffProducer), channelExecutor.run, Effect.forkScoped, Effect.zipRight((0, _Function.pipe)(handoffConsumer, channel.pipeToOrFail(sink.channel), core.collectElements, channelExecutor.run, Effect.forkScoped, Effect.flatMap(sinkFiber => (0, _Function.pipe)(Effect.forkScoped(timeout(Option.none())), Effect.flatMap(scheduleFiber => (0, _Function.pipe)(Effect.scope(), Effect.map(scope => new StreamImpl(scheduledAggregator(sinkFiber, scheduleFiber, scope)))))))))));
+    }));
+  };
+};
+/** @internal */
+exports.aggregateWithinEither = aggregateWithinEither;
+const as = value => {
+  return self => (0, _Function.pipe)(self, map(() => value));
+};
+/** @internal */
+exports.as = as;
+const _async = (register, outputBuffer = 16) => asyncOption(cb => {
+  register(cb);
+  return Option.none();
+}, outputBuffer);
+/** @internal */
+exports._async = _async;
+const asyncEffect = (register, outputBuffer = 16) => (0, _Function.pipe)(Effect.acquireRelease(Queue.bounded(outputBuffer), queue => Queue.shutdown(queue)), Effect.flatMap(output => (0, _Function.pipe)(Effect.runtime(), Effect.flatMap(runtime => (0, _Function.pipe)(register(emit.make(k => (0, _Function.pipe)(_take.fromPull(k), Effect.flatMap(take => Queue.offer(output, take)), Effect.asUnit, Runtime.runPromiseExit(runtime)).then(exit => {
+  if (Exit.isFailure(exit)) {
+    if (!Cause.isInterrupted(exit.cause)) {
+      throw Cause.squash(exit.cause);
+    }
+  }
+}))), Effect.map(() => {
+  const loop = (0, _Function.pipe)(Queue.take(output), Effect.flatMap(_take.done), Effect.match(maybeError => (0, _Function.pipe)(core.fromEffect(Queue.shutdown(output)), channel.zipRight((0, _Function.pipe)(maybeError, Option.match(core.unit, core.fail)))), chunk => (0, _Function.pipe)(core.write(chunk), core.flatMap(() => loop))), channel.unwrap);
+  return loop;
+}))))), channel.unwrapScoped, fromChannel);
+/** @internal */
+exports.asyncEffect = asyncEffect;
+const asyncInterrupt = (register, outputBuffer = 16) => (0, _Function.pipe)(Effect.acquireRelease(Queue.bounded(outputBuffer), queue => Queue.shutdown(queue)), Effect.flatMap(output => (0, _Function.pipe)(Effect.runtime(), Effect.flatMap(runtime => (0, _Function.pipe)(Effect.sync(() => register(emit.make(k => (0, _Function.pipe)(_take.fromPull(k), Effect.flatMap(take => Queue.offer(output, take)), Effect.asUnit, Runtime.runPromiseExit(runtime)).then(exit => {
+  if (Exit.isFailure(exit)) {
+    if (!Cause.isInterrupted(exit.cause)) {
+      throw Cause.squash(exit.cause);
+    }
+  }
+})))), Effect.map(Either.match(canceler => {
+  const loop = (0, _Function.pipe)(Queue.take(output), Effect.flatMap(_take.done), Effect.match(maybeError => (0, _Function.pipe)(core.fromEffect(Queue.shutdown(output)), channel.zipRight((0, _Function.pipe)(maybeError, Option.match(core.unit, core.fail)))), chunk => (0, _Function.pipe)(core.write(chunk), core.flatMap(() => loop))), channel.unwrap);
+  return (0, _Function.pipe)(fromChannel(loop), ensuring(canceler));
+}, stream => unwrap((0, _Function.pipe)(Queue.shutdown(output), Effect.as(stream))))))))), unwrapScoped);
+/** @internal */
+exports.asyncInterrupt = asyncInterrupt;
+const asyncOption = (register, outputBuffer = 16) => asyncInterrupt(emit => (0, _Function.pipe)(register(emit), Either.fromOption(Effect.unit)), outputBuffer);
+/** @internal */
+exports.asyncOption = asyncOption;
+const asyncScoped = (register, outputBuffer = 16) => (0, _Function.pipe)(Effect.acquireRelease(Queue.bounded(outputBuffer), queue => Queue.shutdown(queue)), Effect.flatMap(output => (0, _Function.pipe)(Effect.runtime(), Effect.flatMap(runtime => (0, _Function.pipe)(register(emit.make(k => (0, _Function.pipe)(_take.fromPull(k), Effect.flatMap(take => Queue.offer(output, take)), Effect.asUnit, Runtime.runPromiseExit(runtime)).then(exit => {
+  if (Exit.isFailure(exit)) {
+    if (!Cause.isInterrupted(exit.cause)) {
+      throw Cause.squash(exit.cause);
+    }
+  }
+}))), Effect.zipRight(Ref.make(false)), Effect.flatMap(ref => (0, _Function.pipe)(Ref.get(ref), Effect.map(isDone => isDone ? pull.end() : (0, _Function.pipe)(Queue.take(output), Effect.flatMap(_take.done), Effect.onError(() => (0, _Function.pipe)(Ref.set(ref, true), Effect.zipRight(Queue.shutdown(output)))))))))))), scoped, flatMap(repeatEffectChunkOption));
+/** @internal */
+exports.asyncScoped = asyncScoped;
+const branchAfter = (n, f) => {
+  return self => suspend(() => {
+    const bufferring = acc => core.readWith(input => {
+      const nextSize = acc.length + input.length;
+      if (nextSize >= n) {
+        const [b1, b2] = (0, _Function.pipe)(input, Chunk.splitAt(n - acc.length));
+        return running((0, _Function.pipe)(acc, Chunk.concat(b1)), b2);
+      }
+      return bufferring((0, _Function.pipe)(acc, Chunk.concat(input)));
+    }, core.fail, () => running(acc, Chunk.empty()));
+    const running = (prefix, leftover) => (0, _Function.pipe)(prepend(leftover).channel, core.pipeTo(f(prefix).channel));
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(bufferring(Chunk.empty()))));
+  });
+};
+/** @internal */
+exports.branchAfter = branchAfter;
+const broadcast = /*#__PURE__*/Debug.pipeableWithTrace(trace => (n, maximumLag) => self => (0, _Function.pipe)(self, broadcastedQueues(n, maximumLag), Effect.map(tuple => tuple.map(queue => (0, _Function.pipe)(fromQueueWithShutdown(queue), flattenTake)))).traced(trace));
+/** @internal */
+exports.broadcast = broadcast;
+const broadcastDynamic = /*#__PURE__*/Debug.pipeableWithTrace(trace => maximumLag => self => (0, _Function.pipe)(self, broadcastedQueuesDynamic(maximumLag), Effect.map(effect => (0, _Function.pipe)(scoped(effect), flatMap(fromQueue), flattenTake))).traced(trace));
+/** @internal */
+exports.broadcastDynamic = broadcastDynamic;
+const broadcastedQueues = /*#__PURE__*/Debug.pipeableWithTrace(trace => (n, maximumLag) => self => (0, _Function.pipe)(Hub.bounded(maximumLag), Effect.flatMap(hub => (0, _Function.pipe)(Effect.collectAll(Array.from({
+  length: n
+}, () => Hub.subscribe(hub))), Effect.map(chunk => Chunk.toReadonlyArray(chunk)), Effect.tap(() => (0, _Function.pipe)(self, runIntoHubScoped(hub), Effect.forkScoped))))).traced(trace));
+/** @internal */
+exports.broadcastedQueues = broadcastedQueues;
+const broadcastedQueuesDynamic = /*#__PURE__*/Debug.pipeableWithTrace(trace => maximumLag => self => (0, _Function.pipe)(self, toHub(maximumLag), Effect.map(Hub.subscribe)).traced(trace));
+/** @internal */
+exports.broadcastedQueuesDynamic = broadcastedQueuesDynamic;
+const buffer = capacity => {
+  return self => {
+    const queue = (0, _Function.pipe)(self, toQueueOfElements(capacity));
+    return new StreamImpl((0, _Function.pipe)(queue, Effect.map(queue => {
+      const process = (0, _Function.pipe)(core.fromEffect(Queue.take(queue)), core.flatMap(Exit.match(cause => (0, _Function.pipe)(Cause.flipCauseOption(cause), Option.match(core.unit, core.failCause)), value => (0, _Function.pipe)(core.write(Chunk.of(value)), core.flatMap(() => process)))));
+      return process;
+    }), channel.unwrapScoped));
+  };
+};
+/** @internal */
+exports.buffer = buffer;
+const bufferChunks = capacity => {
+  return self => {
+    const queue = (0, _Function.pipe)(self, toQueue(capacity));
+    return new StreamImpl((0, _Function.pipe)(queue, Effect.map(queue => {
+      const process = (0, _Function.pipe)(core.fromEffect(Queue.take(queue)), core.flatMap(_take.match(core.unit, core.failCause, value => (0, _Function.pipe)(core.write(value), core.flatMap(() => process)))));
+      return process;
+    }), channel.unwrapScoped));
+  };
+};
+/** @internal */
+exports.bufferChunks = bufferChunks;
+const bufferChunksDropping = capacity => {
+  return self => {
+    const queue = Effect.acquireRelease(Queue.dropping(capacity), queue => Queue.shutdown(queue));
+    return new StreamImpl(bufferSignal(queue, self.channel));
+  };
+};
+/** @internal */
+exports.bufferChunksDropping = bufferChunksDropping;
+const bufferChunksSliding = capacity => {
+  return self => {
+    const queue = Effect.acquireRelease(Queue.sliding(capacity), queue => Queue.shutdown(queue));
+    return new StreamImpl(bufferSignal(queue, self.channel));
+  };
+};
+/** @internal */
+exports.bufferChunksSliding = bufferChunksSliding;
+const bufferDropping = capacity => {
+  return self => {
+    const queue = Effect.acquireRelease(Queue.dropping(capacity), queue => Queue.shutdown(queue));
+    return new StreamImpl(bufferSignal(queue, rechunk(1)(self).channel));
+  };
+};
+/** @internal */
+exports.bufferDropping = bufferDropping;
+const bufferSliding = capacity => {
+  return self => {
+    const queue = Effect.acquireRelease(Queue.sliding(capacity), queue => Queue.shutdown(queue));
+    return new StreamImpl(bufferSignal(queue, (0, _Function.pipe)(self, rechunk(1)).channel));
+  };
+};
+/** @internal */
+exports.bufferSliding = bufferSliding;
+const bufferUnbounded = self => {
+  const queue = toQueueUnbounded(self);
+  return new StreamImpl((0, _Function.pipe)(queue, Effect.map(queue => {
+    const process = (0, _Function.pipe)(core.fromEffect(Queue.take(queue)), core.flatMap(_take.match(core.unit, core.failCause, value => (0, _Function.pipe)(core.write(value), core.flatMap(() => process)))));
+    return process;
+  }), channel.unwrapScoped));
+};
+/** @internal */
+exports.bufferUnbounded = bufferUnbounded;
+const bufferSignal = (scoped, bufferChannel) => {
+  const producer = (queue, ref) => {
+    const terminate = take => (0, _Function.pipe)(Ref.get(ref), Effect.tap(Deferred.await), Effect.zipRight(Deferred.make()), Effect.flatMap(deferred => (0, _Function.pipe)(Queue.offer(queue, [take, deferred]), Effect.zipRight(Ref.set(ref, deferred)), Effect.zipRight(Deferred.await(deferred)))), Effect.asUnit, core.fromEffect);
+    return core.readWith(input => (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => (0, _Function.pipe)(Queue.offer(queue, [_take.chunk(input), deferred]), Effect.flatMap(added => (0, _Function.pipe)(Ref.set(ref, deferred), Effect.when(() => added))))), Effect.asUnit, core.fromEffect, core.flatMap(() => producer(queue, ref))), error => terminate(_take.fail(error)), () => terminate(_take.end));
+  };
+  const consumer = queue => {
+    const process = (0, _Function.pipe)(core.fromEffect(Queue.take(queue)), core.flatMap(([take, deferred]) => (0, _Function.pipe)(core.fromEffect(Deferred.succeed(deferred, void 0)), channel.zipRight((0, _Function.pipe)(take, _take.match(core.unit, core.failCause, value => (0, _Function.pipe)(core.write(value), core.flatMap(() => process))))))));
+    return process;
+  };
+  return channel.unwrapScoped((0, _Function.pipe)(scoped, Effect.flatMap(queue => (0, _Function.pipe)(Deferred.make(), Effect.tap(start => Deferred.succeed(start, void 0)), Effect.flatMap(start => (0, _Function.pipe)(Ref.make(start), Effect.flatMap(ref => (0, _Function.pipe)(bufferChannel, core.pipeTo(producer(queue, ref)), channelExecutor.runScoped, Effect.forkScoped)), Effect.as(consumer(queue))))))));
+};
+/** @internal */
+const catchAll = f => {
+  return self => (0, _Function.pipe)(self, catchAllCause(cause => (0, _Function.pipe)(Cause.failureOrCause(cause), Either.match(f, failCause))));
+};
+/** @internal */
+exports.catchAll = catchAll;
+const catchAllCause = f => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, core.catchAllCause(cause => f(cause).channel)));
+};
+/** @internal */
+exports.catchAllCause = catchAllCause;
+const catchSome = pf => {
+  return self => (0, _Function.pipe)(self, catchAll(error => (0, _Function.pipe)(pf(error), Option.getOrElse(() => fail(error)))));
+};
+/** @internal */
+exports.catchSome = catchSome;
+const catchSomeCause = pf => {
+  return self => (0, _Function.pipe)(self, catchAllCause(cause => (0, _Function.pipe)(pf(cause), Option.getOrElse(() => failCause(cause)))));
+};
+/** @internal */
+exports.catchSomeCause = catchSomeCause;
+const changes = self => (0, _Function.pipe)(self, changesWith((x, y) => Equal.equals(y)(x)));
+/** @internal */
+exports.changes = changes;
+const changesWith = f => {
+  return self => {
+    const writer = last => core.readWithCause(input => {
+      const [newLast, newChunk] = (0, _Function.pipe)(input, Chunk.reduce([last, Chunk.empty()], ([option, outputs], output) => {
+        if (Option.isSome(option) && f(option.value, output)) {
+          return [Option.some(output), outputs];
+        }
+        return [Option.some(output), (0, _Function.pipe)(outputs, Chunk.append(output))];
+      }));
+      return (0, _Function.pipe)(core.write(newChunk), core.flatMap(() => writer(newLast)));
+    }, core.failCause, core.unit);
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(writer(Option.none()))));
+  };
+};
+/** @internal */
+exports.changesWith = changesWith;
+const changesWithEffect = f => {
+  return self => {
+    const writer = last => core.readWithCause(input => (0, _Function.pipe)(input, Effect.reduce([last, Chunk.empty()], ([option, outputs], output) => {
+      if (Option.isSome(option)) {
+        return (0, _Function.pipe)(f(option.value, output), Effect.map(bool => bool ? [Option.some(output), outputs] : [Option.some(output), (0, _Function.pipe)(outputs, Chunk.append(output))]));
+      }
+      return Effect.succeed([Option.some(output), (0, _Function.pipe)(outputs, Chunk.append(output))]);
+    }), core.fromEffect, core.flatMap(([newLast, newChunk]) => (0, _Function.pipe)(core.write(newChunk), core.flatMap(() => writer(newLast))))), core.failCause, core.unit);
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(writer(Option.none()))));
+  };
+};
+/** @internal */
+exports.changesWithEffect = changesWithEffect;
+const chunks = self => (0, _Function.pipe)(self, mapChunks(Chunk.of));
+/** @internal */
+exports.chunks = chunks;
+const chunksWith = f => {
+  return self => flattenChunks(f(chunks(self)));
+};
+/** @internal */
+exports.chunksWith = chunksWith;
+const collect = pf => {
+  return self => (0, _Function.pipe)(self, mapChunks(Chunk.filterMap(pf)));
+};
+/** @internal */
+exports.collect = collect;
+const collectEffect = pf => {
+  return self => suspend(() => {
+    const loop = iterator => {
+      const next = iterator.next();
+      if (next.done) {
+        return core.readWithCause(input => loop(input[Symbol.iterator]()), core.failCause, core.succeed);
+      } else {
+        return (0, _Function.pipe)(pf(next.value), Option.match(() => Effect.sync(() => loop(iterator)), Effect.map(a2 => (0, _Function.pipe)(core.write(Chunk.of(a2)), core.flatMap(() => loop(iterator))))), channel.unwrap);
+      }
+    };
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(loop(Chunk.empty()[Symbol.iterator]()))));
+  });
+};
+/** @internal */
+exports.collectEffect = collectEffect;
+const collectLeft = self => (0, _Function.pipe)(self, collect(either => Either.isLeft(either) ? Option.some(either.left) : Option.none()));
+/** @internal */
+exports.collectLeft = collectLeft;
+const collectSome = self => (0, _Function.pipe)(self, collect(option => Option.isSome(option) ? Option.some(option.value) : Option.none()));
+/** @internal */
+exports.collectSome = collectSome;
+const collectSuccess = self => (0, _Function.pipe)(self, collect(exit => Exit.isSuccess(exit) ? Option.some(exit.value) : Option.none()));
+/** @internal */
+exports.collectSuccess = collectSuccess;
+const collectRight = self => (0, _Function.pipe)(self, collect(either => Either.isRight(either) ? Option.some(either.right) : Option.none()));
+/** @internal */
+exports.collectRight = collectRight;
+const collectWhile = pf => {
+  return self => {
+    const loop = core.readWith(input => {
+      const mapped = (0, _Function.pipe)(input, Chunk.filterMapWhile(pf));
+      if (mapped.length === input.length) {
+        return (0, _Function.pipe)(core.write(mapped), core.flatMap(() => loop));
+      }
+      return core.write(mapped);
+    }, core.fail, core.succeed);
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(loop)));
+  };
+};
+/** @internal */
+exports.collectWhile = collectWhile;
+const collectWhileLeft = self => (0, _Function.pipe)(self, collectWhile(either => Either.isLeft(either) ? Option.some(either.left) : Option.none()));
+/** @internal */
+exports.collectWhileLeft = collectWhileLeft;
+const collectWhileSome = self => (0, _Function.pipe)(self, collectWhile(option => Option.isSome(option) ? Option.some(option.value) : Option.none()));
+/** @internal */
+exports.collectWhileSome = collectWhileSome;
+const collectWhileRight = self => (0, _Function.pipe)(self, collectWhile(either => Either.isRight(either) ? Option.some(either.right) : Option.none()));
+/** @internal */
+exports.collectWhileRight = collectWhileRight;
+const collectWhileSuccess = self => (0, _Function.pipe)(self, collectWhile(exit => Exit.isSuccess(exit) ? Option.some(exit.value) : Option.none()));
+/** @internal */
+exports.collectWhileSuccess = collectWhileSuccess;
+const collectWhileEffect = pf => {
+  return self => suspend(() => {
+    const loop = iterator => {
+      const next = iterator.next();
+      if (next.done) {
+        return core.readWithCause(input => loop(input[Symbol.iterator]()), core.failCause, core.succeed);
+      } else {
+        return (0, _Function.pipe)(pf(next.value), Option.match(() => Effect.succeed(core.unit()), Effect.map(a2 => (0, _Function.pipe)(core.write(Chunk.of(a2)), core.flatMap(() => loop(iterator))))), channel.unwrap);
+      }
+    };
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(loop(Chunk.empty()[Symbol.iterator]()))));
+  });
+};
+/** @internal */
+exports.collectWhileEffect = collectWhileEffect;
+const combine = (that, s, f) => {
+  return self => {
+    const producer = (handoff, latch) => (0, _Function.pipe)(core.fromEffect(Handoff.take(latch)), channel.zipRight(core.readWithCause(input => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(Exit.succeed(input)))), core.flatMap(() => producer(handoff, latch))), cause => core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(Exit.failCause((0, _Function.pipe)(cause, Cause.map(Option.some)))))), () => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(Exit.fail(Option.none())))), core.flatMap(() => producer(handoff, latch))))));
+    return new StreamImpl(channel.unwrapScoped(Effect.gen(function* ($) {
+      const left = yield* $(Handoff.make());
+      const right = yield* $(Handoff.make());
+      const latchL = yield* $(Handoff.make());
+      const latchR = yield* $(Handoff.make());
+      yield* $((0, _Function.pipe)(self.channel, channel.concatMap(channel.writeChunk), core.pipeTo(producer(left, latchL)), channelExecutor.runScoped, Effect.forkScoped));
+      yield* $((0, _Function.pipe)(that.channel, channel.concatMap(channel.writeChunk), core.pipeTo(producer(right, latchR)), channelExecutor.runScoped, Effect.forkScoped));
+      const pullLeft = (0, _Function.pipe)(latchL, Handoff.offer(void 0), Effect.zipRight((0, _Function.pipe)(Handoff.take(left), Effect.flatMap(Effect.done))));
+      const pullRight = (0, _Function.pipe)(latchR, Handoff.offer(void 0), Effect.zipRight((0, _Function.pipe)(Handoff.take(right), Effect.flatMap(Effect.done))));
+      return unfoldEffect(s, s => (0, _Function.pipe)(f(s, pullLeft, pullRight), Effect.flatMap(exit => Effect.unsome(Effect.done(exit))))).channel;
+    })));
+  };
+};
+/** @internal */
+exports.combine = combine;
+const combineChunks = (that, s, f) => {
+  return self => {
+    const producer = (handoff, latch) => (0, _Function.pipe)(core.fromEffect(Handoff.take(latch)), channel.zipRight(core.readWithCause(input => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(_take.chunk(input)))), core.flatMap(() => producer(handoff, latch))), cause => core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(_take.failCause(cause)))), () => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(_take.end))), core.flatMap(() => producer(handoff, latch))))));
+    return new StreamImpl((0, _Function.pipe)(Effect.tuple(Handoff.make(), Handoff.make(), Handoff.make(), Handoff.make()), Effect.tap(([left, _, latchL]) => (0, _Function.pipe)(self.channel, core.pipeTo(producer(left, latchL)), channelExecutor.runScoped, Effect.forkScoped)), Effect.tap(([_, right, __, latchR]) => (0, _Function.pipe)(that.channel, core.pipeTo(producer(right, latchR)), channelExecutor.runScoped, Effect.forkScoped)), Effect.map(([left, right, latchL, latchR]) => {
+      const pullLeft = (0, _Function.pipe)(latchL, Handoff.offer(void 0), Effect.zipRight((0, _Function.pipe)(Handoff.take(left), Effect.flatMap(_take.done))));
+      const pullRight = (0, _Function.pipe)(latchR, Handoff.offer(void 0), Effect.zipRight((0, _Function.pipe)(Handoff.take(right), Effect.flatMap(_take.done))));
+      return unfoldChunkEffect(s, s => (0, _Function.pipe)(f(s, pullLeft, pullRight), Effect.flatMap(exit => Effect.unsome(Effect.done(exit))))).channel;
+    }), channel.unwrapScoped));
+  };
+};
+/** @internal */
+exports.combineChunks = combineChunks;
+const concat = that => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.zipRight(that.channel)));
+};
+/** @internal */
+exports.concat = concat;
+const concatAll = streams => suspend(() => (0, _Function.pipe)(streams, Chunk.reduce(empty, (x, y) => concat(y)(x))));
+/** @internal */
+exports.concatAll = concatAll;
+const cross = that => {
+  return self => (0, _Function.pipe)(self, crossWith(that, (a, a2) => [a, a2]));
+};
+/** @internal */
+exports.cross = cross;
+const crossLeft = that => {
+  return self => (0, _Function.pipe)(self, crossWith(that, (a, _) => a));
+};
+/** @internal */
+exports.crossLeft = crossLeft;
+const crossRight = that => {
+  return self => (0, _Function.pipe)(self, crossWith(that, (_, a2) => a2));
+};
+/** @internal */
+exports.crossRight = crossRight;
+const crossWith = (that, f) => {
+  return self => (0, _Function.pipe)(self, flatMap(a => (0, _Function.pipe)(that, map(b => f(a, b)))));
+};
+/** @internal */
+exports.crossWith = crossWith;
+const debounce = duration => {
+  return self => (0, _Function.pipe)(singleProducerAsyncInput.make(), Effect.flatMap(input => Effect.transplant(grafter => (0, _Function.pipe)(Handoff.make(), Effect.map(handoff => {
+    const enqueue = last => (0, _Function.pipe)(Clock.sleep(duration), Effect.as(last), Effect.fork, grafter, Effect.map(fiber => consumer(DebounceState.previous(fiber))));
+    const producer = core.readWithCause(input => (0, _Function.pipe)(Chunk.last(input), Option.match(() => producer, last => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(HandoffSignal.emit(Chunk.of(last))))), core.flatMap(() => producer)))), cause => core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(HandoffSignal.halt(cause)))), () => core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer(HandoffSignal.end(SinkEndReason.UpstreamEnd)))));
+    const consumer = state => {
+      switch (state._tag) {
+        case "NotStarted":
+          {
+            return (0, _Function.pipe)(Handoff.take(handoff), Effect.map(signal => {
+              switch (signal._tag) {
+                case "Emit":
+                  {
+                    return channel.unwrap(enqueue(signal.elements));
+                  }
+                case "Halt":
+                  {
+                    return core.failCause(signal.cause);
+                  }
+                case "End":
+                  {
+                    return core.unit();
+                  }
+              }
+            }), channel.unwrap);
+          }
+        case "Previous":
+          {
+            return (0, _Function.pipe)(Fiber.join(state.fiber), Effect.raceWith(Handoff.take(handoff), (leftExit, current) => (0, _Function.pipe)(leftExit, Exit.match(cause => (0, _Function.pipe)(Fiber.interrupt(current), Effect.as(core.failCause(cause))), chunk => Effect.succeed((0, _Function.pipe)(core.write(chunk), core.flatMap(() => consumer(DebounceState.current(current))))))), (rightExit, previous) => (0, _Function.pipe)(rightExit, Exit.match(cause => (0, _Function.pipe)(Fiber.interrupt(previous), Effect.as(core.failCause(cause))), signal => {
+              switch (signal._tag) {
+                case "Emit":
+                  {
+                    return (0, _Function.pipe)(Fiber.interrupt(previous), Effect.zipRight(enqueue(signal.elements)));
+                  }
+                case "Halt":
+                  {
+                    return (0, _Function.pipe)(Fiber.interrupt(previous), Effect.as(core.failCause(signal.cause)));
+                  }
+                case "End":
+                  {
+                    return (0, _Function.pipe)(Fiber.join(previous), Effect.map(chunk => (0, _Function.pipe)(core.write(chunk), channel.zipRight(core.unit()))));
+                  }
+              }
+            }))), channel.unwrap);
+          }
+        case "Current":
+          {
+            return (0, _Function.pipe)(Fiber.join(state.fiber), Effect.map(signal => {
+              switch (signal._tag) {
+                case "Emit":
+                  {
+                    return channel.unwrap(enqueue(signal.elements));
+                  }
+                case "Halt":
+                  {
+                    return core.failCause(signal.cause);
+                  }
+                case "End":
+                  {
+                    return core.unit();
+                  }
+              }
+            }), channel.unwrap);
+          }
+      }
+    };
+    const debounceChannel = (0, _Function.pipe)(channel.fromInput(input), core.pipeTo(producer), channelExecutor.run, Effect.forkScoped, Effect.as((0, _Function.pipe)(consumer(DebounceState.notStarted), core.embedInput(input))), channel.unwrapScoped);
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(debounceChannel)));
+  })))), unwrap);
+};
+/** @internal */
+exports.debounce = debounce;
+const die = defect => fromEffect(Effect.die(defect));
+/** @internal */
+exports.die = die;
+const dieSync = evaluate => fromEffect(Effect.dieSync(evaluate));
+/** @internal */
+exports.dieSync = dieSync;
+const dieMessage = message => fromEffect(Effect.dieMessage(message));
+/** @internal */
+exports.dieMessage = dieMessage;
+const distributedWith = (n, maximumLag, decide) => {
+  return self => (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => (0, _Function.pipe)(self, distributedWithDynamic(maximumLag, a => (0, _Function.pipe)(Deferred.await(deferred), Effect.flatMap(f => f(a))), () => Effect.unit()), Effect.flatMap(next => (0, _Function.pipe)(Chunk.range(0, n - 1), Chunk.map(id => (0, _Function.pipe)(next, Effect.map(([key, queue]) => [[key, id], queue]))), Effect.collectAll, Effect.flatMap(entries => {
+    const [mappings, queues] = (0, _Function.pipe)(entries, Chunk.reduceRight([new Map(), Chunk.empty()], ([mappings, queues], [mapping, queue]) => [mappings.set(mapping[0], mapping[1]), (0, _Function.pipe)(queues, Chunk.prepend(queue))]));
+    return (0, _Function.pipe)(Deferred.succeed(deferred, a => (0, _Function.pipe)(decide(a), Effect.map(f => key => (0, _Function.pipe)(f(mappings.get(key)))))), Effect.as(Array.from(queues)));
+  }))))));
+};
+/** @internal */
+exports.distributedWith = distributedWith;
+const distributedWithDynamicId = {
+  ref: 0
+};
+const newDistributedWithDynamicId = () => {
+  const current = distributedWithDynamicId.ref;
+  distributedWithDynamicId.ref = current + 1;
+  return current;
+};
+/** @internal */
+const distributedWithDynamic = /*#__PURE__*/Debug.pipeableWithTrace(trace => (maximumLag, decide, done = () => Effect.unit()) => self => (0, _Function.pipe)(Effect.acquireRelease(Ref.make(new Map()), (ref, _) => (0, _Function.pipe)(Ref.get(ref), Effect.flatMap(queues => (0, _Function.pipe)(queues.values(), Effect.forEach(Queue.shutdown))))), Effect.flatMap(queuesRef => Effect.gen(function* ($) {
+  const offer = a => (0, _Function.pipe)(decide(a), Effect.flatMap(shouldProcess => (0, _Function.pipe)(Ref.get(queuesRef), Effect.flatMap(queues => (0, _Function.pipe)(queues.entries(), Effect.reduce(Chunk.empty(), (acc, [id, queue]) => {
+    if (shouldProcess(id)) {
+      return (0, _Function.pipe)(Queue.offer(queue, Exit.succeed(a)), Effect.matchCauseEffect(cause =>
+      // Ignore all downstream queues that were shut
+      // down and remove them later
+      Cause.isInterrupted(cause) ? Effect.succeed((0, _Function.pipe)(acc, Chunk.prepend(id))) : Effect.failCause(cause), () => Effect.succeed(acc)));
+    }
+    return Effect.succeed(acc);
+  }), Effect.flatMap(ids => {
+    if (Chunk.isNonEmpty(ids)) {
+      return (0, _Function.pipe)(Ref.update(queuesRef, map => {
+        for (const id of ids) {
+          map.delete(id);
+        }
+        return map;
+      }));
+    }
+    return Effect.unit();
+  }))))), Effect.asUnit);
+  const queuesLock = yield* $(Effect.makeSemaphore(1));
+  const newQueue = yield* $(Ref.make((0, _Function.pipe)(Queue.bounded(maximumLag), Effect.flatMap(queue => {
+    const id = newDistributedWithDynamicId();
+    return (0, _Function.pipe)(Ref.update(queuesRef, map => map.set(id, queue)), Effect.as([id, queue]));
+  }))));
+  const finalize = endTake =>
+  // Make sure that no queues are currently being added
+  queuesLock.withPermits(1)((0, _Function.pipe)(Ref.set(newQueue, (0, _Function.pipe)(
+  // All newly created queues should end immediately
+  Queue.bounded(1), Effect.tap(queue => Queue.offer(queue, endTake)), Effect.flatMap(queue => {
+    const id = newDistributedWithDynamicId();
+    return (0, _Function.pipe)(Ref.update(queuesRef, map => map.set(id, queue)), Effect.as([id, queue]));
+  }))), Effect.zipRight((0, _Function.pipe)(Ref.get(queuesRef), Effect.flatMap(map => (0, _Function.pipe)(Chunk.fromIterable(map.values()), Effect.forEach(queue => (0, _Function.pipe)(Queue.offer(queue, endTake), Effect.catchSomeCause(cause => Cause.isInterrupted(cause) ? Option.some(Effect.unit()) : Option.none()))))))), Effect.zipRight(done(endTake)), Effect.asUnit));
+  yield* $((0, _Function.pipe)(self, runForEachScoped(offer), Effect.matchCauseEffect(cause => finalize(Exit.failCause((0, _Function.pipe)(cause, Cause.map(Option.some)))), () => finalize(Exit.fail(Option.none()))), Effect.forkScoped));
+  return queuesLock.withPermits(1)(Effect.flatten(Ref.get(newQueue)));
+}))).traced(trace));
+/** @internal */
+exports.distributedWithDynamic = distributedWithDynamic;
+const done = exit => fromEffect(Effect.done(exit));
+/** @internal */
+exports.done = done;
+const drain = self => new StreamImpl(channel.drain(self.channel));
+/** @internal */
+exports.drain = drain;
+const drainFork = that => {
+  return self => (0, _Function.pipe)(fromEffect(Deferred.make()), flatMap(backgroundDied => (0, _Function.pipe)(scoped((0, _Function.pipe)(that, runForEachScoped(() => Effect.unit()), Effect.catchAllCause(cause => Deferred.failCause(backgroundDied, cause)), Effect.forkScoped)), crossRight((0, _Function.pipe)(self, interruptWhenDeferred(backgroundDied))))));
+};
+/** @internal */
+exports.drainFork = drainFork;
+const drop = n => {
+  return self => {
+    const loop = r => core.readWith(input => {
+      const dropped = (0, _Function.pipe)(input, Chunk.drop(r));
+      const leftover = Math.max(0, r - input.length);
+      const more = Chunk.isEmpty(input) || leftover > 0;
+      if (more) {
+        return loop(leftover);
+      }
+      return (0, _Function.pipe)(core.write(dropped), channel.zipRight(channel.identityChannel()));
+    }, core.fail, core.unit);
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(loop(n))));
+  };
+};
+/** @internal */
+exports.drop = drop;
+const dropRight = n => {
+  return self => {
+    if (n <= 0) {
+      return identityStream();
+    }
+    return suspend(() => {
+      const queue = new _support.RingBuffer(n);
+      const reader = core.readWith(input => {
+        const outputs = (0, _Function.pipe)(input, Chunk.filterMap(elem => {
+          const head = queue.head();
+          queue.put(elem);
+          return head;
+        }));
+        return (0, _Function.pipe)(core.write(outputs), core.flatMap(() => reader));
+      }, core.fail, core.unit);
+      return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(reader)));
+    });
+  };
+};
+/** @internal */
+exports.dropRight = dropRight;
+const dropUntil = predicate => {
+  return self => (0, _Function.pipe)(self, dropWhile(a => !predicate(a)), drop(1));
+};
+/** @internal */
+exports.dropUntil = dropUntil;
+const dropUntilEffect = predicate => {
+  return self => {
+    const loop = core.readWith(input => (0, _Function.pipe)(input, Effect.dropUntil(predicate), Effect.map(leftover => {
+      const more = Chunk.isEmpty(leftover);
+      if (more) {
+        return core.suspend(() => loop);
+      }
+      return (0, _Function.pipe)(core.write(leftover), channel.zipRight(channel.identityChannel()));
+    }), channel.unwrap), core.fail, core.unit);
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(loop)));
+  };
+};
+/** @internal */
+exports.dropUntilEffect = dropUntilEffect;
+const dropWhile = predicate => {
+  return self => {
+    const loop = core.readWith(input => {
+      const output = (0, _Function.pipe)(input, Chunk.dropWhile(predicate));
+      if (Chunk.isEmpty(output)) {
+        return core.suspend(() => loop);
+      }
+      return (0, _Function.pipe)(core.write(output), channel.zipRight(channel.identityChannel()));
+    }, core.fail, core.succeedNow);
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(loop)));
+  };
+};
+/** @internal */
+exports.dropWhile = dropWhile;
+const dropWhileEffect = predicate => {
+  return self => {
+    const loop = core.readWith(input => (0, _Function.pipe)(input, Effect.dropWhile(predicate), Effect.map(leftover => {
+      const more = Chunk.isEmpty(leftover);
+      if (more) {
+        return core.suspend(() => loop);
+      }
+      return (0, _Function.pipe)(core.write(leftover), channel.zipRight(channel.identityChannel()));
+    }), channel.unwrap), core.fail, core.unit);
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(loop)));
+  };
+};
+/** @internal */
+exports.dropWhileEffect = dropWhileEffect;
+const either = self => (0, _Function.pipe)(self, map(Either.right), catchAll(error => make(Either.left(error))));
+/** @internal */
+exports.either = either;
+const empty = /*#__PURE__*/new StreamImpl( /*#__PURE__*/core.write( /*#__PURE__*/Chunk.empty()));
+/** @internal */
+exports.empty = empty;
+const ensuring = finalizer => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.ensuring(finalizer)));
+};
+/** @internal */
+exports.ensuring = ensuring;
+const context = () => fromEffect(Effect.context());
+/** @internal */
+exports.context = context;
+const contextWith = f => (0, _Function.pipe)(context(), map(f));
+/** @internal */
+exports.contextWith = contextWith;
+const contextWithEffect = f => (0, _Function.pipe)(context(), mapEffect(f));
+/** @internal */
+exports.contextWithEffect = contextWithEffect;
+const contextWithStream = f => (0, _Function.pipe)(context(), flatMap(f));
+/** @internal */
+exports.contextWithStream = contextWithStream;
+const execute = effect => drain(fromEffect(effect));
+/** @internal */
+exports.execute = execute;
+const fail = error => fromEffectOption(Effect.fail(Option.some(error)));
+/** @internal */
+exports.fail = fail;
+const failSync = evaluate => fromEffectOption(Effect.failSync(() => Option.some(evaluate())));
+/** @internal */
+exports.failSync = failSync;
+const failCause = cause => fromEffect(Effect.failCause(cause));
+/** @internal */
+exports.failCause = failCause;
+const failCauseSync = evaluate => fromEffect(Effect.failCauseSync(evaluate));
+/** @internal */
+exports.failCauseSync = failCauseSync;
+const filter = predicate => {
+  return self => (0, _Function.pipe)(self, mapChunks(Chunk.filter(predicate)));
+};
+/** @internal */
+exports.filter = filter;
+const filterEffect = f => {
+  return self => {
+    const loop = iterator => {
+      const next = iterator.next();
+      if (next.done) {
+        return core.readWithCause(input => loop(input[Symbol.iterator]()), core.failCause, core.succeed);
+      } else {
+        return (0, _Function.pipe)(f(next.value), Effect.map(bool => bool ? (0, _Function.pipe)(core.write(Chunk.of(next.value)), core.flatMap(() => loop(iterator))) : loop(iterator)), channel.unwrap);
+      }
+    };
+    return new StreamImpl(core.suspend(() => (0, _Function.pipe)(self.channel, core.pipeTo(loop(Chunk.empty()[Symbol.iterator]())))));
+  };
+};
+/** @internal */
+exports.filterEffect = filterEffect;
+const finalizer = finalizer => acquireRelease(Effect.unit(), () => finalizer);
+/** @internal */
+exports.finalizer = finalizer;
+const find = predicate => {
+  return self => {
+    const loop = core.readWith(input => (0, _Function.pipe)(input, Chunk.findFirst(predicate), Option.match(() => loop, n => core.write(Chunk.of(n)))), core.fail, core.unit);
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(loop)));
+  };
+};
+/** @internal */
+exports.find = find;
+const findEffect = predicate => {
+  return self => {
+    const loop = core.readWith(input => (0, _Function.pipe)(input, Effect.find(predicate), Effect.map(Option.match(() => loop, n => core.write(Chunk.of(n)))), channel.unwrap), core.fail, core.unit);
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(loop)));
+  };
+};
+/** @internal */
+exports.findEffect = findEffect;
+const flatMap = f => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.concatMap(as => (0, _Function.pipe)(as, Chunk.map(a => f(a).channel), Chunk.reduce(core.unit(), (left, right) => (0, _Function.pipe)(left, channel.zipRight(right)))))));
+};
+/** @internal */
+exports.flatMap = flatMap;
+const flatMapPar = (n, bufferSize = 16) => {
+  return f => {
+    return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.concatMap(channel.writeChunk), channel.mergeMap(n, bufferSize)(out => f(out).channel)));
+  };
+};
+/** @internal */
+exports.flatMapPar = flatMapPar;
+const flatMapParSwitch = (n, bufferSize = 16) => {
+  return f => {
+    return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.concatMap(channel.writeChunk), channel.mergeMap(n, bufferSize, mergeStrategy.BufferSliding)(out => f(out).channel)));
+  };
+};
+/** @internal */
+exports.flatMapParSwitch = flatMapParSwitch;
+const flatten = self => (0, _Function.pipe)(self, flatMap(_Function.identity));
+/** @internal */
+exports.flatten = flatten;
+const flattenChunks = self => {
+  const flatten = core.readWithCause(chunks => (0, _Function.pipe)(channel.writeChunk(chunks), core.flatMap(() => flatten)), core.failCause, core.unit);
+  return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(flatten)));
+};
+/** @internal */
+exports.flattenChunks = flattenChunks;
+const flattenEffect = self => (0, _Function.pipe)(self, mapEffect(_Function.identity));
+/** @internal */
+exports.flattenEffect = flattenEffect;
+const flattenExit = self => (0, _Function.pipe)(self, mapEffect(Effect.done));
+/** @internal */
+exports.flattenExit = flattenExit;
+const flattenExitOption = self => {
+  const processChunk = (chunk, cont) => {
+    const [toEmit, rest] = (0, _Function.pipe)(chunk, Chunk.splitWhere(exit => !Exit.isSuccess(exit)));
+    const next = (0, _Function.pipe)(Chunk.head(rest), Option.match(() => cont, Exit.match(cause => (0, _Function.pipe)(Cause.flipCauseOption(cause), Option.match(core.unit, core.failCause)), core.unit)));
+    return (0, _Function.pipe)(core.write((0, _Function.pipe)(toEmit, Chunk.filterMap(exit => Exit.isSuccess(exit) ? Option.some(exit.value) : Option.none()))), core.flatMap(() => next));
+  };
+  const process = core.readWithCause(chunk => processChunk(chunk, process), cause => core.failCause(cause), () => core.unit());
+  return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(process)));
+};
+/** @internal */
+exports.flattenExitOption = flattenExitOption;
+const flattenIterables = self => (0, _Function.pipe)(self, map(Chunk.fromIterable), flattenChunks);
+/** @internal */
+exports.flattenIterables = flattenIterables;
+const flattenPar = (n, bufferSize = 16) => {
+  return self => (0, _Function.pipe)(self, flatMapPar(n, bufferSize)(_Function.identity));
+};
+/** @internal */
+exports.flattenPar = flattenPar;
+const flattenParUnbounded = (bufferSize = 16) => {
+  return self => (0, _Function.pipe)(self, flatMapPar(Number.POSITIVE_INFINITY, bufferSize)(_Function.identity));
+};
+/** @internal */
+exports.flattenParUnbounded = flattenParUnbounded;
+const flattenTake = self => flattenChunks(flattenExitOption((0, _Function.pipe)(self, map(take => take.exit))));
+/** @internal */
+exports.flattenTake = flattenTake;
+const forever = self => new StreamImpl(channel.repeated(self.channel));
+/** @internal */
+exports.forever = forever;
+const fromChannel = channel => new StreamImpl(channel);
+/** @internal */
+exports.fromChannel = fromChannel;
+const fromChunk = chunk => new StreamImpl(Chunk.isEmpty(chunk) ? core.unit() : core.write(chunk));
+/** @internal */
+exports.fromChunk = fromChunk;
+const fromChunkHub = hub => (0, _Function.pipe)(scoped(Hub.subscribe(hub)), flatMap(fromChunkQueue));
+/** @internal */
+exports.fromChunkHub = fromChunkHub;
+const fromChunkHubScoped = hub => (0, _Function.pipe)(Hub.subscribe(hub), Effect.map(fromChunkQueue));
+/** @internal */
+exports.fromChunkHubScoped = fromChunkHubScoped;
+const fromChunkHubWithShutdown = hub => (0, _Function.pipe)(fromChunkHub(hub), ensuring(Hub.shutdown(hub)));
+/** @internal */
+exports.fromChunkHubWithShutdown = fromChunkHubWithShutdown;
+const fromChunkHubScopedWithShutdown = hub => (0, _Function.pipe)(fromChunkHubScoped(hub), Effect.map(ensuring(Hub.shutdown(hub))));
+/** @internal */
+exports.fromChunkHubScopedWithShutdown = fromChunkHubScopedWithShutdown;
+const fromChunkQueue = queue => (0, _Function.pipe)(Queue.take(queue), Effect.catchAllCause(cause => (0, _Function.pipe)(Queue.isShutdown(queue), Effect.flatMap(isShutdown => isShutdown && Cause.isInterrupted(cause) ? pull.end() : pull.failCause(cause)))), repeatEffectChunkOption);
+/** @internal */
+exports.fromChunkQueue = fromChunkQueue;
+const fromChunkQueueWithShutdown = queue => (0, _Function.pipe)(fromChunkQueue(queue), ensuring(Queue.shutdown(queue)));
+/** @internal */
+exports.fromChunkQueueWithShutdown = fromChunkQueueWithShutdown;
+const fromChunks = (...chunks) => (0, _Function.pipe)(fromIterable(chunks), flatMap(fromChunk));
+/** @internal */
+exports.fromChunks = fromChunks;
+const fromEffect = effect => (0, _Function.pipe)(effect, Effect.mapError(Option.some), fromEffectOption);
+/** @internal */
+exports.fromEffect = fromEffect;
+const fromEffectOption = effect => new StreamImpl((0, _Function.pipe)(effect, Effect.match(Option.match(core.unit, core.fail), a => core.write(Chunk.of(a))), channel.unwrap));
+/** @internal */
+exports.fromEffectOption = fromEffectOption;
+const fromHub = (hub, maxChunkSize = DefaultChunkSize) => (0, _Function.pipe)(scoped(Hub.subscribe(hub)), flatMap(queue => fromQueue(queue, maxChunkSize)));
+/** @internal */
+exports.fromHub = fromHub;
+const fromHubScoped = /*#__PURE__*/Debug.methodWithTrace(trace => (hub, maxChunkSize = DefaultChunkSize) => (0, _Function.pipe)(Effect.suspendSucceed(() => (0, _Function.pipe)(Hub.subscribe(hub), Effect.map(queue => fromQueueWithShutdown(queue, maxChunkSize))))).traced(trace));
+/** @internal */
+exports.fromHubScoped = fromHubScoped;
+const fromHubWithShutdown = (hub, maxChunkSize = DefaultChunkSize) => (0, _Function.pipe)(fromHub(hub, maxChunkSize), ensuring(Hub.shutdown(hub)));
+/** @internal */
+exports.fromHubWithShutdown = fromHubWithShutdown;
+const fromHubScopedWithShutdown = /*#__PURE__*/Debug.methodWithTrace(trace => (hub, maxChunkSize = DefaultChunkSize) => (0, _Function.pipe)(fromHubScoped(hub, maxChunkSize), Effect.map(ensuring(Hub.shutdown(hub)))).traced(trace));
+/** @internal */
+exports.fromHubScopedWithShutdown = fromHubScopedWithShutdown;
+const fromIterable = iterable => suspend(() => Chunk.isChunk(iterable) ? fromChunk(iterable) : fromIteratorSucceed(iterable[Symbol.iterator]()));
+/** @internal */
+exports.fromIterable = fromIterable;
+const fromIterableEffect = effect => (0, _Function.pipe)(effect, Effect.map(fromIterable), unwrap);
+/** @internal */
+exports.fromIterableEffect = fromIterableEffect;
+const fromIteratorSucceed = (iterator, maxChunkSize = DefaultChunkSize) => {
+  return (0, _Function.pipe)(Effect.sync(() => {
+    let builder = [];
+    const loop = iterator => (0, _Function.pipe)(Effect.sync(() => {
+      let next = iterator.next();
+      if (maxChunkSize === 1) {
+        if (next.done) {
+          return core.unit();
+        }
+        return (0, _Function.pipe)(core.write(Chunk.of(next.value)), core.flatMap(() => loop(iterator)));
+      }
+      builder = [];
+      let count = 0;
+      while (count < maxChunkSize && !next.done) {
+        builder.push(next.value);
+        next = iterator.next();
+        count = count + 1;
+      }
+      if (count > 0) {
+        return (0, _Function.pipe)(core.write(Chunk.unsafeFromArray(builder)), core.flatMap(() => loop(iterator)));
+      }
+      return core.unit();
+    }), channel.unwrap);
+    return new StreamImpl(loop(iterator));
+  }), unwrap);
+};
+/** @internal */
+exports.fromIteratorSucceed = fromIteratorSucceed;
+const fromPull = effect => (0, _Function.pipe)(effect, Effect.map(repeatEffectChunkOption), unwrapScoped);
+/** @internal */
+exports.fromPull = fromPull;
+const fromQueue = (queue, maxChunkSize = DefaultChunkSize) => (0, _Function.pipe)(Queue.takeBetween(queue, 1, maxChunkSize), Effect.catchAllCause(cause => (0, _Function.pipe)(Queue.isShutdown(queue), Effect.flatMap(isShutdown => isShutdown && Cause.isInterrupted(cause) ? pull.end() : pull.failCause(cause)))), repeatEffectChunkOption);
+/** @internal */
+exports.fromQueue = fromQueue;
+const fromQueueWithShutdown = (queue, maxChunkSize = DefaultChunkSize) => (0, _Function.pipe)(fromQueue(queue, maxChunkSize), ensuring(Queue.shutdown(queue)));
+/** @internal */
+exports.fromQueueWithShutdown = fromQueueWithShutdown;
+const fromSchedule = schedule => (0, _Function.pipe)(Schedule.driver(schedule), Effect.map(driver => repeatEffectOption(driver.next(void 0))), unwrap);
+/** @internal */
+exports.fromSchedule = fromSchedule;
+const groupAdjacentBy = f => {
+  return self => {
+    const go = (input, state) => (0, _Function.pipe)(input, Chunk.reduce([Chunk.empty(), state], ([outputs, option], a) => {
+      if (Option.isSome(option)) {
+        const key = option.value[0];
+        const aggregated = option.value[1];
+        const key2 = f(a);
+        if (Equal.equals(key2)(key)) {
+          return [outputs, Option.some([key, (0, _Function.pipe)(aggregated, Chunk.append(a))])];
+        }
+        return [(0, _Function.pipe)(outputs, Chunk.append(option.value)), Option.some([key2, Chunk.of(a)])];
+      }
+      return [outputs, Option.some([f(a), Chunk.of(a)])];
+    }));
+    const chunkAdjacent = buffer => core.readWithCause(input => {
+      const [outputs, newBuffer] = go(input, buffer);
+      return (0, _Function.pipe)(core.write(outputs), core.flatMap(() => chunkAdjacent(newBuffer)));
+    }, core.failCause, () => (0, _Function.pipe)(buffer, Option.match(core.unit, output => core.write(Chunk.of(output)))));
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(chunkAdjacent(Option.none()))));
+  };
+};
+/** @internal */
+exports.groupAdjacentBy = groupAdjacentBy;
+const grouped = chunkSize => {
+  return self => (0, _Function.pipe)(self, rechunk(chunkSize), chunks);
+};
+/** @internal */
+exports.grouped = grouped;
+const groupedWithin = (chunkSize, duration) => {
+  return self => (0, _Function.pipe)(self, aggregateWithin(_sink.collectAllN(chunkSize), Schedule.spaced(duration)));
+};
+/** @internal */
+exports.groupedWithin = groupedWithin;
+const haltWhen = effect => {
+  return self => {
+    const writer = fiber => (0, _Function.pipe)(Fiber.poll(fiber), Effect.map(Option.match(() => core.readWith(input => (0, _Function.pipe)(core.write(input), core.flatMap(() => writer(fiber))), core.fail, core.unit), Exit.match(core.failCause, core.unit))), channel.unwrap);
+    return new StreamImpl((0, _Function.pipe)(Effect.forkScoped(effect), Effect.map(fiber => (0, _Function.pipe)(self.channel, core.pipeTo(writer(fiber)))), channel.unwrapScoped));
+  };
+};
+/** @internal */
+exports.haltWhen = haltWhen;
+const haltAfter = duration => {
+  return self => (0, _Function.pipe)(self, haltWhen(Clock.sleep(duration)));
+};
+/** @internal */
+exports.haltAfter = haltAfter;
+const haltWhenDeferred = deferred => {
+  return self => {
+    const writer = (0, _Function.pipe)(Deferred.poll(deferred), Effect.map(Option.match(() => core.readWith(input => (0, _Function.pipe)(core.write(input), core.flatMap(() => writer)), core.fail, core.unit), effect => (0, _Function.pipe)(effect, Effect.match(core.fail, core.unit), channel.unwrap))), channel.unwrap);
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(writer)));
+  };
+};
+/** @internal */
+exports.haltWhenDeferred = haltWhenDeferred;
+const identityStream = () => new StreamImpl(channel.identityChannel());
+/** @internal */
+exports.identityStream = identityStream;
+const interleave = that => {
+  return self => (0, _Function.pipe)(self, interleaveWith(that, forever(make(true, false))));
+};
+/** @internal */
+exports.interleave = interleave;
+const interleaveWith = (that, decider) => {
+  return self => {
+    const producer = handoff => core.readWithCause(value => (0, _Function.pipe)(handoff, Handoff.offer(_take.of(value)), core.fromEffect, core.flatMap(() => producer(handoff))), cause => (0, _Function.pipe)(handoff, Handoff.offer(_take.failCause(cause)), core.fromEffect), () => (0, _Function.pipe)(handoff, Handoff.offer(_take.end), core.fromEffect));
+    return new StreamImpl(channel.unwrapScoped((0, _Function.pipe)(Handoff.make(), Effect.zip(Handoff.make()), Effect.tap(([left]) => (0, _Function.pipe)(self.channel, channel.concatMap(channel.writeChunk), core.pipeTo(producer(left)), channelExecutor.runScoped, Effect.forkScoped)), Effect.tap(([_, right]) => (0, _Function.pipe)(that.channel, channel.concatMap(channel.writeChunk), core.pipeTo(producer(right)), channelExecutor.runScoped, Effect.forkScoped)), Effect.map(([left, right]) => {
+      const process = (leftDone, rightDone) => core.readWithCause(bool => {
+        if (bool && !leftDone) {
+          return (0, _Function.pipe)(core.fromEffect(Handoff.take(left)), core.flatMap(_take.match(() => rightDone ? core.unit() : process(true, rightDone), core.failCause, chunk => (0, _Function.pipe)(core.write(chunk), core.flatMap(() => process(leftDone, rightDone))))));
+        }
+        if (!bool && !rightDone) {
+          return (0, _Function.pipe)(core.fromEffect(Handoff.take(right)), core.flatMap(_take.match(() => leftDone ? core.unit() : process(leftDone, true), core.failCause, chunk => (0, _Function.pipe)(core.write(chunk), core.flatMap(() => process(leftDone, rightDone))))));
+        }
+        return process(leftDone, rightDone);
+      }, core.failCause, core.unit);
+      return (0, _Function.pipe)(decider.channel, channel.concatMap(channel.writeChunk), core.pipeTo(process(false, false)));
+    }))));
+  };
+};
+/** @internal */
+exports.interleaveWith = interleaveWith;
+const intersperse = element => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(core.suspend(() => {
+    const writer = isFirst => core.readWithCause(chunk => {
+      const builder = [];
+      let flagResult = isFirst;
+      for (const output of chunk) {
+        if (flagResult) {
+          flagResult = false;
+          builder.push(output);
+        } else {
+          builder.push(element);
+          builder.push(output);
+        }
+      }
+      return (0, _Function.pipe)(core.write(Chunk.unsafeFromArray(builder)), core.flatMap(() => writer(flagResult)));
+    }, core.failCause, core.unit);
+    return writer(true);
+  }))));
+};
+/** @internal */
+exports.intersperse = intersperse;
+const intersperseAffixes = (start, middle, end) => {
+  return self => (0, _Function.pipe)(make(start), concat((0, _Function.pipe)(self, intersperse(middle))), concat(make(end)));
+};
+/** @internal */
+exports.intersperseAffixes = intersperseAffixes;
+const interruptAfter = duration => {
+  return self => (0, _Function.pipe)(self, interruptWhen(Clock.sleep(duration)));
+};
+/** @internal */
+exports.interruptAfter = interruptAfter;
+const interruptWhen = effect => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.interruptWhen(effect)));
+};
+/** @internal */
+exports.interruptWhen = interruptWhen;
+const interruptWhenDeferred = deferred => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.interruptWhenDeferred(deferred)));
+};
+/** @internal */
+exports.interruptWhenDeferred = interruptWhenDeferred;
+const iterate = (value, next) => unfold(value, a => Option.some([a, next(a)]));
+/** @internal */
+exports.iterate = iterate;
+const log = message => fromEffect(Effect.log(message));
+/** @internal */
+exports.log = log;
+const logDebug = message => fromEffect(Effect.logDebug(message));
+/** @internal */
+exports.logDebug = logDebug;
+const logDebugCause = cause => fromEffect(Effect.logDebugCause(cause));
+/** @internal */
+exports.logDebugCause = logDebugCause;
+const logDebugCauseMessage = (message, cause) => fromEffect(Effect.logDebugCauseMessage(message, cause));
+/** @internal */
+exports.logDebugCauseMessage = logDebugCauseMessage;
+const logError = message => fromEffect(Effect.logError(message));
+/** @internal */
+exports.logError = logError;
+const logErrorCause = cause => fromEffect(Effect.logErrorCause(cause));
+/** @internal */
+exports.logErrorCause = logErrorCause;
+const logErrorCauseMessage = (message, cause) => fromEffect(Effect.logErrorCauseMessage(message, cause));
+/** @internal */
+exports.logErrorCauseMessage = logErrorCauseMessage;
+const logFatal = message => fromEffect(Effect.logFatal(message));
+/** @internal */
+exports.logFatal = logFatal;
+const logFatalCause = cause => fromEffect(Effect.logFatalCause(cause));
+/** @internal */
+exports.logFatalCause = logFatalCause;
+const logFatalCauseMessage = (message, cause) => fromEffect(Effect.logFatalCauseMessage(message, cause));
+/** @internal */
+exports.logFatalCauseMessage = logFatalCauseMessage;
+const logInfo = message => fromEffect(Effect.logInfo(message));
+/** @internal */
+exports.logInfo = logInfo;
+const logInfoCause = cause => fromEffect(Effect.logInfoCause(cause));
+/** @internal */
+exports.logInfoCause = logInfoCause;
+const logInfoCauseMessage = (message, cause) => fromEffect(Effect.logInfoCauseMessage(message, cause));
+/** @internal */
+exports.logInfoCauseMessage = logInfoCauseMessage;
+const logWarning = message => fromEffect(Effect.logWarning(message));
+/** @internal */
+exports.logWarning = logWarning;
+const logWarningCause = cause => fromEffect(Effect.logWarningCause(cause));
+/** @internal */
+exports.logWarningCause = logWarningCause;
+const logWarningCauseMessage = (message, cause) => fromEffect(Effect.logWarningCauseMessage(message, cause));
+/** @internal */
+exports.logWarningCauseMessage = logWarningCauseMessage;
+const logTrace = message => fromEffect(Effect.logTrace(message));
+/** @internal */
+exports.logTrace = logTrace;
+const logTraceCause = cause => fromEffect(Effect.logTraceCause(cause));
+/** @internal */
+exports.logTraceCause = logTraceCause;
+const logTraceCauseMessage = (message, cause) => fromEffect(Effect.logTraceCauseMessage(message, cause));
+/** @internal */
+exports.logTraceCauseMessage = logTraceCauseMessage;
+const make = (...as) => fromIterable(as);
+/** @internal */
+exports.make = make;
+const map = f => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.mapOut(Chunk.map(f))));
+};
+/** @internal */
+exports.map = map;
+const mapAccum = (s, f) => {
+  return self => {
+    const accumulator = s => core.readWith(input => {
+      const [nextS, chunk] = (0, _Function.pipe)(input, Chunk.mapAccum(s, f));
+      return (0, _Function.pipe)(core.write(chunk), core.flatMap(() => accumulator(nextS)));
+    }, core.fail, core.unit);
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(accumulator(s))));
+  };
+};
+/** @internal */
+exports.mapAccum = mapAccum;
+const mapAccumEffect = (s, f) => {
+  return self => suspend(() => {
+    const accumulator = s => core.readWith(input => (0, _Function.pipe)(Effect.suspendSucceed(() => {
+      const outputs = [];
+      const emit = output => Effect.sync(() => {
+        outputs.push(output);
+      });
+      return (0, _Function.pipe)(input, Effect.reduce(s, (s, a) => (0, _Function.pipe)(f(s, a), Effect.flatMap(([s, a]) => (0, _Function.pipe)(emit(a), Effect.as(s))))), Effect.match(error => {
+        if (outputs.length !== 0) {
+          return (0, _Function.pipe)(core.write(Chunk.unsafeFromArray(outputs)), channel.zipRight(core.fail(error)));
+        }
+        return core.fail(error);
+      }, s => (0, _Function.pipe)(core.write(Chunk.unsafeFromArray(outputs)), core.flatMap(() => accumulator(s)))));
+    }), channel.unwrap), core.fail, core.unit);
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(accumulator(s))));
+  });
+};
+/** @internal */
+exports.mapAccumEffect = mapAccumEffect;
+const mapBoth = (f, g) => {
+  return self => (0, _Function.pipe)(self, mapError(f), map(g));
+};
+/** @internal */
+exports.mapBoth = mapBoth;
+const mapChunks = f => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.mapOut(f)));
+};
+/** @internal */
+exports.mapChunks = mapChunks;
+const mapChunksEffect = f => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.mapOutEffect(f)));
+};
+/** @internal */
+exports.mapChunksEffect = mapChunksEffect;
+const mapConcat = f => {
+  return self => (0, _Function.pipe)(self, mapConcatChunk(a => Chunk.fromIterable(f(a))));
+};
+/** @internal */
+exports.mapConcat = mapConcat;
+const mapConcatChunk = f => {
+  return self => (0, _Function.pipe)(self, mapChunks(Chunk.flatMap(f)));
+};
+/** @internal */
+exports.mapConcatChunk = mapConcatChunk;
+const mapConcatChunkEffect = f => {
+  return self => (0, _Function.pipe)(self, mapEffect(f), mapConcatChunk(_Function.identity));
+};
+/** @internal */
+exports.mapConcatChunkEffect = mapConcatChunkEffect;
+const mapConcatEffect = f => {
+  return self => (0, _Function.pipe)(self, mapEffect(a => (0, _Function.pipe)(f(a), Effect.map(Chunk.fromIterable))), mapConcatChunk(_Function.identity));
+};
+/** @internal */
+exports.mapConcatEffect = mapConcatEffect;
+const mapEffect = f => {
+  return self => suspend(() => {
+    const loop = iterator => {
+      const next = iterator.next();
+      if (next.done) {
+        return core.readWithCause(elem => loop(elem[Symbol.iterator]()), core.failCause, core.succeed);
+      } else {
+        return (0, _Function.pipe)(f(next.value), Effect.map(a2 => (0, _Function.pipe)(core.write(Chunk.of(a2)), core.flatMap(() => loop(iterator)))), channel.unwrap);
+      }
+    };
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(loop(Chunk.empty()[Symbol.iterator]()))));
+  });
+};
+/** @internal */
+exports.mapEffect = mapEffect;
+const mapEffectPar = n => {
+  return f => {
+    return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.concatMap(channel.writeChunk), channel.mapOutEffectPar(n)(f), channel.mapOut(Chunk.of)));
+  };
+};
+/** @internal */
+exports.mapEffectPar = mapEffectPar;
+const mapEffectParUnordered = n => {
+  return f => {
+    return self => (0, _Function.pipe)(self, flatMapPar(n)(a => fromEffect(f(a))));
+  };
+};
+/** @internal */
+exports.mapEffectParUnordered = mapEffectParUnordered;
+const mapError = f => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.mapError(f)));
+};
+/** @internal */
+exports.mapError = mapError;
+const mapErrorCause = f => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.mapErrorCause(f)));
+};
+/** @internal */
+exports.mapErrorCause = mapErrorCause;
+const merge = (that, strategy = haltStrategy.Both) => {
+  return self => (0, _Function.pipe)(self, mergeWith(that, _Function.identity, _Function.identity, strategy));
+};
+/** @internal */
+exports.merge = merge;
+const mergeAll = (n, bufferSize = 16) => {
+  return (...streams) => (0, _Function.pipe)(fromIterable(streams), flattenPar(n, bufferSize));
+};
+/** @internal */
+exports.mergeAll = mergeAll;
+const mergeAllUnbounded = (bufferSize = 16) => {
+  return (...streams) => (0, _Function.pipe)(fromIterable(streams), flattenPar(Number.POSITIVE_INFINITY, bufferSize));
+};
+/** @internal */
+exports.mergeAllUnbounded = mergeAllUnbounded;
+const mergeHaltEither = that => {
+  return self => (0, _Function.pipe)(self, merge(that, haltStrategy.Either));
+};
+/** @internal */
+exports.mergeHaltEither = mergeHaltEither;
+const mergeHaltLeft = that => {
+  return self => (0, _Function.pipe)(self, merge(that, haltStrategy.Left));
+};
+/** @internal */
+exports.mergeHaltLeft = mergeHaltLeft;
+const mergeHaltRight = that => {
+  return self => (0, _Function.pipe)(self, merge(that, haltStrategy.Right));
+};
+/** @internal */
+exports.mergeHaltRight = mergeHaltRight;
+const mergeEither = that => {
+  return self => (0, _Function.pipe)(self, mergeWith(that, Either.left, Either.right));
+};
+/** @internal */
+exports.mergeEither = mergeEither;
+const mergeLeft = that => {
+  return self => (0, _Function.pipe)(self, merge(drain(that)));
+};
+/** @internal */
+exports.mergeLeft = mergeLeft;
+const mergeRight = that => {
+  return self => (0, _Function.pipe)(drain(self), merge(that));
+};
+/** @internal */
+exports.mergeRight = mergeRight;
+const mergeWith = (that, left, right, strategy = haltStrategy.Both) => {
+  return self => {
+    const handler = terminate => exit => terminate || !Exit.isSuccess(exit) ? mergeDecision.Done(Effect.done(exit)) : mergeDecision.Await(Effect.done);
+    return new StreamImpl((0, _Function.pipe)((0, _Function.pipe)(self, map(left)).channel, channel.mergeWith((0, _Function.pipe)(that, map(right)).channel, handler(strategy === haltStrategy.Either || strategy === haltStrategy.Left), handler(strategy === haltStrategy.Either || strategy === haltStrategy.Right))));
+  };
+};
+/** @internal */
+exports.mergeWith = mergeWith;
+const mkString = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(self, run(_sink.mkString())).traced(trace));
+/** @internal */
+exports.mkString = mkString;
+const never = () => fromEffect(Effect.never());
+/** @internal */
+exports.never = never;
+const onError = cleanup => {
+  return self => (0, _Function.pipe)(self, catchAllCause(cause => fromEffect((0, _Function.pipe)(cleanup(cause), Effect.zipRight(Effect.failCause(cause))))));
+};
+/** @internal */
+exports.onError = onError;
+const onDone = cleanup => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, core.ensuringWith(exit => Exit.isSuccess(exit) ? cleanup() : Effect.unit())));
+};
+/** @internal */
+exports.onDone = onDone;
+const orDie = self => (0, _Function.pipe)(self, orDieWith(_Function.identity));
+/** @internal */
+exports.orDie = orDie;
+const orDieWith = f => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.orDieWith(f)));
+};
+/** @internal */
+exports.orDieWith = orDieWith;
+const orElse = that => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.orElse(() => that().channel)));
+};
+/** @internal */
+exports.orElse = orElse;
+const orElseEither = that => {
+  return self => (0, _Function.pipe)(self, map(Either.left), orElse(() => (0, _Function.pipe)(that(), map(Either.right))));
+};
+/** @internal */
+exports.orElseEither = orElseEither;
+const orElseFail = error => {
+  return self => (0, _Function.pipe)(self, orElse(() => failSync(error)));
+};
+/** @internal */
+exports.orElseFail = orElseFail;
+const orElseIfEmpty = element => {
+  return self => (0, _Function.pipe)(self, orElseIfEmptyChunk(() => Chunk.of(element())));
+};
+/** @internal */
+exports.orElseIfEmpty = orElseIfEmpty;
+const orElseIfEmptyChunk = chunk => {
+  return self => (0, _Function.pipe)(self, orElseIfEmptyStream(() => new StreamImpl(core.write(chunk()))));
+};
+/** @internal */
+exports.orElseIfEmptyChunk = orElseIfEmptyChunk;
+const orElseIfEmptyStream = stream => {
+  return self => {
+    const writer = core.readWith(input => {
+      if (Chunk.isEmpty(input)) {
+        return core.suspend(() => writer);
+      }
+      return (0, _Function.pipe)(core.write(input), channel.zipRight(channel.identityChannel()));
+    }, core.fail, () => core.suspend(() => stream().channel));
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(writer)));
+  };
+};
+/** @internal */
+exports.orElseIfEmptyStream = orElseIfEmptyStream;
+const orElseOptional = that => {
+  return self => (0, _Function.pipe)(self, catchAll(Option.match(that, error => fail(Option.some(error)))));
+};
+/** @internal */
+exports.orElseOptional = orElseOptional;
+const orElseSucceed = value => {
+  return self => (0, _Function.pipe)(self, orElse(() => sync(value)));
+};
+/** @internal */
+exports.orElseSucceed = orElseSucceed;
+const paginate = (s, f) => paginateChunk(s, s => {
+  const page = f(s);
+  return [Chunk.of(page[0]), page[1]];
+});
+/** @internal */
+exports.paginate = paginate;
+const paginateChunk = (s, f) => {
+  const loop = s => {
+    const page = f(s);
+    return (0, _Function.pipe)(page[1], Option.match(() => (0, _Function.pipe)(core.write(page[0]), channel.zipRight(core.unit())), s => (0, _Function.pipe)(core.write(page[0]), core.flatMap(() => loop(s)))));
+  };
+  return new StreamImpl(core.suspend(() => loop(s)));
+};
+/** @internal */
+exports.paginateChunk = paginateChunk;
+const paginateChunkEffect = (s, f) => {
+  const loop = s => (0, _Function.pipe)(f(s), Effect.map(([chunk, option]) => (0, _Function.pipe)(option, Option.match(() => (0, _Function.pipe)(core.write(chunk), channel.zipRight(core.unit())), s => (0, _Function.pipe)(core.write(chunk), core.flatMap(() => loop(s)))))), channel.unwrap);
+  return new StreamImpl(core.suspend(() => loop(s)));
+};
+/** @internal */
+exports.paginateChunkEffect = paginateChunkEffect;
+const paginateEffect = (s, f) => paginateChunkEffect(s, s => (0, _Function.pipe)(f(s), Effect.map(([a, s]) => [Chunk.of(a), s])));
+/** @internal */
+exports.paginateEffect = paginateEffect;
+const peel = /*#__PURE__*/Debug.pipeableWithTrace(trace => sink => {
+  return self => {
+    const OP_EMIT = "Emit";
+    const OP_HALT = "Halt";
+    const OP_END = "End";
+    return (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => (0, _Function.pipe)(Handoff.make(), Effect.map(handoff => {
+      const consumer = (0, _Function.pipe)(_sink.collectLeftover(sink), _sink.foldSink(error => (0, _Function.pipe)(_sink.fromEffect(Deferred.fail(deferred, error)), _sink.zipRight(_sink.fail(error))), ([z, leftovers]) => {
+        const loop = core.readWithCause(elements => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer({
+          _tag: OP_EMIT,
+          elements
+        }))), core.flatMap(() => loop)), cause => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer({
+          _tag: OP_HALT,
+          cause
+        }))), channel.zipRight(core.failCause(cause))), _ => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer({
+          _tag: OP_END
+        }))), channel.zipRight(core.unit())));
+        return _sink.fromChannel((0, _Function.pipe)(core.fromEffect(Deferred.succeed(deferred, z)), channel.zipRight(core.fromEffect((0, _Function.pipe)(handoff, Handoff.offer({
+          _tag: OP_EMIT,
+          elements: leftovers
+        })))), channel.zipRight(loop)));
+      }));
+      const producer = (0, _Function.pipe)(Handoff.take(handoff), Effect.map(signal => {
+        switch (signal._tag) {
+          case OP_EMIT:
+            {
+              return (0, _Function.pipe)(core.write(signal.elements), core.flatMap(() => producer));
+            }
+          case OP_HALT:
+            {
+              return core.failCause(signal.cause);
+            }
+          case OP_END:
+            {
+              return core.unit();
+            }
+        }
+      }), channel.unwrap);
+      return (0, _Function.pipe)(self, tapErrorCause(cause => Deferred.failCause(deferred, cause)), run(consumer), Effect.forkScoped, Effect.zipRight(Deferred.await(deferred)), Effect.map(z => [z, new StreamImpl(producer)]));
+    }))), Effect.flatten).traced(trace);
+  };
+});
+/** @internal */
+exports.peel = peel;
+const partition = (predicate, bufferSize = 16) => {
+  return self => (0, _Function.pipe)(self, partitionEither(a => predicate(a) ? Effect.succeed(Either.left(a)) : Effect.succeed(Either.right(a)), bufferSize));
+};
+/** @internal */
+exports.partition = partition;
+const partitionEither = (predicate, bufferSize = 16) => {
+  return self => (0, _Function.pipe)(self, mapEffect(predicate), distributedWith(2, bufferSize, Either.match(() => Effect.succeed(n => n === 0), () => Effect.succeed(n => n === 1))), Effect.flatMap(([queue1, queue2]) => Effect.succeed([collectLeft(flattenExitOption(fromQueueWithShutdown(queue1))), collectRight(flattenExitOption(fromQueueWithShutdown(queue2)))])));
+};
+/** @internal */
+exports.partitionEither = partitionEither;
+const pipeThrough = sink => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(sink.channel)));
+};
+/** @internal */
+exports.pipeThrough = pipeThrough;
+const pipeThroughChannel = channel => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(channel)));
+};
+/** @internal */
+exports.pipeThroughChannel = pipeThroughChannel;
+const pipeThroughChannelOrFail = chan => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(chan)));
+};
+/** @internal */
+exports.pipeThroughChannelOrFail = pipeThroughChannelOrFail;
+const prepend = values => new StreamImpl((0, _Function.pipe)(core.write(values), channel.zipRight(channel.identityChannel())));
+/** @internal */
+exports.prepend = prepend;
+const provideContext = context => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, core.provideContext(context)));
+};
+/** @internal */
+exports.provideContext = provideContext;
+const provideLayer = layer => {
+  return self => new StreamImpl(channel.unwrapScoped((0, _Function.pipe)(Layer.build(layer), Effect.map(env => (0, _Function.pipe)(self.channel, core.provideContext(env))))));
+};
+/** @internal */
+exports.provideLayer = provideLayer;
+const provideService = tag => {
+  return resource => {
+    return self => (0, _Function.pipe)(self, provideServiceEffect(tag)(Effect.succeed(resource)));
+  };
+};
+/** @internal */
+exports.provideService = provideService;
+const provideServiceEffect = tag => {
+  return effect => {
+    return self => (0, _Function.pipe)(self, provideServiceStream(tag)(fromEffect(effect)));
+  };
+};
+/** @internal */
+exports.provideServiceEffect = provideServiceEffect;
+const provideServiceStream = tag => {
+  return stream => {
+    return self => contextWithStream(env => (0, _Function.pipe)(stream, flatMap(service => (0, _Function.pipe)(self, provideContext((0, _Function.pipe)(env, Context.add(tag)(service)))))));
+  };
+};
+/** @internal */
+exports.provideServiceStream = provideServiceStream;
+const contramapContext = f => {
+  return self => contextWithStream(env => (0, _Function.pipe)(self, provideContext(f(env))));
+};
+/** @internal */
+exports.contramapContext = contramapContext;
+const provideSomeLayer = layer => {
+  return self =>
+  // @ts-expect-error
+  (0, _Function.pipe)(self, provideLayer((0, _Function.pipe)(Layer.context(), Layer.merge(layer))));
+};
+/** @internal */
+exports.provideSomeLayer = provideSomeLayer;
+const range = (min, max, chunkSize = DefaultChunkSize) => suspend(() => {
+  if (min >= max) {
+    return empty;
+  }
+  const go = (min, max, chunkSize) => {
+    const remaining = max - min;
+    if (remaining > chunkSize) {
+      return (0, _Function.pipe)(core.write(Chunk.range(min, min + chunkSize - 1)), core.flatMap(() => go(min + chunkSize, max, chunkSize)));
+    }
+    return core.write(Chunk.range(min, min + remaining - 1));
+  };
+  return new StreamImpl(go(min, max, chunkSize));
+});
+/** @internal */
+exports.range = range;
+const rechunk = n => {
+  return self => suspend(() => {
+    const target = Math.max(n, 1);
+    const process = rechunkProcess(new StreamRechunker(target), target);
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(process)));
+  });
+};
+/** @internal */
+exports.rechunk = rechunk;
+const rechunkProcess = (rechunker, target) => core.readWithCause(chunk => {
+  if (chunk.length === target && rechunker.isEmpty()) {
+    return (0, _Function.pipe)(core.write(chunk), core.flatMap(() => rechunkProcess(rechunker, target)));
+  }
+  if (chunk.length > 0) {
+    const chunks = [];
+    let result = undefined;
+    let index = 0;
+    while (index < chunk.length) {
+      while (index < chunk.length && result === undefined) {
+        result = rechunker.write((0, _Function.pipe)(chunk, Chunk.unsafeGet(index)));
+        index = index + 1;
+      }
+      if (result !== undefined) {
+        chunks.push(result);
+        result = undefined;
+      }
+    }
+    return (0, _Function.pipe)(channel.writeAll(...chunks), core.flatMap(() => rechunkProcess(rechunker, target)));
+  }
+  return core.suspend(() => rechunkProcess(rechunker, target));
+}, cause => (0, _Function.pipe)(rechunker.emitIfNotEmpty(), channel.zipRight(core.failCause(cause))), () => rechunker.emitIfNotEmpty());
+/** @internal */
+class StreamRechunker {
+  constructor(n) {
+    this.n = n;
+    this.builder = [];
+    this.pos = 0;
+  }
+  isEmpty() {
+    return this.pos === 0;
+  }
+  write(elem) {
+    this.builder.push(elem);
+    this.pos += 1;
+    if (this.pos === this.n) {
+      const result = Chunk.unsafeFromArray(this.builder);
+      this.builder = [];
+      this.pos = 0;
+      return result;
+    }
+    return undefined;
+  }
+  emitIfNotEmpty() {
+    if (this.pos !== 0) {
+      return core.write(Chunk.unsafeFromArray(this.builder));
+    }
+    return core.unit();
+  }
+}
+/** @internal */
+const refineOrDie = pf => {
+  return self => (0, _Function.pipe)(self, refineOrDieWith(pf, _Function.identity));
+};
+/** @internal */
+exports.refineOrDie = refineOrDie;
+const refineOrDieWith = (pf, f) => {
+  return self => new StreamImpl((0, _Function.pipe)(self.channel, channel.catchAll(error => (0, _Function.pipe)(pf(error), Option.match(() => core.failCause(Cause.die(f(error))), core.fail)))));
+};
+/** @internal */
+exports.refineOrDieWith = refineOrDieWith;
+const repeat = schedule => {
+  return self => (0, _Function.pipe)(self, repeatEither(schedule), collectRight);
+};
+/** @internal */
+exports.repeat = repeat;
+const repeatEffect = effect => repeatEffectOption((0, _Function.pipe)(effect, Effect.mapError(Option.some)));
+/** @internal */
+exports.repeatEffect = repeatEffect;
+const repeatEffectChunk = effect => repeatEffectChunkOption((0, _Function.pipe)(effect, Effect.mapError(Option.some)));
+/** @internal */
+exports.repeatEffectChunk = repeatEffectChunk;
+const repeatEffectChunkOption = effect => unfoldChunkEffect(effect, effect => (0, _Function.pipe)(effect, Effect.map(chunk => Option.some([chunk, effect])), Effect.catchAll(Option.match(Effect.succeedNone, Effect.fail))));
+/** @internal */
+exports.repeatEffectChunkOption = repeatEffectChunkOption;
+const repeatEffectOption = effect => repeatEffectChunkOption((0, _Function.pipe)(effect, Effect.map(Chunk.of)));
+/** @internal */
+exports.repeatEffectOption = repeatEffectOption;
+const repeatEither = schedule => {
+  return self => (0, _Function.pipe)(self, repeatWith(schedule, a => Either.right(a), Either.left));
+};
+/** @internal */
+exports.repeatEither = repeatEither;
+const repeatElements = schedule => {
+  return self => (0, _Function.pipe)(self, repeatElementsEither(schedule), collectRight);
+};
+/** @internal */
+exports.repeatElements = repeatElements;
+const repeatElementsEither = schedule => {
+  return self => (0, _Function.pipe)(self, repeatElementsWith(schedule, a => Either.right(a), Either.left));
+};
+/** @internal */
+exports.repeatElementsEither = repeatElementsEither;
+const repeatElementsWith = (schedule, f, g) => {
+  return self => {
+    const driver = (0, _Function.pipe)(Schedule.driver(schedule), Effect.map(driver => {
+      const feed = input => (0, _Function.pipe)(Chunk.head(input), Option.match(() => loop, a => (0, _Function.pipe)(core.write(Chunk.of(f(a))), channel.zipRight(step((0, _Function.pipe)(input, Chunk.drop(1)), a)))));
+      const step = (input, a) => {
+        const advance = (0, _Function.pipe)(driver.next(a), Effect.as((0, _Function.pipe)(core.write(Chunk.of(f(a))), core.flatMap(() => step(input, a)))));
+        const reset = (0, _Function.pipe)(driver.last(), Effect.orDie, Effect.flatMap(b => (0, _Function.pipe)(driver.reset(), Effect.map(() => (0, _Function.pipe)(core.write(Chunk.of(g(b))), channel.zipRight(feed(input)))))));
+        return (0, _Function.pipe)(advance, Effect.orElse(() => reset), channel.unwrap);
+      };
+      const loop = core.readWith(feed, core.fail, core.unit);
+      return loop;
+    }), channel.unwrap);
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(driver)));
+  };
+};
+/** @internal */
+exports.repeatElementsWith = repeatElementsWith;
+const repeatForever = value => new StreamImpl(channel.repeated(core.write(Chunk.of(value))));
+/** @internal */
+exports.repeatForever = repeatForever;
+const repeatWith = (schedule, f, g) => {
+  return self => {
+    return (0, _Function.pipe)(Schedule.driver(schedule), Effect.map(driver => {
+      const scheduleOutput = (0, _Function.pipe)(driver.last(), Effect.orDie, Effect.map(g));
+      const process = (0, _Function.pipe)(self, map(f)).channel;
+      const loop = (0, _Function.pipe)(driver.next(void 0), Effect.match(core.unit, () => (0, _Function.pipe)(process, channel.zipRight((0, _Function.pipe)(scheduleOutput, Effect.map(c => (0, _Function.pipe)(core.write(Chunk.of(c)), core.flatMap(() => loop))), channel.unwrap)))), channel.unwrap);
+      return new StreamImpl((0, _Function.pipe)(process, channel.zipRight(loop)));
+    }), unwrap);
+  };
+};
+/**
+ * Repeats the value using the provided schedule.
+ *
+ * @since 1.0.0
+ * @category constructors
+ */
+exports.repeatWith = repeatWith;
+const repeatWithSchedule = (value, schedule) => repeatEffectWithSchedule(Effect.succeed(value), schedule);
+/** @internal */
+exports.repeatWithSchedule = repeatWithSchedule;
+const repeatEffectWithSchedule = (effect, schedule) => (0, _Function.pipe)(fromEffect((0, _Function.pipe)(effect, Effect.zip(Schedule.driver(schedule)))), flatMap(([a, driver]) => (0, _Function.pipe)(succeed(a), concat(unfoldEffect(a, s => (0, _Function.pipe)(driver.next(s), Effect.matchEffect(Effect.succeed, () => (0, _Function.pipe)(effect, Effect.map(nextA => Option.some([nextA, nextA]))))))))));
+/** @internal */
+exports.repeatEffectWithSchedule = repeatEffectWithSchedule;
+const retry = schedule => {
+  return self => (0, _Function.pipe)(Schedule.driver(schedule), Effect.map(driver => {
+    const loop = (0, _Function.pipe)(self, catchAll(error => (0, _Function.pipe)(driver.next(error), Effect.matchEffect(() => Effect.fail(error), () => Effect.succeed((0, _Function.pipe)(loop, tap(() => driver.reset())))), unwrap)));
+    return loop;
+  }), unwrap);
+};
+/** @internal */
+exports.retry = retry;
+const right = self => (0, _Function.pipe)(self, mapError(Option.some), rightOrFail(() => Option.none()));
+/** @internal */
+exports.right = right;
+const rightOrFail = error => {
+  return self => (0, _Function.pipe)(self, mapEffect(Either.match(() => Effect.failSync(error), Effect.succeed)));
+};
+/** @internal */
+exports.rightOrFail = rightOrFail;
+const run = /*#__PURE__*/Debug.pipeableWithTrace(trace => sink => self => (0, _Function.pipe)(self.channel, channel.pipeToOrFail(sink.channel), channel.runDrain).traced(trace));
+/** @internal */
+exports.run = run;
+const runCollect = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(self, run(_sink.collectAll())).traced(trace));
+/** @internal */
+exports.runCollect = runCollect;
+const runCount = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(self, run(_sink.count())).traced(trace));
+/** @internal */
+exports.runCount = runCount;
+const runDrain = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(self, run(_sink.drain())).traced(trace));
+/** @internal */
+exports.runDrain = runDrain;
+const runFold = /*#__PURE__*/Debug.pipeableWithTrace(trace => (s, f) => self => (0, _Function.pipe)(self, runFoldWhileScoped(s, _Function.constTrue, f), Effect.scoped).traced(trace));
+/** @internal */
+exports.runFold = runFold;
+const runFoldEffect = /*#__PURE__*/Debug.pipeableWithTrace(trace => (s, f) => self => (0, _Function.pipe)(self, runFoldWhileScopedEffect(s, _Function.constTrue, f), Effect.scoped).traced(trace));
+/** @internal */
+exports.runFoldEffect = runFoldEffect;
+const runFoldScoped = /*#__PURE__*/Debug.pipeableWithTrace(trace => (s, f) => self => (0, _Function.pipe)(self, runFoldWhileScoped(s, _Function.constTrue, f)).traced(trace));
+/** @internal */
+exports.runFoldScoped = runFoldScoped;
+const runFoldScopedEffect = /*#__PURE__*/Debug.pipeableWithTrace(trace => (s, f) => self => (0, _Function.pipe)(self, runFoldWhileScopedEffect(s, _Function.constTrue, f)).traced(trace));
+/** @internal */
+exports.runFoldScopedEffect = runFoldScopedEffect;
+const runFoldWhile = /*#__PURE__*/Debug.pipeableWithTrace(trace => (s, cont, f) => self => (0, _Function.pipe)(self, runFoldWhileScoped(s, cont, f), Effect.scoped).traced(trace));
+/** @internal */
+exports.runFoldWhile = runFoldWhile;
+const runFoldWhileEffect = /*#__PURE__*/Debug.pipeableWithTrace(trace => (s, cont, f) => self => (0, _Function.pipe)(self, runFoldWhileScopedEffect(s, cont, f), Effect.scoped).traced(trace));
+/** @internal */
+exports.runFoldWhileEffect = runFoldWhileEffect;
+const runFoldWhileScoped = /*#__PURE__*/Debug.pipeableWithTrace(trace => (s, cont, f) => self => (0, _Function.pipe)(self, runScoped(_sink.fold(s, cont, f))).traced(trace));
+/** @internal */
+exports.runFoldWhileScoped = runFoldWhileScoped;
+const runFoldWhileScopedEffect = /*#__PURE__*/Debug.pipeableWithTrace(trace => (s, cont, f) => self => (0, _Function.pipe)(self, runScoped(_sink.foldEffect(s, cont, f))).traced(trace));
+/** @internal */
+exports.runFoldWhileScopedEffect = runFoldWhileScopedEffect;
+const runForEach = /*#__PURE__*/Debug.pipeableWithTrace(trace => f => self => (0, _Function.pipe)(self, run(_sink.forEach(f))).traced(trace));
+/** @internal */
+exports.runForEach = runForEach;
+const runForEachChunk = /*#__PURE__*/Debug.pipeableWithTrace(trace => f => self => (0, _Function.pipe)(self, run(_sink.forEachChunk(f))).traced(trace));
+/** @internal */
+exports.runForEachChunk = runForEachChunk;
+const runForEachChunkScoped = /*#__PURE__*/Debug.pipeableWithTrace(trace => f => self => (0, _Function.pipe)(self, runScoped(_sink.forEachChunk(f))).traced(trace));
+/** @internal */
+exports.runForEachChunkScoped = runForEachChunkScoped;
+const runForEachScoped = /*#__PURE__*/Debug.pipeableWithTrace(trace => f => self => (0, _Function.pipe)(self, runScoped(_sink.forEach(f))).traced(trace));
+/** @internal */
+exports.runForEachScoped = runForEachScoped;
+const runForEachWhile = /*#__PURE__*/Debug.pipeableWithTrace(trace => f => self => (0, _Function.pipe)(self, run(_sink.forEachWhile(f))).traced(trace));
+/** @internal */
+exports.runForEachWhile = runForEachWhile;
+const runForEachWhileScoped = /*#__PURE__*/Debug.pipeableWithTrace(trace => f => self => (0, _Function.pipe)(self, runScoped(_sink.forEachWhile(f))).traced(trace));
+/** @internal */
+exports.runForEachWhileScoped = runForEachWhileScoped;
+const runHead = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(self, run(_sink.head())).traced(trace));
+/** @internal */
+exports.runHead = runHead;
+const runIntoHub = /*#__PURE__*/Debug.pipeableWithTrace(trace => hub => self => (0, _Function.pipe)(self, runIntoQueue(hub)).traced(trace));
+/** @internal */
+exports.runIntoHub = runIntoHub;
+const runIntoHubScoped = /*#__PURE__*/Debug.pipeableWithTrace(trace => hub => self => (0, _Function.pipe)(self, runIntoQueueScoped(hub)).traced(trace));
+/** @internal */
+exports.runIntoHubScoped = runIntoHubScoped;
+const runIntoQueue = /*#__PURE__*/Debug.pipeableWithTrace(trace => queue => self => (0, _Function.pipe)(self, runIntoQueueScoped(queue), Effect.scoped).traced(trace));
+/** @internal */
+exports.runIntoQueue = runIntoQueue;
+const runIntoQueueElementsScoped = /*#__PURE__*/Debug.pipeableWithTrace(trace => queue => self => {
+  const writer = core.readWithCause(input => (0, _Function.pipe)(input, Chunk.reduce(core.unit(), (acc, a) => (0, _Function.pipe)(acc, channel.zipRight(core.write(Exit.succeed(a))))), core.flatMap(() => writer)), cause => (0, _Function.pipe)(core.write(Exit.failCause((0, _Function.pipe)(cause, Cause.map(Option.some))))), () => core.write(Exit.fail(Option.none())));
+  return (0, _Function.pipe)(self.channel, core.pipeTo(writer), channel.mapOutEffect(exit => (0, _Function.pipe)(Queue.offer(queue, exit))), channel.drain, channelExecutor.runScoped, Effect.asUnit).traced(trace);
+});
+/** @internal */
+exports.runIntoQueueElementsScoped = runIntoQueueElementsScoped;
+const runIntoQueueScoped = /*#__PURE__*/Debug.pipeableWithTrace(trace => queue => self => {
+  const writer = core.readWithCause(input => (0, _Function.pipe)(core.write(_take.chunk(input)), core.flatMap(() => writer)), cause => core.write(_take.failCause(cause)), () => core.write(_take.end));
+  return (0, _Function.pipe)(self.channel, core.pipeTo(writer), channel.mapOutEffect(take => (0, _Function.pipe)(Queue.offer(queue, take))), channel.drain, channelExecutor.runScoped, Effect.asUnit).traced(trace);
+});
+/** @internal */
+exports.runIntoQueueScoped = runIntoQueueScoped;
+const runLast = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(self, run(_sink.last())).traced(trace));
+/** @internal */
+exports.runLast = runLast;
+const runScoped = /*#__PURE__*/Debug.pipeableWithTrace(trace => sink => self => (0, _Function.pipe)(self.channel, channel.pipeToOrFail(sink.channel), channel.drain, channelExecutor.runScoped).traced(trace));
+/** @internal */
+exports.runScoped = runScoped;
+const runSum = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(self, run(_sink.sum())).traced(trace));
+/** @internal */
+exports.runSum = runSum;
+const scan = (s, f) => {
+  return self => (0, _Function.pipe)(self, scanEffect(s, (s, a) => Effect.succeed(f(s, a))));
+};
+/** @internal */
+exports.scan = scan;
+const scanReduce = f => {
+  return self => (0, _Function.pipe)(self, scanReduceEffect((a2, a) => Effect.succeed(f(a2, a))));
+};
+/** @internal */
+exports.scanReduce = scanReduce;
+const scanReduceEffect = f => {
+  return self => (0, _Function.pipe)(self, mapAccumEffect(Option.none(), (option, a) => {
+    switch (option._tag) {
+      case "None":
+        {
+          return Effect.succeed([Option.some(a), a]);
+        }
+      case "Some":
+        {
+          return (0, _Function.pipe)(f(option.value, a), Effect.map(b => [Option.some(b), b]));
+        }
+    }
+  }));
+};
+/** @internal */
+exports.scanReduceEffect = scanReduceEffect;
+const schedule = schedule => {
+  return self => (0, _Function.pipe)(self, scheduleEither(schedule), collectRight);
+};
+/** @internal */
+exports.schedule = schedule;
+const scheduleEither = schedule => {
+  return self => (0, _Function.pipe)(self, scheduleWith(schedule, a => Either.right(a), Either.left));
+};
+/** @internal */
+exports.scheduleEither = scheduleEither;
+const scheduleWith = (schedule, f, g) => {
+  return self => {
+    const loop = (driver, iterator) => {
+      const next = iterator.next();
+      if (next.done) {
+        return core.readWithCause(chunk => loop(driver, chunk[Symbol.iterator]()), core.failCause, core.succeedNow);
+      }
+      return (0, _Function.pipe)(driver.next(next.value), Effect.matchEffect(() => (0, _Function.pipe)(driver.last(), Effect.orDie, Effect.map(b => (0, _Function.pipe)(core.write(Chunk.make(f(next.value), g(b))), core.flatMap(() => loop(driver, iterator)))), Effect.zipLeft(driver.reset())), () => Effect.succeed((0, _Function.pipe)(core.write(Chunk.of(f(next.value))), core.flatMap(() => loop(driver, iterator))))), channel.unwrap);
+    };
+    return new StreamImpl((0, _Function.pipe)(core.fromEffect(Schedule.driver(schedule)), core.flatMap(driver => (0, _Function.pipe)(self.channel, core.pipeTo(loop(driver, Chunk.empty()[Symbol.iterator]()))))));
+  };
+};
+/** @internal */
+exports.scheduleWith = scheduleWith;
+const scanEffect = (s, f) => {
+  return self => new StreamImpl((0, _Function.pipe)(core.write(Chunk.of(s)), core.flatMap(() => (0, _Function.pipe)(self, mapAccumEffect(s, (s, a) => (0, _Function.pipe)(f(s, a), Effect.map(s => [s, s])))).channel)));
+};
+/** @internal */
+exports.scanEffect = scanEffect;
+const scoped = effect => new StreamImpl(channel.scoped((0, _Function.pipe)(effect, Effect.map(Chunk.of))));
+/** @internal */
+exports.scoped = scoped;
+const service = tag => serviceWith(tag)(_Function.identity);
+/** @internal */
+exports.service = service;
+const serviceWith = tag => {
+  return f => fromEffect(Effect.serviceWith(tag, f));
+};
+/** @internal */
+exports.serviceWith = serviceWith;
+const serviceWithEffect = tag => {
+  return f => fromEffect(Effect.serviceWithEffect(tag, f));
+};
+/** @internal */
+exports.serviceWithEffect = serviceWithEffect;
+const serviceWithStream = tag => {
+  return f => (0, _Function.pipe)(service(tag), flatMap(f));
+};
+/** @internal */
+exports.serviceWithStream = serviceWithStream;
+const some = self => (0, _Function.pipe)(self, mapError(Option.some), someOrFail(() => Option.none()));
+/** @internal */
+exports.some = some;
+const someOrElse = fallback => {
+  return self => (0, _Function.pipe)(self, map(Option.getOrElse(fallback)));
+};
+/** @internal */
+exports.someOrElse = someOrElse;
+const someOrFail = error => {
+  return self => (0, _Function.pipe)(self, mapEffect(Option.match(() => Effect.failSync(error), Effect.succeed)));
+};
+/** @internal */
+exports.someOrFail = someOrFail;
+const sliding = (chunkSize, stepSize = 1) => {
+  return self => {
+    if (chunkSize <= 0 || stepSize <= 0) {
+      return die(Cause.IllegalArgumentException("Invalid bounds - `chunkSize` and `stepSize` must be greater than zero"));
+    }
+    return new StreamImpl(core.suspend(() => {
+      const queue = new _support.RingBuffer(chunkSize);
+      const emitOnStreamEnd = (queueSize, channelEnd) => {
+        if (queueSize < chunkSize) {
+          const items = queue.toChunk();
+          const result = Chunk.isEmpty(items) ? Chunk.empty() : Chunk.of(items);
+          return (0, _Function.pipe)(core.write(result), core.flatMap(() => channelEnd));
+        }
+        const lastEmitIndex = queueSize - (queueSize - chunkSize) % stepSize;
+        if (lastEmitIndex === queueSize) {
+          return channelEnd;
+        }
+        const leftovers = queueSize - (lastEmitIndex - chunkSize + stepSize);
+        const lastItems = (0, _Function.pipe)(queue.toChunk(), Chunk.takeRight(leftovers));
+        const result = Chunk.isEmpty(lastItems) ? Chunk.empty() : Chunk.of(lastItems);
+        return (0, _Function.pipe)(core.write(result), core.flatMap(() => channelEnd));
+      };
+      const reader = queueSize => core.readWithCause(input => (0, _Function.pipe)(core.write((0, _Function.pipe)(Chunk.zipWithIndex(input), Chunk.filterMap(([element, index]) => {
+        queue.put(element);
+        const currentIndex = queueSize + index + 1;
+        if (currentIndex < chunkSize || (currentIndex - chunkSize) % stepSize > 0) {
+          return Option.none();
+        }
+        return Option.some(queue.toChunk());
+      }))), core.flatMap(() => reader(queueSize + input.length))), cause => emitOnStreamEnd(queueSize, core.failCause(cause)), () => emitOnStreamEnd(queueSize, core.unit()));
+      return (0, _Function.pipe)(self.channel, core.pipeTo(reader(0)));
+    }));
+  };
+};
+/** @internal */
+exports.sliding = sliding;
+const split = predicate => {
+  return self => {
+    const split = (leftovers, input) => {
+      const [chunk, remaining] = (0, _Function.pipe)(leftovers, Chunk.concat(input), Chunk.splitWhere(predicate));
+      if (Chunk.isEmpty(chunk) || Chunk.isEmpty(remaining)) {
+        return loop((0, _Function.pipe)(chunk, Chunk.concat((0, _Function.pipe)(remaining, Chunk.drop(1)))));
+      }
+      return (0, _Function.pipe)(core.write(Chunk.of(chunk)), core.flatMap(() => split(Chunk.empty(), (0, _Function.pipe)(remaining, Chunk.drop(1)))));
+    };
+    const loop = leftovers => core.readWith(input => split(leftovers, input), core.fail, () => {
+      if (Chunk.isEmpty(leftovers)) {
+        return core.unit();
+      }
+      if (Option.isNone((0, _Function.pipe)(leftovers, Chunk.findFirst(predicate)))) {
+        return (0, _Function.pipe)(core.write(Chunk.of(leftovers)), channel.zipRight(core.unit()));
+      }
+      return (0, _Function.pipe)(split(Chunk.empty(), leftovers), channel.zipRight(core.unit()));
+    });
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(loop(Chunk.empty()))));
+  };
+};
+/** @internal */
+exports.split = split;
+const splitOnChunk = delimiter => {
+  return self => {
+    const next = (leftover, delimiterIndex) => core.readWithCause(inputChunk => {
+      let buffer;
+      const [carry, delimiterCursor] = (0, _Function.pipe)(inputChunk, Chunk.reduce([(0, _Function.pipe)(leftover, Option.getOrElse(() => Chunk.empty())), delimiterIndex], ([carry, delimiterCursor], a) => {
+        const concatenated = (0, _Function.pipe)(carry, Chunk.append(a));
+        if (delimiterCursor < delimiter.length && Equal.equals(a, (0, _Function.pipe)(delimiter, Chunk.unsafeGet(delimiterCursor)))) {
+          if (delimiterCursor + 1 === delimiter.length) {
+            if (buffer === undefined) {
+              buffer = [];
+            }
+            buffer.push((0, _Function.pipe)(concatenated, Chunk.take(concatenated.length - delimiter.length)));
+            return [Chunk.empty(), 0];
+          }
+          return [concatenated, delimiterCursor + 1];
+        }
+        return [concatenated, Equal.equals(a, (0, _Function.pipe)(delimiter, Chunk.unsafeGet(0))) ? 1 : 0];
+      }));
+      const output = buffer === undefined ? Chunk.empty() : Chunk.unsafeFromArray(buffer);
+      return (0, _Function.pipe)(core.write(output), core.flatMap(() => next(Chunk.isNonEmpty(carry) ? Option.some(carry) : Option.none(), delimiterCursor)));
+    }, cause => (0, _Function.pipe)(leftover, Option.match(() => core.failCause(cause), chunk => (0, _Function.pipe)(core.write(Chunk.of(chunk)), channel.zipRight(core.failCause(cause))))), done => (0, _Function.pipe)(leftover, Option.match(() => core.succeed(done), chunk => (0, _Function.pipe)(core.write(Chunk.of(chunk)), channel.zipRight(core.succeed(done))))));
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(next(Option.none(), 0))));
+  };
+};
+/** @internal */
+exports.splitOnChunk = splitOnChunk;
+const succeed = value => fromChunk(Chunk.of(value));
+/** @internal */
+exports.succeed = succeed;
+const sync = evaluate => suspend(() => fromChunk(Chunk.of(evaluate())));
+/** @internal */
+exports.sync = sync;
+const suspend = stream => new StreamImpl(core.suspend(() => stream().channel));
+/** @internal */
+exports.suspend = suspend;
+const take = n => {
+  return self => {
+    if (!Number.isInteger(n)) {
+      return die(Cause.IllegalArgumentException(`${n} must be an integer`));
+    }
+    const loop = n => core.readWith(input => {
+      const taken = (0, _Function.pipe)(input, Chunk.take(Math.min(n, Number.POSITIVE_INFINITY)));
+      const leftover = Math.max(0, n - taken.length);
+      const more = leftover > 0;
+      if (more) {
+        return (0, _Function.pipe)(core.write(taken), core.flatMap(() => loop(leftover)));
+      }
+      return core.write(taken);
+    }, core.fail, core.succeed);
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(0 < n ? loop(n) : core.unit())));
+  };
+};
+/** @internal */
+exports.take = take;
+const takeRight = n => {
+  return self => {
+    if (n <= 0) {
+      return empty;
+    }
+    return new StreamImpl((0, _Function.pipe)(Effect.succeed(new _support.RingBuffer(n)), Effect.map(queue => {
+      const reader = core.readWith(input => {
+        for (const element of input) {
+          queue.put(element);
+        }
+        return reader;
+      }, core.fail, () => (0, _Function.pipe)(core.write(queue.toChunk()), channel.zipRight(core.unit())));
+      return (0, _Function.pipe)(self.channel, core.pipeTo(reader));
+    }), channel.unwrap));
+  };
+};
+/** @internal */
+exports.takeRight = takeRight;
+const takeUntil = predicate => {
+  return self => {
+    const loop = core.readWith(input => {
+      const taken = (0, _Function.pipe)(input, Chunk.takeWhile(a => !predicate(a)));
+      const last = (0, _Function.pipe)(input, Chunk.drop(taken.length), Chunk.take(1));
+      if (Chunk.isEmpty(last)) {
+        return (0, _Function.pipe)(core.write(taken), core.flatMap(() => loop));
+      }
+      return core.write((0, _Function.pipe)(taken, Chunk.concat(last)));
+    }, core.fail, core.succeed);
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(loop)));
+  };
+};
+/** @internal */
+exports.takeUntil = takeUntil;
+const takeUntilEffect = predicate => {
+  return self => {
+    const loop = iterator => {
+      const next = iterator.next();
+      if (next.done) {
+        return core.readWithCause(elem => loop(elem[Symbol.iterator]()), core.failCause, core.succeed);
+      }
+      return (0, _Function.pipe)(predicate(next.value), Effect.map(bool => bool ? core.write(Chunk.of(next.value)) : (0, _Function.pipe)(core.write(Chunk.of(next.value)), core.flatMap(() => loop(iterator)))), channel.unwrap);
+    };
+    return new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(loop(Chunk.empty()[Symbol.iterator]()))));
+  };
+};
+/** @internal */
+exports.takeUntilEffect = takeUntilEffect;
+const takeWhile = predicate => {
+  return self => {
+    const loop = core.readWith(input => {
+      const taken = (0, _Function.pipe)(input, Chunk.takeWhile(predicate));
+      const more = taken.length === input.length;
+      if (more) {
+        return (0, _Function.pipe)(core.write(taken), core.flatMap(() => loop));
+      }
+      return core.write(taken);
+    }, core.fail, core.succeed);
+    return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(loop)));
+  };
+};
+/** @internal */
+exports.takeWhile = takeWhile;
+const tap = f => {
+  return self => (0, _Function.pipe)(self, mapEffect(a => (0, _Function.pipe)(f(a), Effect.as(a))));
+};
+/** @internal */
+exports.tap = tap;
+const tapError = f => {
+  return self => (0, _Function.pipe)(self, catchAll(error => fromEffect((0, _Function.pipe)(f(error), Effect.zipRight(Effect.fail(error))))));
+};
+/** @internal */
+exports.tapError = tapError;
+const tapErrorCause = f => {
+  return self => (0, _Function.pipe)(self, catchAllCause(cause => fromEffect((0, _Function.pipe)(f(cause), Effect.zipRight(Effect.failCause(cause))))));
+};
+/** @internal */
+exports.tapErrorCause = tapErrorCause;
+const tapSink = sink => {
+  return self => (0, _Function.pipe)(fromEffect(Queue.bounded(1)), flatMap(queue => {
+    const right = flattenTake(fromQueue(queue, 1));
+    const loop = core.readWithCause(chunk => (0, _Function.pipe)(core.fromEffect((0, _Function.pipe)(Queue.offer(queue, _take.chunk(chunk)))), channel.zipRight(core.write(chunk)), core.flatMap(() => loop)), cause => core.fromEffect((0, _Function.pipe)(Queue.offer(queue, _take.failCause(cause)))), () => core.fromEffect((0, _Function.pipe)(Queue.offer(queue, _take.end))));
+    return (0, _Function.pipe)(new StreamImpl((0, _Function.pipe)(self.channel, core.pipeTo(loop))), merge(execute((0, _Function.pipe)(right, run(sink))), haltStrategy.Both));
+  }));
+};
+/** @internal */
+exports.tapSink = tapSink;
+const throttleEnforce = (units, duration, burst = 0) => {
+  return costFn => {
+    return self => (0, _Function.pipe)(self, throttleEnforceEffect(units, duration, burst)(chunk => Effect.succeed(costFn(chunk))));
+  };
+};
+/** @internal */
+exports.throttleEnforce = throttleEnforce;
+const throttleEnforceEffect = (units, duration, burst = 0) => {
+  return costFn => {
+    return self => {
+      const loop = (tokens, timestampMillis) => core.readWithCause(input => (0, _Function.pipe)(costFn(input), Effect.zip(Clock.currentTimeMillis()), Effect.map(([weight, currentTimeMillis]) => {
+        const elapsed = currentTimeMillis - timestampMillis;
+        const cycles = elapsed / duration.millis;
+        const sum = tokens + cycles * units;
+        const max = units + burst < 0 ? Number.POSITIVE_INFINITY : units + burst;
+        const available = sum < 0 ? max : Math.min(sum, max);
+        if (weight <= available) {
+          return (0, _Function.pipe)(core.write(input), core.flatMap(() => loop(available - weight, currentTimeMillis)));
+        }
+        return loop(available, currentTimeMillis);
+      }), channel.unwrap), core.failCause, core.unit);
+      const throttled = (0, _Function.pipe)(Clock.currentTimeMillis(), Effect.map(currentTimeMillis => loop(units, currentTimeMillis)), channel.unwrap);
+      return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(throttled)));
+    };
+  };
+};
+/** @internal */
+exports.throttleEnforceEffect = throttleEnforceEffect;
+const throttleShape = (units, duration, burst = 0) => {
+  return costFn => {
+    return self => (0, _Function.pipe)(self, throttleShapeEffect(units, duration, burst)(chunk => Effect.succeed(costFn(chunk))));
+  };
+};
+/** @internal */
+exports.throttleShape = throttleShape;
+const throttleShapeEffect = (units, duration, burst = 0) => {
+  return costFn => {
+    return self => {
+      const loop = (tokens, timestampMillis) => core.readWithCause(input => (0, _Function.pipe)(costFn(input), Effect.zip(Clock.currentTimeMillis()), Effect.map(([weight, currentTimeMillis]) => {
+        const elapsed = currentTimeMillis - timestampMillis;
+        const cycles = elapsed / duration.millis;
+        const sum = tokens + cycles * units;
+        const max = units + burst < 0 ? Number.POSITIVE_INFINITY : units + burst;
+        const available = sum < 0 ? max : Math.min(sum, max);
+        const remaining = available - weight;
+        const waitCycles = remaining >= 0 ? 0 : -remaining / units;
+        const delay = Duration.millis(Math.max(0, waitCycles * duration.millis));
+        if ((0, _Function.pipe)(delay, Duration.greaterThan(Duration.zero))) {
+          return (0, _Function.pipe)(core.fromEffect(Clock.sleep(delay)), channel.zipRight(core.write(input)), core.flatMap(() => loop(remaining, currentTimeMillis)));
+        }
+        return (0, _Function.pipe)(core.write(input), core.flatMap(() => loop(remaining, currentTimeMillis)));
+      }), channel.unwrap), core.failCause, core.unit);
+      const throttled = (0, _Function.pipe)(Clock.currentTimeMillis(), Effect.map(currentTimeMillis => loop(units, currentTimeMillis)), channel.unwrap);
+      return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(throttled)));
+    };
+  };
+};
+/** @internal */
+exports.throttleShapeEffect = throttleShapeEffect;
+const tick = interval => repeatWithSchedule(void 0, Schedule.spaced(interval));
+/** @internal */
+exports.tick = tick;
+const timeout = duration => {
+  return self => (0, _Function.pipe)(toPull(self), Effect.map(Effect.timeoutFail(() => Option.none(), duration)), fromPull);
+};
+/** @internal */
+exports.timeout = timeout;
+const timeoutFail = (error, duration) => {
+  return self => (0, _Function.pipe)(self, timeoutTo(duration, failSync(error)));
+};
+/** @internal */
+exports.timeoutFail = timeoutFail;
+const timeoutFailCause = (cause, duration) => {
+  return self => (0, _Function.pipe)(toPull(self), Effect.map(Effect.timeoutFailCause(() => (0, _Function.pipe)(cause(), Cause.map(Option.some)), duration)), fromPull);
+};
+/** @internal */
+exports.timeoutFailCause = timeoutFailCause;
+const timeoutTo = (duration, that) => {
+  const StreamTimeout = Cause.RuntimeException("Stream Timeout");
+  return self => (0, _Function.pipe)(self, timeoutFailCause(() => Cause.die(StreamTimeout), duration), catchSomeCause(annotatedCause => {
+    const cause = Cause.unannotate(annotatedCause);
+    return Cause.isDieType(cause) && Cause.isRuntimeException(cause.defect) && cause.defect.message !== undefined && cause.defect.message === "Stream Timeout" ? Option.some(that) : Option.none();
+  }));
+};
+/** @internal */
+exports.timeoutTo = timeoutTo;
+const toHub = /*#__PURE__*/Debug.pipeableWithTrace(trace => capacity => self => (0, _Function.pipe)(Effect.acquireRelease(Hub.bounded(capacity), hub => Hub.shutdown(hub)), Effect.tap(hub => (0, _Function.pipe)(self, runIntoHubScoped(hub), Effect.forkScoped))).traced(trace));
+/** @internal */
+exports.toHub = toHub;
+const toPull = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(channel.toPull(self.channel), Effect.map(pull => (0, _Function.pipe)(pull, Effect.mapError(Option.some), Effect.flatMap(Either.match(() => Effect.fail(Option.none()), Effect.succeed))))).traced(trace));
+/** @internal */
+exports.toPull = toPull;
+const toQueue = /*#__PURE__*/Debug.pipeableWithTrace(trace => (capacity = 2) => self => (0, _Function.pipe)(Effect.acquireRelease(Queue.bounded(capacity), queue => Queue.shutdown(queue)), Effect.tap(queue => (0, _Function.pipe)(self, runIntoQueueScoped(queue), Effect.forkScoped))).traced(trace));
+/** @internal */
+exports.toQueue = toQueue;
+const toQueueDropping = /*#__PURE__*/Debug.pipeableWithTrace(trace => (capacity = 2) => self => (0, _Function.pipe)(Effect.acquireRelease(Queue.dropping(capacity), queue => Queue.shutdown(queue)), Effect.tap(queue => (0, _Function.pipe)(self, runIntoQueueScoped(queue), Effect.forkScoped))).traced(trace));
+/** @internal */
+exports.toQueueDropping = toQueueDropping;
+const toQueueOfElements = /*#__PURE__*/Debug.pipeableWithTrace(trace => (capacity = 2) => self => (0, _Function.pipe)(Effect.acquireRelease(Queue.bounded(capacity), queue => Queue.shutdown(queue)), Effect.tap(queue => (0, _Function.pipe)(self, runIntoQueueElementsScoped(queue), Effect.forkScoped))).traced(trace));
+/** @internal */
+exports.toQueueOfElements = toQueueOfElements;
+const toQueueSliding = /*#__PURE__*/Debug.pipeableWithTrace(trace => (capacity = 2) => self => (0, _Function.pipe)(Effect.acquireRelease(Queue.sliding(capacity), queue => Queue.shutdown(queue)), Effect.tap(queue => (0, _Function.pipe)(self, runIntoQueueScoped(queue), Effect.forkScoped))).traced(trace));
+/** @internal */
+exports.toQueueSliding = toQueueSliding;
+const toQueueUnbounded = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(Effect.acquireRelease(Queue.unbounded(), queue => Queue.shutdown(queue)), Effect.tap(queue => (0, _Function.pipe)(self, runIntoQueueScoped(queue), Effect.forkScoped))).traced(trace));
+/** @internal */
+exports.toQueueUnbounded = toQueueUnbounded;
+const transduce = sink => {
+  return self => {
+    const newChannel = core.suspend(() => {
+      const leftovers = {
+        ref: Chunk.empty()
+      };
+      const upstreamDone = {
+        ref: false
+      };
+      const buffer = core.suspend(() => {
+        const leftover = leftovers.ref;
+        if (Chunk.isEmpty(leftover)) {
+          return core.readWith(input => (0, _Function.pipe)(core.write(input), core.flatMap(() => buffer)), core.fail, core.succeedNow);
+        }
+        leftovers.ref = Chunk.empty();
+        return (0, _Function.pipe)(channel.writeChunk(leftover), core.flatMap(() => buffer));
+      });
+      const concatAndGet = chunk => {
+        const leftover = leftovers.ref;
+        const concatenated = (0, _Function.pipe)(leftover, Chunk.concat((0, _Function.pipe)(chunk, Chunk.filter(chunk => chunk.length !== 0))));
+        leftovers.ref = concatenated;
+        return concatenated;
+      };
+      const upstreamMarker = core.readWith(input => (0, _Function.pipe)(core.write(input), core.flatMap(() => upstreamMarker)), core.fail, done => (0, _Function.pipe)(core.sync(() => {
+        upstreamDone.ref = true;
+      }), channel.zipRight(core.succeedNow(done))));
+      const transducer = (0, _Function.pipe)(sink.channel, core.collectElements, core.flatMap(([leftover, z]) => (0, _Function.pipe)(core.succeed([upstreamDone.ref, concatAndGet(leftover)]), core.flatMap(([done, newLeftovers]) => {
+        const nextChannel = done && Chunk.isEmpty(newLeftovers) ? core.unit() : transducer;
+        return (0, _Function.pipe)(core.write(Chunk.of(z)), core.flatMap(() => nextChannel));
+      }))));
+      return (0, _Function.pipe)(self.channel, core.pipeTo(upstreamMarker), core.pipeTo(buffer), channel.pipeToOrFail(transducer));
+    });
+    return new StreamImpl(newChannel);
+  };
+};
+/** @internal */
+exports.transduce = transduce;
+const unfold = (s, f) => unfoldChunk(s, s => (0, _Function.pipe)(f(s), Option.map(([a, s]) => [Chunk.of(a), s])));
+/** @internal */
+exports.unfold = unfold;
+const unfoldChunk = (s, f) => {
+  const loop = s => (0, _Function.pipe)(f(s), Option.match(core.unit, ([chunk, s]) => (0, _Function.pipe)(core.write(chunk), core.flatMap(() => loop(s)))));
+  return new StreamImpl(core.suspend(() => loop(s)));
+};
+/** @internal */
+exports.unfoldChunk = unfoldChunk;
+const unfoldChunkEffect = (s, f) => suspend(() => {
+  const loop = s => (0, _Function.pipe)(f(s), Effect.map(Option.match(core.unit, ([chunk, s]) => (0, _Function.pipe)(core.write(chunk), core.flatMap(() => loop(s))))), channel.unwrap);
+  return new StreamImpl(loop(s));
+});
+/** @internal */
+exports.unfoldChunkEffect = unfoldChunkEffect;
+const unfoldEffect = (s, f) => unfoldChunkEffect(s, s => (0, _Function.pipe)(f(s), Effect.map(Option.map(([a, s]) => [Chunk.of(a), s]))));
+/** @internal */
+exports.unfoldEffect = unfoldEffect;
+const unit = () => succeed(void 0);
+/** @internal */
+exports.unit = unit;
+const unwrap = effect => flatten(fromEffect(effect));
+/** @internal */
+exports.unwrap = unwrap;
+const unwrapScoped = effect => flatten(scoped(effect));
+/** @internal */
+exports.unwrapScoped = unwrapScoped;
+const updateService = tag => {
+  return f => {
+    return self => (0, _Function.pipe)(self, contramapContext(context => (0, _Function.pipe)(context, Context.add(tag)(f((0, _Function.pipe)(context, Context.unsafeGet(tag)))))));
+  };
+};
+/** @internal */
+exports.updateService = updateService;
+const when = predicate => {
+  return self => (0, _Function.pipe)(self, whenEffect(Effect.sync(predicate)));
+};
+/** @internal */
+exports.when = when;
+const whenCase = (evaluate, pf) => whenCaseEffect(pf)(Effect.sync(evaluate));
+/** @internal */
+exports.whenCase = whenCase;
+const whenCaseEffect = pf => {
+  return self => (0, _Function.pipe)(fromEffect(self), flatMap(a => (0, _Function.pipe)(pf(a), Option.getOrElse(() => empty))));
+};
+/** @internal */
+exports.whenCaseEffect = whenCaseEffect;
+const whenEffect = effect => {
+  return self => (0, _Function.pipe)(fromEffect(effect), flatMap(bool => bool ? self : empty));
+};
+/** @internal */
+exports.whenEffect = whenEffect;
+const zip = that => {
+  return self => (0, _Function.pipe)(self, zipWith(that, (a, a2) => [a, a2]));
+};
+/** @internal */
+exports.zip = zip;
+const zipFlatten = that => {
+  return self => (0, _Function.pipe)(self, zipWith(that, (a, a2) => [...a, a2]));
+};
+/** @internal */
+exports.zipFlatten = zipFlatten;
+const zipAll = (that, defaultLeft, defaultRight) => {
+  return self => (0, _Function.pipe)(self, zipAllWith(that, a => [a, defaultRight], a2 => [defaultLeft, a2], (a, a2) => [a, a2]));
+};
+/** @internal */
+exports.zipAll = zipAll;
+const zipAllLeft = (that, defaultLeft) => {
+  return self => (0, _Function.pipe)(self, zipAllWith(that, _Function.identity, () => defaultLeft, a => a));
+};
+/** @internal */
+exports.zipAllLeft = zipAllLeft;
+const zipAllRight = (that, defaultRight) => {
+  return self => (0, _Function.pipe)(self, zipAllWith(that, () => defaultRight, _Function.identity, (_, a2) => a2));
+};
+/** @internal */
+exports.zipAllRight = zipAllRight;
+const zipAllSortedByKey = order => {
+  return (that, defaultLeft, defaultRight) => {
+    return self => (0, _Function.pipe)(self, zipAllSortedByKeyWith(order)(that, a => [a, defaultRight], a2 => [defaultLeft, a2], (a, a2) => [a, a2]));
+  };
+};
+/** @internal */
+exports.zipAllSortedByKey = zipAllSortedByKey;
+const zipAllSortedByKeyLeft = order => {
+  return (that, defaultLeft) => {
+    return self => (0, _Function.pipe)(self, zipAllSortedByKeyWith(order)(that, _Function.identity, () => defaultLeft, a => a));
+  };
+};
+/** @internal */
+exports.zipAllSortedByKeyLeft = zipAllSortedByKeyLeft;
+const zipAllSortedByKeyRight = order => {
+  return (that, defaultRight) => {
+    return self => (0, _Function.pipe)(self, zipAllSortedByKeyWith(order)(that, () => defaultRight, _Function.identity, (_, a2) => a2));
+  };
+};
+/** @internal */
+exports.zipAllSortedByKeyRight = zipAllSortedByKeyRight;
+const zipAllSortedByKeyWith = order => {
+  return (that, left, right, both) => {
+    return self => {
+      const pull = (state, pullLeft, pullRight) => {
+        switch (state._tag) {
+          case "DrainLeft":
+            {
+              return (0, _Function.pipe)(pullLeft, Effect.match(Exit.fail, leftChunk => Exit.succeed([(0, _Function.pipe)(leftChunk, Chunk.map(([k, a]) => [k, left(a)])), ZipAllState.DrainLeft])));
+            }
+          case "DrainRight":
+            {
+              return (0, _Function.pipe)(pullRight, Effect.match(Exit.fail, rightChunk => Exit.succeed([(0, _Function.pipe)(rightChunk, Chunk.map(([k, a2]) => [k, right(a2)])), ZipAllState.DrainRight])));
+            }
+          case "PullBoth":
+            {
+              return (0, _Function.pipe)(Effect.unsome(pullLeft), Effect.zipPar(Effect.unsome(pullRight)), Effect.matchEffect(error => Effect.succeed(Exit.fail(Option.some(error))), ([leftOption, rightOption]) => {
+                if (Option.isSome(leftOption) && Option.isSome(rightOption)) {
+                  if (Chunk.isEmpty(leftOption.value) && Chunk.isEmpty(rightOption.value)) {
+                    return pull(ZipAllState.PullBoth, pullLeft, pullRight);
+                  }
+                  if (Chunk.isEmpty(leftOption.value)) {
+                    return pull(ZipAllState.PullLeft(rightOption.value), pullLeft, pullRight);
+                  }
+                  if (Chunk.isEmpty(rightOption.value)) {
+                    return pull(ZipAllState.PullRight(leftOption.value), pullLeft, pullRight);
+                  }
+                  return Effect.succeed(Exit.succeed(merge(leftOption.value, rightOption.value)));
+                }
+                if (Option.isSome(leftOption) && Option.isNone(rightOption)) {
+                  if (Chunk.isEmpty(leftOption.value)) {
+                    return pull(ZipAllState.DrainLeft, pullLeft, pullRight);
+                  }
+                  return Effect.succeed(Exit.succeed([(0, _Function.pipe)(leftOption.value, Chunk.map(([k, a]) => [k, left(a)])), ZipAllState.DrainLeft]));
+                }
+                if (Option.isNone(leftOption) && Option.isSome(rightOption)) {
+                  if (Chunk.isEmpty(rightOption.value)) {
+                    return pull(ZipAllState.DrainRight, pullLeft, pullRight);
+                  }
+                  return Effect.succeed(Exit.succeed([(0, _Function.pipe)(rightOption.value, Chunk.map(([k, a2]) => [k, right(a2)])), ZipAllState.DrainRight]));
+                }
+                return Effect.succeed(Exit.fail(Option.none()));
+              }));
+            }
+          case "PullLeft":
+            {
+              return (0, _Function.pipe)(pullLeft, Effect.matchEffect(Option.match(() => Effect.succeed(Exit.succeed([(0, _Function.pipe)(state.rightChunk, Chunk.map(([k, a2]) => [k, right(a2)])), ZipAllState.DrainRight])), error => Effect.succeed(Exit.fail(Option.some(error)))), leftChunk => Chunk.isEmpty(leftChunk) ? pull(ZipAllState.PullLeft(state.rightChunk), pullLeft, pullRight) : Effect.succeed(Exit.succeed(merge(leftChunk, state.rightChunk)))));
+            }
+          case "PullRight":
+            {
+              return (0, _Function.pipe)(pullRight, Effect.matchEffect(Option.match(() => Effect.succeed(Exit.succeed([(0, _Function.pipe)(state.leftChunk, Chunk.map(([k, a]) => [k, left(a)])), ZipAllState.DrainLeft])), error => Effect.succeed(Exit.fail(Option.some(error)))), rightChunk => Chunk.isEmpty(rightChunk) ? pull(ZipAllState.PullRight(state.leftChunk), pullLeft, pullRight) : Effect.succeed(Exit.succeed(merge(state.leftChunk, rightChunk)))));
+            }
+        }
+      };
+      const merge = (leftChunk, rightChunk) => {
+        const hasNext = (chunk, index) => index < chunk.length - 1;
+        const builder = [];
+        let state = undefined;
+        let leftIndex = 0;
+        let rightIndex = 0;
+        let leftTuple = (0, _Function.pipe)(leftChunk, Chunk.unsafeGet(leftIndex));
+        let rightTuple = (0, _Function.pipe)(rightChunk, Chunk.unsafeGet(rightIndex));
+        let k1 = leftTuple[0];
+        let a = leftTuple[1];
+        let k2 = rightTuple[0];
+        let a2 = rightTuple[1];
+        let loop = true;
+        while (loop) {
+          const compare = order.compare(k1, k2);
+          if (compare === 0) {
+            builder.push([k1, both(a, a2)]);
+            if (hasNext(leftChunk, leftIndex) && hasNext(rightChunk, rightIndex)) {
+              leftIndex = leftIndex + 1;
+              rightIndex = rightIndex + 1;
+              leftTuple = (0, _Function.pipe)(leftChunk, Chunk.unsafeGet(leftIndex));
+              rightTuple = (0, _Function.pipe)(rightChunk, Chunk.unsafeGet(rightIndex));
+              k1 = leftTuple[0];
+              a = leftTuple[1];
+              k2 = rightTuple[0];
+              a2 = rightTuple[1];
+            } else if (hasNext(leftChunk, leftIndex)) {
+              state = ZipAllState.PullRight((0, _Function.pipe)(leftChunk, Chunk.drop(leftIndex + 1)));
+              loop = false;
+            } else if (hasNext(rightChunk, rightIndex)) {
+              state = ZipAllState.PullLeft((0, _Function.pipe)(rightChunk, Chunk.drop(rightIndex + 1)));
+              loop = false;
+            } else {
+              state = ZipAllState.PullBoth;
+              loop = false;
+            }
+          } else if (compare < 0) {
+            builder.push([k1, left(a)]);
+            if (hasNext(leftChunk, leftIndex)) {
+              leftIndex = leftIndex + 1;
+              leftTuple = (0, _Function.pipe)(leftChunk, Chunk.unsafeGet(leftIndex));
+              k1 = leftTuple[0];
+              a = leftTuple[1];
+            } else {
+              const rightBuilder = [];
+              rightBuilder.push(rightTuple);
+              while (hasNext(rightChunk, rightIndex)) {
+                rightIndex = rightIndex + 1;
+                rightTuple = (0, _Function.pipe)(rightChunk, Chunk.unsafeGet(rightIndex));
+                rightBuilder.push(rightTuple);
+              }
+              state = ZipAllState.PullLeft(Chunk.unsafeFromArray(rightBuilder));
+              loop = false;
+            }
+          } else {
+            builder.push([k2, right(a2)]);
+            if (hasNext(rightChunk, rightIndex)) {
+              rightIndex = rightIndex + 1;
+              rightTuple = (0, _Function.pipe)(rightChunk, Chunk.unsafeGet(rightIndex));
+              k2 = rightTuple[0];
+              a2 = rightTuple[1];
+            } else {
+              const leftBuilder = [];
+              leftBuilder.push(leftTuple);
+              while (hasNext(leftChunk, leftIndex)) {
+                leftIndex = leftIndex + 1;
+                leftTuple = (0, _Function.pipe)(leftChunk, Chunk.unsafeGet(leftIndex));
+                leftBuilder.push(leftTuple);
+              }
+              state = ZipAllState.PullRight(Chunk.unsafeFromArray(leftBuilder));
+              loop = false;
+            }
+          }
+        }
+        return [Chunk.unsafeFromArray(builder), state];
+      };
+      return (0, _Function.pipe)(self, combineChunks(that, ZipAllState.PullBoth, pull));
+    };
+  };
+};
+/** @internal */
+exports.zipAllSortedByKeyWith = zipAllSortedByKeyWith;
+const zipAllWith = (that, left, right, both) => {
+  return self => {
+    const pull = (state, pullLeft, pullRight) => {
+      switch (state._tag) {
+        case "DrainLeft":
+          {
+            return (0, _Function.pipe)(pullLeft, Effect.matchEffect(error => Effect.succeed(Exit.fail(error)), leftChunk => Effect.succeed(Exit.succeed([(0, _Function.pipe)(leftChunk, Chunk.map(left)), ZipAllState.DrainLeft]))));
+          }
+        case "DrainRight":
+          {
+            return (0, _Function.pipe)(pullRight, Effect.matchEffect(error => Effect.succeed(Exit.fail(error)), rightChunk => Effect.succeed(Exit.succeed([(0, _Function.pipe)(rightChunk, Chunk.map(right)), ZipAllState.DrainRight]))));
+          }
+        case "PullBoth":
+          {
+            return (0, _Function.pipe)(Effect.unsome(pullLeft), Effect.zipPar(Effect.unsome(pullRight)), Effect.matchEffect(error => Effect.succeed(Exit.fail(Option.some(error))), ([leftOption, rightOption]) => {
+              if (Option.isSome(leftOption) && Option.isSome(rightOption)) {
+                if (Chunk.isEmpty(leftOption.value) && Chunk.isEmpty(rightOption.value)) {
+                  return pull(ZipAllState.PullBoth, pullLeft, pullRight);
+                }
+                if (Chunk.isEmpty(leftOption.value)) {
+                  return pull(ZipAllState.PullLeft(rightOption.value), pullLeft, pullRight);
+                }
+                if (Chunk.isEmpty(rightOption.value)) {
+                  return pull(ZipAllState.PullRight(leftOption.value), pullLeft, pullRight);
+                }
+                return Effect.succeed(Exit.succeed(zip(leftOption.value, rightOption.value, both)));
+              }
+              if (Option.isSome(leftOption) && Option.isNone(rightOption)) {
+                return Effect.succeed(Exit.succeed([(0, _Function.pipe)(leftOption.value, Chunk.map(left)), ZipAllState.DrainLeft]));
+              }
+              if (Option.isNone(leftOption) && Option.isSome(rightOption)) {
+                return Effect.succeed(Exit.succeed([(0, _Function.pipe)(rightOption.value, Chunk.map(right)), ZipAllState.DrainRight]));
+              }
+              return Effect.succeed(Exit.fail(Option.none()));
+            }));
+          }
+        case "PullLeft":
+          {
+            return (0, _Function.pipe)(pullLeft, Effect.matchEffect(Option.match(() => Effect.succeed(Exit.succeed([(0, _Function.pipe)(state.rightChunk, Chunk.map(right)), ZipAllState.DrainRight])), error => Effect.succeed(Exit.fail(Option.some(error)))), leftChunk => {
+              if (Chunk.isEmpty(leftChunk)) {
+                return pull(ZipAllState.PullLeft(state.rightChunk), pullLeft, pullRight);
+              }
+              if (Chunk.isEmpty(state.rightChunk)) {
+                return pull(ZipAllState.PullRight(leftChunk), pullLeft, pullRight);
+              }
+              return Effect.succeed(Exit.succeed(zip(leftChunk, state.rightChunk, both)));
+            }));
+          }
+        case "PullRight":
+          {
+            return (0, _Function.pipe)(pullRight, Effect.matchEffect(Option.match(() => Effect.succeed(Exit.succeed([(0, _Function.pipe)(state.leftChunk, Chunk.map(left)), ZipAllState.DrainLeft])), error => Effect.succeed(Exit.fail(Option.some(error)))), rightChunk => {
+              if (Chunk.isEmpty(rightChunk)) {
+                return pull(ZipAllState.PullRight(state.leftChunk), pullLeft, pullRight);
+              }
+              if (Chunk.isEmpty(state.leftChunk)) {
+                return pull(ZipAllState.PullLeft(rightChunk), pullLeft, pullRight);
+              }
+              return Effect.succeed(Exit.succeed(zip(state.leftChunk, rightChunk, both)));
+            }));
+          }
+      }
+    };
+    const zip = (leftChunk, rightChunk, f) => {
+      const [output, either] = zipChunks(leftChunk, rightChunk, f);
+      switch (either._tag) {
+        case "Left":
+          {
+            if (Chunk.isEmpty(either.left)) {
+              return [output, ZipAllState.PullBoth];
+            }
+            return [output, ZipAllState.PullRight(either.left)];
+          }
+        case "Right":
+          {
+            if (Chunk.isEmpty(either.right)) {
+              return [output, ZipAllState.PullBoth];
+            }
+            return [output, ZipAllState.PullLeft(either.right)];
+          }
+      }
+    };
+    return (0, _Function.pipe)(self, combineChunks(that, ZipAllState.PullBoth, pull));
+  };
+};
+/** @internal */
+exports.zipAllWith = zipAllWith;
+const zipLatest = that => {
+  return self => (0, _Function.pipe)(self, zipLatestWith(that, (a, a2) => [a, a2]));
+};
+/** @internal */
+exports.zipLatest = zipLatest;
+const zipLatestWith = (that, f) => {
+  return self => {
+    const pullNonEmpty = pull => (0, _Function.pipe)(pull, Effect.flatMap(chunk => Chunk.isEmpty(chunk) ? pullNonEmpty(pull) : Effect.succeed(chunk)));
+    return (0, _Function.pipe)(toPull(self), Effect.map(pullNonEmpty), Effect.zip((0, _Function.pipe)(toPull(that), Effect.map(pullNonEmpty))), Effect.flatMap(([left, right]) => (0, _Function.pipe)(fromEffectOption((0, _Function.pipe)(left, Effect.raceWith(right, (leftDone, rightFiber) => (0, _Function.pipe)(Effect.done(leftDone), Effect.zipWith(Fiber.join(rightFiber), (l, r) => [l, r, true])), (rightDone, leftFiber) => (0, _Function.pipe)(Effect.done(rightDone), Effect.zipWith(Fiber.join(leftFiber), (l, r) => [r, l, false]))))), flatMap(([l, r, leftFirst]) => (0, _Function.pipe)(fromEffect(Ref.make([Chunk.unsafeLast(l), Chunk.unsafeLast(r)])), flatMap(latest => (0, _Function.pipe)(fromChunk(leftFirst ? (0, _Function.pipe)(r, Chunk.map(a2 => f(Chunk.unsafeLast(l), a2))) : (0, _Function.pipe)(l, Chunk.map(a => f(a, Chunk.unsafeLast(r))))), concat((0, _Function.pipe)(repeatEffectOption(left), mergeEither(repeatEffectOption(right)), mapEffect(Either.match(leftChunk => (0, _Function.pipe)(Ref.modify(latest, ([_, rightLatest]) => [(0, _Function.pipe)(leftChunk, Chunk.map(a => f(a, rightLatest))), [Chunk.unsafeLast(leftChunk), rightLatest]])), rightChunk => (0, _Function.pipe)(Ref.modify(latest, ([leftLatest, _]) => [(0, _Function.pipe)(rightChunk, Chunk.map(a2 => f(leftLatest, a2))), [leftLatest, Chunk.unsafeLast(rightChunk)]])))), flatMap(fromChunk))))))), toPull)), fromPull);
+  };
+};
+/** @internal */
+exports.zipLatestWith = zipLatestWith;
+const zipLeft = that => {
+  return self => (0, _Function.pipe)(self, zipWithChunks(that, (left, right) => {
+    if (left.length > right.length) {
+      return [(0, _Function.pipe)(left, Chunk.take(right.length)), Either.left((0, _Function.pipe)(left, Chunk.take(right.length)))];
+    }
+    return [left, Either.right((0, _Function.pipe)(right, Chunk.drop(left.length)))];
+  }));
+};
+/** @internal */
+exports.zipLeft = zipLeft;
+const zipRight = that => {
+  return self => (0, _Function.pipe)(self, zipWithChunks(that, (left, right) => {
+    if (left.length > right.length) {
+      return [right, Either.left((0, _Function.pipe)(left, Chunk.take(right.length)))];
+    }
+    return [(0, _Function.pipe)(right, Chunk.take(left.length)), Either.right((0, _Function.pipe)(right, Chunk.drop(left.length)))];
+  }));
+};
+/** @internal */
+exports.zipRight = zipRight;
+const zipWith = (that, f) => {
+  return self => (0, _Function.pipe)(self, zipWithChunks(that, (leftChunk, rightChunk) => zipChunks(leftChunk, rightChunk, f)));
+};
+/** @internal */
+exports.zipWith = zipWith;
+const zipWithChunks = (that, f) => {
+  return self => {
+    const pull = (state, pullLeft, pullRight) => {
+      switch (state._tag) {
+        case "PullBoth":
+          {
+            return (0, _Function.pipe)(Effect.unsome(pullLeft), Effect.zipPar(Effect.unsome(pullRight)), Effect.matchEffect(error => Effect.succeed(Exit.fail(Option.some(error))), ([leftOption, rightOption]) => {
+              if (Option.isSome(leftOption) && Option.isSome(rightOption)) {
+                if (Chunk.isEmpty(leftOption.value) && Chunk.isEmpty(rightOption.value)) {
+                  return pull(ZipChunksState.PullBoth, pullLeft, pullRight);
+                }
+                if (Chunk.isEmpty(leftOption.value)) {
+                  return pull(ZipChunksState.PullLeft(rightOption.value), pullLeft, pullRight);
+                }
+                if (Chunk.isEmpty(rightOption.value)) {
+                  return pull(ZipChunksState.PullRight(leftOption.value), pullLeft, pullRight);
+                }
+                return Effect.succeed(Exit.succeed(zip(leftOption.value, rightOption.value)));
+              }
+              return Effect.succeed(Exit.fail(Option.none()));
+            }));
+          }
+        case "PullLet":
+          {
+            return (0, _Function.pipe)(pullLeft, Effect.matchEffect(error => Effect.succeed(Exit.fail(error)), leftChunk => {
+              if (Chunk.isEmpty(leftChunk)) {
+                return pull(ZipChunksState.PullLeft(state.rightChunk), pullLeft, pullRight);
+              }
+              if (Chunk.isEmpty(state.rightChunk)) {
+                return pull(ZipChunksState.PullRight(leftChunk), pullLeft, pullRight);
+              }
+              return Effect.succeed(Exit.succeed(zip(leftChunk, state.rightChunk)));
+            }));
+          }
+        case "PullRight":
+          {
+            return (0, _Function.pipe)(pullRight, Effect.matchEffect(error => Effect.succeed(Exit.fail(error)), rightChunk => {
+              if (Chunk.isEmpty(rightChunk)) {
+                return pull(ZipChunksState.PullRight(state.leftChunk), pullLeft, pullRight);
+              }
+              if (Chunk.isEmpty(state.leftChunk)) {
+                return pull(ZipChunksState.PullLeft(rightChunk), pullLeft, pullRight);
+              }
+              return Effect.succeed(Exit.succeed(zip(state.leftChunk, rightChunk)));
+            }));
+          }
+      }
+    };
+    const zip = (leftChunk, rightChunk) => {
+      const [output, either] = f(leftChunk, rightChunk);
+      switch (either._tag) {
+        case "Left":
+          {
+            if (Chunk.isEmpty(either.left)) {
+              return [output, ZipChunksState.PullBoth];
+            }
+            return [output, ZipChunksState.PullRight(either.left)];
+          }
+        case "Right":
+          {
+            if (Chunk.isEmpty(either.right)) {
+              return [output, ZipChunksState.PullBoth];
+            }
+            return [output, ZipChunksState.PullLeft(either.right)];
+          }
+      }
+    };
+    return (0, _Function.pipe)(self, combineChunks(that, ZipChunksState.PullBoth, pull));
+  };
+};
+/** @internal */
+exports.zipWithChunks = zipWithChunks;
+const zipWithIndex = self => (0, _Function.pipe)(self, mapAccum(0, (index, a) => [index + 1, [a, index]]));
+/** @internal */
+exports.zipWithIndex = zipWithIndex;
+const zipWithNext = self => {
+  const process = last => core.readWithCause(input => {
+    const [newLast, chunk] = (0, _Function.pipe)(input, Chunk.mapAccum(last, (prev, curr) => [Option.some(curr), (0, _Function.pipe)(prev, Option.map(a => [a, curr]))]));
+    const output = (0, _Function.pipe)(chunk, Chunk.filterMap(option => Option.isSome(option) ? Option.some([option.value[0], Option.some(option.value[1])]) : Option.none()));
+    return (0, _Function.pipe)(core.write(output), core.flatMap(() => process(newLast)));
+  }, core.failCause, () => (0, _Function.pipe)(last, Option.match(core.unit, value => (0, _Function.pipe)(core.write(Chunk.of([value, Option.none()])), channel.zipRight(core.unit())))));
+  return new StreamImpl((0, _Function.pipe)(self.channel, channel.pipeToOrFail(process(Option.none()))));
+};
+/** @internal */
+exports.zipWithNext = zipWithNext;
+const zipWithPrevious = self => (0, _Function.pipe)(self, mapAccum(Option.none(), (prev, curr) => [Option.some(curr), [prev, curr]]));
+/** @internal */
+exports.zipWithPrevious = zipWithPrevious;
+const zipWithPreviousAndNext = self => (0, _Function.pipe)(zipWithNext(zipWithPrevious(self)), map(([[prev, curr], next]) => [prev, curr, (0, _Function.pipe)(next, Option.map(tuple => tuple[1]))]));
+/** @internal */
+exports.zipWithPreviousAndNext = zipWithPreviousAndNext;
+const zipChunks = (left, right, f) => {
+  if (left.length > right.length) {
+    return [(0, _Function.pipe)(left, Chunk.take(right.length), Chunk.zipWith(right, f)), Either.left((0, _Function.pipe)(left, Chunk.drop(right.length)))];
+  }
+  return [(0, _Function.pipe)(left, Chunk.zipWith((0, _Function.pipe)(right, Chunk.take(left.length)), f)), Either.right((0, _Function.pipe)(right, Chunk.drop(left.length)))];
+};
+// Circular with Channel
+/** @internal */
+const channelToStream = self => {
+  return new StreamImpl(self);
+};
+exports.channelToStream = channelToStream;
+//# sourceMappingURL=stream.js.map
+
+/***/ }),
+
+/***/ 1262:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.previous = exports.notStarted = exports.current = exports.OP_PREVIOUS = exports.OP_NOT_STARTED = exports.OP_CURRENT = void 0;
+/** @internal */
+const OP_NOT_STARTED = "NotStarted";
+/** @internal */
+exports.OP_NOT_STARTED = OP_NOT_STARTED;
+const OP_PREVIOUS = "Previous";
+/** @internal */
+exports.OP_PREVIOUS = OP_PREVIOUS;
+const OP_CURRENT = "Current";
+/** @internal */
+exports.OP_CURRENT = OP_CURRENT;
+const notStarted = {
+  _tag: OP_NOT_STARTED
+};
+/** @internal */
+exports.notStarted = notStarted;
+const previous = fiber => ({
+  _tag: OP_PREVIOUS,
+  fiber
+});
+/** @internal */
+exports.previous = previous;
+const current = fiber => ({
+  _tag: OP_CURRENT,
+  fiber
+});
+exports.current = current;
+//# sourceMappingURL=debounceState.js.map
+
+/***/ }),
+
+/***/ 6656:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.make = void 0;
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const make = emit => {
+  const ops = {
+    chunk(as) {
+      return this(Effect.succeed(as));
+    },
+    die(defect) {
+      return this(Effect.die(defect));
+    },
+    dieMessage(message) {
+      return this(Effect.dieMessage(message));
+    },
+    done(exit) {
+      return this(Effect.done((0, _Function.pipe)(exit, Exit.mapBoth(Option.some, Chunk.of))));
+    },
+    end() {
+      return this(Effect.fail(Option.none()));
+    },
+    fail(e) {
+      return this(Effect.fail(Option.some(e)));
+    },
+    fromEffect(effect) {
+      return this((0, _Function.pipe)(effect, Effect.mapBoth(Option.some, Chunk.of)));
+    },
+    fromEffectChunk(effect) {
+      return this((0, _Function.pipe)(effect, Effect.mapError(Option.some)));
+    },
+    halt(cause) {
+      return this(Effect.failCause((0, _Function.pipe)(cause, Cause.map(Option.some))));
+    },
+    single(value) {
+      return this(Effect.succeed(Chunk.of(value)));
+    }
+  };
+  return Object.assign(emit, ops);
+};
+exports.make = make;
+//# sourceMappingURL=emit.js.map
+
+/***/ }),
+
+/***/ 6963:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.match = exports.isRight = exports.isLeft = exports.isEither = exports.isBoth = exports.Right = exports.Left = exports.Either = exports.Both = void 0;
+var OpCodes = /*#__PURE__*/(/* unused pure expression or super */ null && (_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(7544))));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const Left = {
+  _tag: "Left"
+};
+/** @internal */
+exports.Left = Left;
+const Right = {
+  _tag: "Right"
+};
+/** @internal */
+exports.Right = Right;
+const Both = {
+  _tag: "Both"
+};
+/** @internal */
+exports.Both = Both;
+const Either = {
+  _tag: "Either"
+};
+/** @internal */
+exports.Either = Either;
+const isLeft = self => self._tag === "Left";
+/** @internal */
+exports.isLeft = isLeft;
+const isRight = self => self._tag === "Right";
+/** @internal */
+exports.isRight = isRight;
+const isBoth = self => self._tag === "Both";
+/** @internal */
+exports.isBoth = isBoth;
+const isEither = self => self._tag === "Either";
+/** @internal */
+exports.isEither = isEither;
+const match = (onLeft, onRight, onBoth, onEither) => {
+  return self => {
+    switch (self._tag) {
+      case "Left":
+        {
+          return onLeft();
+        }
+      case "Right":
+        {
+          return onRight();
+        }
+      case "Both":
+        {
+          return onBoth();
+        }
+      case "Either":
+        {
+          return onEither();
+        }
+    }
+  };
+};
+exports.match = match;
+//# sourceMappingURL=haltStrategy.js.map
+
+/***/ }),
+
+/***/ 9355:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.take = exports.poll = exports.offer = exports.make = exports.OP_HANDOFF_STATE_FULL = exports.OP_HANDOFF_STATE_EMPTY = exports.HandoffTypeId = void 0;
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Deferred = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3576));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Ref = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(6607));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+const HandoffTypeId = /*#__PURE__*/Symbol.for("@effect/stream/Stream/Handoff");
+/** @internal */
+exports.HandoffTypeId = HandoffTypeId;
+const OP_HANDOFF_STATE_EMPTY = "Empty";
+/** @internal */
+exports.OP_HANDOFF_STATE_EMPTY = OP_HANDOFF_STATE_EMPTY;
+const OP_HANDOFF_STATE_FULL = "Full";
+/** @internal */
+exports.OP_HANDOFF_STATE_FULL = OP_HANDOFF_STATE_FULL;
+const handoffStateEmpty = notifyConsumer => ({
+  _tag: OP_HANDOFF_STATE_EMPTY,
+  notifyConsumer
+});
+/** @internal */
+const handoffStateFull = (value, notifyProducer) => ({
+  _tag: OP_HANDOFF_STATE_FULL,
+  value,
+  notifyProducer
+});
+/** @internal */
+const handoffStateMatch = (onEmpty, onFull) => {
+  return self => {
+    switch (self._tag) {
+      case OP_HANDOFF_STATE_EMPTY:
+        {
+          return onEmpty(self.notifyConsumer);
+        }
+      case OP_HANDOFF_STATE_FULL:
+        {
+          return onFull(self.value, self.notifyProducer);
+        }
+    }
+  };
+};
+/** @internal */
+const handoffVariance = {
+  _A: _ => _
+};
+/** @internal */
+const make = /*#__PURE__*/Debug.methodWithTrace(trace => () => (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => Ref.make(handoffStateEmpty(deferred))), Effect.map(ref => ({
+  [HandoffTypeId]: handoffVariance,
+  ref
+}))).traced(trace));
+/**
+ * @macro traced
+ * @internal
+ */
+exports.make = make;
+const offer = /*#__PURE__*/Debug.pipeableWithTrace(trace => value => self => {
+  return (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => (0, _Function.pipe)(Ref.modify(self.ref, state => (0, _Function.pipe)(state, handoffStateMatch(notifyConsumer => [(0, _Function.pipe)(Deferred.succeed(notifyConsumer, void 0), Effect.zipRight(Deferred.await(deferred))), handoffStateFull(value, deferred)], (_, notifyProducer) => [(0, _Function.pipe)(Deferred.await(notifyProducer), Effect.flatMap(() => (0, _Function.pipe)(self, offer(value)))), state]))), Effect.flatten))).traced(trace);
+});
+/**
+ * @macro traced
+ * @since 1.0.0
+ */
+exports.offer = offer;
+const take = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => (0, _Function.pipe)(Ref.modify(self.ref, state => (0, _Function.pipe)(state, handoffStateMatch(notifyConsumer => [(0, _Function.pipe)(Deferred.await(notifyConsumer), Effect.flatMap(() => take(self))), state], (value, notifyProducer) => [(0, _Function.pipe)(Deferred.succeed(notifyProducer, void 0), Effect.as(value)), handoffStateEmpty(deferred)]))), Effect.flatten))).traced(trace));
+/**
+ * @macro traced
+ * @internal
+ */
+exports.take = take;
+const poll = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(Deferred.make(), Effect.flatMap(deferred => (0, _Function.pipe)(Ref.modify(self.ref, state => (0, _Function.pipe)(state, handoffStateMatch(() => [Effect.succeed(Option.none()), state], (value, notifyProducer) => [(0, _Function.pipe)(Deferred.succeed(notifyProducer, void 0), Effect.as(Option.some(value))), handoffStateEmpty(deferred)]))), Effect.flatten))).traced(trace));
+exports.poll = poll;
+//# sourceMappingURL=handoff.js.map
+
+/***/ }),
+
+/***/ 5129:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.halt = exports.end = exports.emit = exports.OP_HALT = exports.OP_END = exports.OP_EMIT = void 0;
+/** @internal */
+const OP_EMIT = "Emit";
+/** @internal */
+exports.OP_EMIT = OP_EMIT;
+const OP_HALT = "Halt";
+/** @internal */
+exports.OP_HALT = OP_HALT;
+const OP_END = "End";
+/** @internal */
+exports.OP_END = OP_END;
+const emit = elements => ({
+  _tag: OP_EMIT,
+  elements
+});
+/** @internal */
+exports.emit = emit;
+const halt = cause => ({
+  _tag: OP_HALT,
+  cause
+});
+/** @internal */
+exports.halt = halt;
+const end = reason => ({
+  _tag: OP_END,
+  reason
+});
+exports.end = end;
+//# sourceMappingURL=handoffSignal.js.map
+
+/***/ }),
+
+/***/ 8550:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.fromDequeue = exports.failCause = exports.fail = exports.end = exports.empty = exports.emitChunk = exports.emit = void 0;
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Queue = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(9925));
+var take = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(2978));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/**
+ * @macro traced
+ * @internal
+ */
+const emit = /*#__PURE__*/Debug.methodWithTrace(trace => value => Effect.succeed(Chunk.of(value)).traced(trace));
+/**
+ * @macro traced
+ * @internal
+ */
+exports.emit = emit;
+const emitChunk = /*#__PURE__*/Debug.methodWithTrace(trace => chunk => Effect.succeed(chunk).traced(trace));
+/**
+ * @macro traced
+ * @internal
+ */
+exports.emitChunk = emitChunk;
+const empty = /*#__PURE__*/Debug.methodWithTrace(trace => () => Effect.succeed(Chunk.empty()).traced(trace));
+/**
+ * @macro traced
+ * @internal
+ */
+exports.empty = empty;
+const end = /*#__PURE__*/Debug.methodWithTrace(trace => () => Effect.fail(Option.none()).traced(trace));
+/**
+ * @macro traced
+ * @internal
+ */
+exports.end = end;
+const fail = /*#__PURE__*/Debug.methodWithTrace(trace => error => Effect.fail(Option.some(error)).traced(trace));
+/**
+ * @macro traced
+ * @internal
+ */
+exports.fail = fail;
+const failCause = /*#__PURE__*/Debug.methodWithTrace(trace => cause => (0, _Function.pipe)(Effect.failCause(cause), Effect.mapError(Option.some)).traced(trace));
+/**
+ * @macro traced
+ * @internal
+ */
+exports.failCause = failCause;
+const fromDequeue = /*#__PURE__*/Debug.methodWithTrace(trace => dequeue => (0, _Function.pipe)(Queue.take(dequeue), Effect.flatMap(take.done)).traced(trace));
+exports.fromDequeue = fromDequeue;
+//# sourceMappingURL=pull.js.map
+
+/***/ }),
+
+/***/ 7246:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.UpstreamEnd = exports.SchedulEnd = exports.OP_UPSTREAM_END = exports.OP_SCHEDULE_END = void 0;
+/** @internal */
+const OP_SCHEDULE_END = "ScheduleEnd";
+/** @internal */
+exports.OP_SCHEDULE_END = OP_SCHEDULE_END;
+const OP_UPSTREAM_END = "UpstreamEnd";
+/** @internal */
+exports.OP_UPSTREAM_END = OP_UPSTREAM_END;
+const SchedulEnd = {
+  _tag: OP_SCHEDULE_END
+};
+/** @internal */
+exports.SchedulEnd = SchedulEnd;
+const UpstreamEnd = {
+  _tag: OP_UPSTREAM_END
+};
+exports.UpstreamEnd = UpstreamEnd;
+//# sourceMappingURL=sinkEndReason.js.map
+
+/***/ }),
+
+/***/ 257:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.PullRight = exports.PullLeft = exports.PullBoth = exports.OP_PULL_RIGHT = exports.OP_PULL_LEFT = exports.OP_PULL_BOTH = exports.OP_DRAIN_RIGHT = exports.OP_DRAIN_LEFT = exports.DrainRight = exports.DrainLeft = void 0;
+/** @internal */
+const OP_DRAIN_LEFT = "DrainLeft";
+/** @internal */
+exports.OP_DRAIN_LEFT = OP_DRAIN_LEFT;
+const OP_DRAIN_RIGHT = "DrainRight";
+/** @internal */
+exports.OP_DRAIN_RIGHT = OP_DRAIN_RIGHT;
+const OP_PULL_BOTH = "PullBoth";
+/** @internal */
+exports.OP_PULL_BOTH = OP_PULL_BOTH;
+const OP_PULL_LEFT = "PullLeft";
+/** @internal */
+exports.OP_PULL_LEFT = OP_PULL_LEFT;
+const OP_PULL_RIGHT = "PullRight";
+/** @internal */
+exports.OP_PULL_RIGHT = OP_PULL_RIGHT;
+const DrainLeft = {
+  _tag: OP_DRAIN_LEFT
+};
+/** @internal */
+exports.DrainLeft = DrainLeft;
+const DrainRight = {
+  _tag: OP_DRAIN_RIGHT
+};
+/** @internal */
+exports.DrainRight = DrainRight;
+const PullBoth = {
+  _tag: OP_PULL_BOTH
+};
+/** @internal */
+exports.PullBoth = PullBoth;
+const PullLeft = rightChunk => ({
+  _tag: OP_PULL_LEFT,
+  rightChunk
+});
+/** @internal */
+exports.PullLeft = PullLeft;
+const PullRight = leftChunk => ({
+  _tag: OP_PULL_RIGHT,
+  leftChunk
+});
+exports.PullRight = PullRight;
+//# sourceMappingURL=zipAllState.js.map
+
+/***/ }),
+
+/***/ 6911:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.PullRight = exports.PullLeft = exports.PullBoth = exports.OP_PULL_RIGHT = exports.OP_PULL_LEFT = exports.OP_PULL_BOTH = void 0;
+/** @internal */
+const OP_PULL_BOTH = "PullBoth";
+/** @internal */
+exports.OP_PULL_BOTH = OP_PULL_BOTH;
+const OP_PULL_LEFT = "PullLet";
+/** @internal */
+exports.OP_PULL_LEFT = OP_PULL_LEFT;
+const OP_PULL_RIGHT = "PullRight";
+/** @internal */
+exports.OP_PULL_RIGHT = OP_PULL_RIGHT;
+const PullBoth = {
+  _tag: OP_PULL_BOTH
+};
+/** @internal */
+exports.PullBoth = PullBoth;
+const PullLeft = rightChunk => ({
+  _tag: OP_PULL_LEFT,
+  rightChunk
+});
+/** @internal */
+exports.PullLeft = PullLeft;
+const PullRight = leftChunk => ({
+  _tag: OP_PULL_RIGHT,
+  leftChunk
+});
+exports.PullRight = PullRight;
+//# sourceMappingURL=zipChunksState.js.map
+
+/***/ }),
+
+/***/ 7691:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.RingBuffer = void 0;
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+/** @internal */
+class RingBuffer {
+  constructor(capacity) {
+    this.capacity = capacity;
+    this.size = 0;
+    this.current = 0;
+    this.array = Array.from({
+      length: capacity
+    }, _Function.constUndefined);
+  }
+  head() {
+    return Option.fromNullable(this.array[this.current]);
+  }
+  lastOrNull() {
+    if (this.size === 0) {
+      return undefined;
+    }
+    const index = this.current === 0 ? this.array.length - 1 : this.current - 1;
+    return this.array[index] ?? undefined;
+  }
+  put(value) {
+    this.array[this.current] = value;
+    this.increment();
+  }
+  dropLast() {
+    if (this.size > 0) {
+      this.decrement();
+      this.array[this.current] = undefined;
+    }
+  }
+  toChunk() {
+    const begin = this.current - this.size;
+    const newArray = begin < 0 ? [...this.array.slice(this.capacity + begin, this.capacity), ...this.array.slice(0, this.current)] : this.array.slice(begin, this.current);
+    return Chunk.fromIterable(newArray);
+  }
+  increment() {
+    if (this.size < this.capacity) {
+      this.size += 1;
+    }
+    this.current = (this.current + 1) % this.capacity;
+  }
+  decrement() {
+    this.size -= 1;
+    if (this.current > 0) {
+      this.current -= 1;
+    } else {
+      this.current = this.capacity - 1;
+    }
+  }
+}
+exports.RingBuffer = RingBuffer;
+//# sourceMappingURL=support.js.map
+
+/***/ }),
+
+/***/ 2978:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.tap = exports.of = exports.matchEffect = exports.match = exports.map = exports.make = exports.isSuccess = exports.isFailure = exports.isDone = exports.fromPull = exports.fromExit = exports.fromEffect = exports.failCause = exports.fail = exports.end = exports.done = exports.dieMessage = exports.die = exports.chunk = exports.TakeTypeId = exports.TakeImpl = void 0;
+var Cause = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3391));
+var Debug = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(8888));
+var Effect = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5618));
+var Exit = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(1773));
+var _Function = /*#__PURE__*/__nccwpck_require__(711);
+var Option = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(5369));
+var Chunk = /*#__PURE__*/_interopRequireWildcard( /*#__PURE__*/__nccwpck_require__(3205));
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+var _a;
+/** @internal */
+const TakeSymbolKey = "@effect/stream/Take";
+/** @internal */
+const TakeTypeId = /*#__PURE__*/Symbol.for(TakeSymbolKey);
+/** @internal */
+exports.TakeTypeId = TakeTypeId;
+const takeVariance = {
+  _E: _ => _,
+  _A: _ => _
+};
+/** @internal */
+class TakeImpl {
+  constructor(exit) {
+    this.exit = exit;
+    this[_a] = takeVariance;
+  }
+}
+exports.TakeImpl = TakeImpl;
+_a = TakeTypeId;
+/** @internal */
+const chunk = chunk => new TakeImpl(Exit.succeed(chunk));
+/** @internal */
+exports.chunk = chunk;
+const die = defect => new TakeImpl(Exit.die(defect));
+/** @internal */
+exports.die = die;
+const dieMessage = message => new TakeImpl(Exit.die(Cause.RuntimeException(message)));
+/** @internal */
+exports.dieMessage = dieMessage;
+const done = /*#__PURE__*/Debug.methodWithTrace(trace => self => (0, _Function.pipe)(Effect.done(self.exit)).traced(trace));
+/** @internal */
+exports.done = done;
+const end = /*#__PURE__*/new TakeImpl( /*#__PURE__*/Exit.fail( /*#__PURE__*/Option.none()));
+/** @internal */
+exports.end = end;
+const fail = error => new TakeImpl(Exit.fail(Option.some(error)));
+/** @internal */
+exports.fail = fail;
+const failCause = cause => new TakeImpl(Exit.failCause((0, _Function.pipe)(cause, Cause.map(Option.some))));
+/** @internal */
+exports.failCause = failCause;
+const fromEffect = /*#__PURE__*/Debug.methodWithTrace(trace => effect => (0, _Function.pipe)(effect, Effect.matchCause(failCause, of)).traced(trace));
+/** @internal */
+exports.fromEffect = fromEffect;
+const fromExit = exit => new TakeImpl((0, _Function.pipe)(exit, Exit.mapBoth(Option.some, Chunk.of)));
+/** @internal */
+exports.fromExit = fromExit;
+const fromPull = /*#__PURE__*/Debug.methodWithTrace(trace => pull => (0, _Function.pipe)(pull, Effect.matchCause(cause => (0, _Function.pipe)(Cause.flipCauseOption(cause), Option.match(() => end, failCause)), chunk)).traced(trace));
+/** @internal */
+exports.fromPull = fromPull;
+const isDone = self => (0, _Function.pipe)(self.exit, Exit.match(cause => Option.isNone(Cause.flipCauseOption(cause)), _Function.constFalse));
+/** @internal */
+exports.isDone = isDone;
+const isFailure = self => (0, _Function.pipe)(self.exit, Exit.match(cause => Option.isSome(Cause.flipCauseOption(cause)), _Function.constFalse));
+/** @internal */
+exports.isFailure = isFailure;
+const isSuccess = self => (0, _Function.pipe)(self.exit, Exit.match(_Function.constFalse, _Function.constTrue));
+/** @internal */
+exports.isSuccess = isSuccess;
+const make = exit => new TakeImpl(exit);
+/** @internal */
+exports.make = make;
+const match = (onEnd, onError, onSuccess) => {
+  return self => (0, _Function.pipe)(self.exit, Exit.match(cause => (0, _Function.pipe)(Cause.flipCauseOption(cause), Option.match(onEnd, onError)), onSuccess));
+};
+/** @internal */
+exports.match = match;
+const matchEffect = /*#__PURE__*/Debug.pipeableWithTrace(trace => (onEnd, onError, onSuccess) => self => (0, _Function.pipe)(self.exit, Exit.matchEffect(cause => (0, _Function.pipe)(Cause.flipCauseOption(cause), Option.match(onEnd, onError)), onSuccess)).traced(trace));
+/** @internal */
+exports.matchEffect = matchEffect;
+const map = f => {
+  return self => new TakeImpl((0, _Function.pipe)(self.exit, Exit.map(Chunk.map(f))));
+};
+/** @internal */
+exports.map = map;
+const of = value => new TakeImpl(Exit.succeed(Chunk.of(value)));
+/** @internal */
+exports.of = of;
+const tap = /*#__PURE__*/Debug.pipeableWithTrace(trace => f => self => (0, _Function.pipe)(self.exit, Exit.forEachEffect(f), Effect.asUnit).traced(trace));
+exports.tap = tap;
+//# sourceMappingURL=take.js.map
 
 /***/ }),
 
@@ -37104,6 +50723,106 @@ exports.Stack = Stack;
 
 /***/ }),
 
+/***/ 688:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true,
+}))
+exports.runMain = exports.defaultTeardown = void 0
+var Cause = /*#__PURE__*/ _interopRequireWildcard(
+  /*#__PURE__*/ __nccwpck_require__(3391),
+)
+var Effect = /*#__PURE__*/ _interopRequireWildcard(
+  /*#__PURE__*/ __nccwpck_require__(5618),
+)
+var Exit = /*#__PURE__*/ _interopRequireWildcard(
+  /*#__PURE__*/ __nccwpck_require__(1773),
+)
+var Fiber = /*#__PURE__*/ _interopRequireWildcard(
+  /*#__PURE__*/ __nccwpck_require__(439),
+)
+function _getRequireWildcardCache(nodeInterop) {
+  if (typeof WeakMap !== "function") return null
+  var cacheBabelInterop = new WeakMap()
+  var cacheNodeInterop = new WeakMap()
+  return (_getRequireWildcardCache = function (nodeInterop) {
+    return nodeInterop ? cacheNodeInterop : cacheBabelInterop
+  })(nodeInterop)
+}
+function _interopRequireWildcard(obj, nodeInterop) {
+  if (!nodeInterop && obj && obj.__esModule) {
+    return obj
+  }
+  if (obj === null || (typeof obj !== "object" && typeof obj !== "function")) {
+    return { default: obj }
+  }
+  var cache = _getRequireWildcardCache(nodeInterop)
+  if (cache && cache.has(obj)) {
+    return cache.get(obj)
+  }
+  var newObj = {}
+  var hasPropertyDescriptor =
+    Object.defineProperty && Object.getOwnPropertyDescriptor
+  for (var key in obj) {
+    if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
+      var desc = hasPropertyDescriptor
+        ? Object.getOwnPropertyDescriptor(obj, key)
+        : null
+      if (desc && (desc.get || desc.set)) {
+        Object.defineProperty(newObj, key, desc)
+      } else {
+        newObj[key] = obj[key]
+      }
+    }
+  }
+  newObj.default = obj
+  if (cache) {
+    cache.set(obj, newObj)
+  }
+  return newObj
+}
+const defaultTeardown = (exit, onExit) => {
+  onExit(Exit.isFailure(exit) && !Cause.isInterruptedOnly(exit.cause) ? 1 : 0)
+}
+/**
+ * @since 1.0.0
+ * @tsplus fluent effect/io/Effect runMain
+ */
+exports.defaultTeardown = defaultTeardown
+const runMain = (effect, teardown = defaultTeardown) => {
+  const fiber = Effect.runFork(effect)
+  fiber.unsafeAddObserver((exit) =>
+    teardown(exit, (code) =>
+      Effect.runCallback(interruptAll(fiber.id()), () => {
+        process.exit(code)
+      }),
+    ),
+  )
+  function onSigint() {
+    process.removeListener("SIGINT", onSigint)
+    process.removeListener("SIGTERM", onSigint)
+    Effect.runCallback(fiber.interruptAsFork(fiber.id()))
+  }
+  process.once("SIGINT", onSigint)
+  process.once("SIGTERM", onSigint)
+}
+exports.runMain = runMain
+const interruptAll = (id) =>
+  Effect.flatMap(Fiber.roots(), (roots) => {
+    if (roots.length === 0) {
+      return Effect.unit()
+    }
+    return Fiber.interruptAllWith(roots, id)
+  })
+//# sourceMappingURL=Runtime.js.map
+
+
+/***/ }),
+
 /***/ 31:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -49611,30 +63330,6 @@ module.exports = require("net");
 
 /***/ }),
 
-/***/ 7561:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:fs");
-
-/***/ }),
-
-/***/ 612:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:os");
-
-/***/ }),
-
-/***/ 9411:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:path");
-
-/***/ }),
-
 /***/ 2037:
 /***/ ((module) => {
 
@@ -49768,38 +63463,36 @@ var __webpack_exports__ = {};
 var exports = __webpack_exports__;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tsplus_module_1 = __nccwpck_require__(2009);
-const tsplus_module_2 = __nccwpck_require__(2891);
-const tsplus_module_3 = __nccwpck_require__(1703);
-const tsplus_module_4 = __nccwpck_require__(5369);
-const tsplus_module_5 = __nccwpck_require__(2924);
-const tsplus_module_6 = __nccwpck_require__(7433);
-const tsplus_module_7 = __nccwpck_require__(2057);
-const Gist_1 = __nccwpck_require__(2792);
+const tsplus_module_1 = __nccwpck_require__(8579);
+const tsplus_module_2 = __nccwpck_require__(8983);
+const tsplus_module_3 = __nccwpck_require__(5618);
+const tsplus_module_4 = __nccwpck_require__(9854);
+const tsplus_module_5 = __nccwpck_require__(3391);
+const tsplus_module_6 = __nccwpck_require__(688);
 const Git = __nccwpck_require__(5843);
 const Github = __nccwpck_require__(8280);
 const Dotenv = __nccwpck_require__(5717);
+const config_1 = __nccwpck_require__(6994);
+// Dotenv for testing in development
 Dotenv.config();
+// Setup the Git client layer
 const GitLive = Git.makeLayer({
-    userName: tsplus_module_1.string("github_actor"),
-    userEmail: tsplus_module_1.map(tsplus_module_1.string("github_actor"), (_) => `${_}@users.noreply.github.com`),
-    git: tsplus_module_1.succeed({}),
+    userName: (0, config_1.nonEmptyString)("github_actor"),
+    userEmail: tsplus_module_1.map((0, config_1.nonEmptyString)("github_actor"), _ => `${_}@users.noreply.github.com`),
+    simpleGit: tsplus_module_1.succeed({}),
 });
+// Setup the Github API
 const GithubLive = Github.makeLayer(tsplus_module_1.nested(tsplus_module_1.struct({
-    token: tsplus_module_1.secret("token"),
+    token: tsplus_module_1.secret("github_token"),
 }), "input"));
-const EnvLive = tsplus_module_2.provide(Gist_1.GistLive)((tsplus_module_2.merge(GithubLive)(GitLive)));
-const program = tsplus_module_3.flatMap(tsplus_module_3.service(Gist_1.Gist), gist => tsplus_module_3.flatMap(tsplus_module_3.config(tsplus_module_1.nested(tsplus_module_1.struct({
-    gistId: tsplus_module_1.optional(tsplus_module_1.string("gist_id")),
-    name: tsplus_module_1.optional(tsplus_module_1.string("name")),
-    path: tsplus_module_1.string("path"),
-}), "input")), ({ name, path, gistId }) => tsplus_module_3.flatMap(tsplus_module_4.match(() => gist.createAndAdd(path, name), (id) => gist.cloneAndAdd(id, path))(gistId), info => tsplus_module_3.map(tsplus_module_3.logInfo(`Created gist: ${info.html_url}`), () => void 0))));
-tsplus_module_3.runCallback(tsplus_module_3.withConfigProvider(tsplus_module_3.provideLayer(program, EnvLive), tsplus_module_7.upperCase(tsplus_module_7.fromEnv())), (exit) => {
-    if (tsplus_module_5.isFailure(exit)) {
-        console.log(tsplus_module_6.squash(exit.cause));
-        process.exit(1);
-    }
-});
+// Build the environment for your program
+const EnvLive = tsplus_module_2.merge(GithubLive)(GitLive);
+const program = tsplus_module_3.flatMap(tsplus_module_3.config(tsplus_module_1.nested(tsplus_module_1.struct({
+    name: (0, config_1.nonEmptyString)("name"),
+}), "input")), ({ name }) => tsplus_module_3.map(tsplus_module_3.logInfo(`Hello there ${name}!`), () => void 0));
+tsplus_module_6.runMain(tsplus_module_3.withConfigProvider(tsplus_module_3.provideLayer(tsplus_module_3.tapErrorCause(program, _ => tsplus_module_3.sync(() => {
+    console.error(tsplus_module_5.squash(_));
+})), EnvLive), tsplus_module_4.upperCase(tsplus_module_4.fromEnv())));
 //# sourceMappingURL=main.js.map
 })();
 
