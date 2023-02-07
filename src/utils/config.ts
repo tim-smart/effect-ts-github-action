@@ -7,3 +7,11 @@ export const nonEmptyString = (name: string) =>
       ? Either.right(trimmed)
       : Either.left(MissingData(Chunk.empty(), "must not be empty"))
   })
+
+export const nonEmptySecret = (name: string) =>
+  Config.secret(name).mapOrFail((_) => {
+    const trimmed = ConfigSecret.fromString(_.value.trim())
+    return trimmed.value !== ""
+      ? Either.right(trimmed)
+      : Either.left(MissingData(Chunk.empty(), "must not be empty"))
+  })

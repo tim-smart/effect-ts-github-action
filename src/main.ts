@@ -1,7 +1,7 @@
 import * as Git from "./Git"
 import * as Github from "./Github"
 import * as Dotenv from "dotenv"
-import { nonEmptyString } from "./utils/config"
+import { nonEmptySecret, nonEmptyString } from "./utils/config"
 
 // Dotenv for testing in development
 Dotenv.config()
@@ -18,7 +18,7 @@ const GitLive = Git.makeLayer({
 // Setup the Github API
 const GithubLive = Github.makeLayer(
   Config.struct({
-    token: Config.secret("github_token"),
+    token: nonEmptySecret("github_token"),
   }).nested("input"),
 )
 
