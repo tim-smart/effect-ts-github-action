@@ -1,7 +1,7 @@
 import { MissingData } from "@effect/io/Config/Error"
 
 export const nonEmptyString = (name: string) =>
-  Config.string(name).mapOrFail((_) => {
+  Config.string(name).mapOrFail(_ => {
     const trimmed = _.trim()
     return trimmed !== ""
       ? Either.right(trimmed)
@@ -9,7 +9,7 @@ export const nonEmptyString = (name: string) =>
   })
 
 export const nonEmptySecret = (name: string) =>
-  Config.secret(name).mapOrFail((_) => {
+  Config.secret(name).mapOrFail(_ => {
     const trimmed = ConfigSecret.fromString(_.value.trim())
     return trimmed.value !== ""
       ? Either.right(trimmed)

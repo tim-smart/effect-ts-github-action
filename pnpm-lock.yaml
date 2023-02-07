@@ -20,7 +20,7 @@ specifiers:
   dotenv: ^16.0.3
   prettier: ^2.8.3
   simple-git: ^3.16.0
-  typescript: https://cdn.jsdelivr.net/npm/@tsplus/installer@0.0.168/compiler/typescript.tgz
+  typescript: https://cdn.jsdelivr.net/npm/@tsplus/installer@0.0.170/compiler/typescript.tgz
 
 dependencies:
   '@actions/core': 1.10.0
@@ -44,7 +44,7 @@ devDependencies:
   '@types/node': 18.11.19
   '@vercel/ncc': 0.36.1
   prettier: 2.8.3
-  typescript: '@cdn.jsdelivr.net/npm/@tsplus/installer@0.0.168/compiler/typescript.tgz'
+  typescript: '@cdn.jsdelivr.net/npm/@tsplus/installer@0.0.170/compiler/typescript.tgz'
 
 packages:
 
@@ -369,10 +369,10 @@ packages:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
     dev: false
 
-  '@cdn.jsdelivr.net/npm/@tsplus/installer@0.0.168/compiler/typescript.tgz':
-    resolution: {tarball: https://cdn.jsdelivr.net/npm/@tsplus/installer@0.0.168/compiler/typescript.tgz}
+  '@cdn.jsdelivr.net/npm/@tsplus/installer@0.0.170/compiler/typescript.tgz':
+    resolution: {tarball: https://cdn.jsdelivr.net/npm/@tsplus/installer@0.0.170/compiler/typescript.tgz}
     name: typescript
-    version: 5.0.0-tsplus.20230128
+    version: 5.0.0-tsplus.20230205
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: true

@@ -4,7 +4,7 @@ import { LiveNodeFs, NodeFs } from "@effect/node/Fs"
 import { context } from "@actions/github"
 import type { Option } from "@fp-ts/core/Option"
 
-export const make = Do(($) => {
+export const make = Do($ => {
   const fs = $(NodeFs.access)
   const runnerTemp = $(Config.string("RUNNER_TEMP").optional.config)
   const tmpDir = runnerTemp.getOrElse(OS.tmpdir)

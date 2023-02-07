@@ -18,7 +18,7 @@ const make = ({ token }: GithubOptions) => {
   type Endpoints = typeof rest
 
   const request = <A>(f: (_: Endpoints) => Promise<A>) =>
-    Effect.tryCatchPromise(f(rest), (reason) => new GithubError(reason))
+    Effect.tryCatchPromise(f(rest), reason => new GithubError(reason))
 
   const wrap =
     <A, Args extends any[]>(
@@ -27,17 +27,17 @@ const make = ({ token }: GithubOptions) => {
     (...args: Args) =>
       Effect.tryCatchPromise(
         () => f(rest)(...args),
-        (reason) => new GithubError(reason),
-      ).map((_) => _.data)
+        reason => new GithubError(reason),
+      ).map(_ => _.data)
 
   const stream = <A>(
     f: (_: Endpoints, page: number) => Promise<OctokitResponse<A[]>>,
   ) =>
-    Stream.paginateChunkEffect(0, (page) =>
+    Stream.paginateChunkEffect(0, page =>
       Effect.tryCatchPromise(
         () => f(rest, page),
-        (reason) => new GithubError(reason),
-      ).map((_) => [
+        reason => new GithubError(reason),
+      ).map(_ => [
         Chunk.fromIterable(_.data),
         maybeNextPage(page, _.headers.link),
       ]),
@@ -53,5 +53,5 @@ export const makeLayer = (_: Config.Wrap<GithubOptions>) =>
 
 const maybeNextPage = (page: number, linkHeader?: string) =>
   Option.fromNullable(linkHeader)
-    .filter((_) => _.includes(`rel=\"next\"`))
+    .filter(_ => _.includes(`rel=\"next\"`))
     .as(page + 1)
