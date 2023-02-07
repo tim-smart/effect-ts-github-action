@@ -43,17 +43,17 @@ import type { Either } from "@fp-ts/core/Either"
 /**
  * @tsplus global
  */
-import type { Chunk } from "@fp-ts/data/Chunk"
+import type { Chunk } from "@effect/data/Chunk"
 
 /**
  * @tsplus global
  */
-import { Tag } from "@fp-ts/data/Context"
+import { Tag } from "@effect/data/Context"
 
 /**
  * @tsplus global
  */
-import type { Duration } from "@fp-ts/data/Duration"
+import type { Duration } from "@effect/data/Duration"
 
 /**
  * @tsplus global

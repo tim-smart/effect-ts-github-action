@@ -2,6 +2,7 @@ import * as Git from "./Git"
 import * as Github from "./Github"
 import * as Dotenv from "dotenv"
 import { nonEmptySecret, nonEmptyString } from "./utils/config"
+import { runMain } from "@effect/node/Runtime"
 
 // Dotenv for testing in development
 Dotenv.config()
@@ -36,8 +37,6 @@ const program = Do($ => {
   // Implement program here
   $(Effect.logInfo(`Hello there ${name}!`))
 })
-
-program
   .tapErrorCause(_ =>
     Effect.sync(() => {
       console.error(_.squash)
@@ -45,4 +44,5 @@ program
   )
   .provideLayer(EnvLive)
   .withConfigProvider(ConfigProvider.fromEnv().upperCase)
-  .runMain()
+
+runMain(program)
