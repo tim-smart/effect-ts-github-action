@@ -4,7 +4,6 @@ import * as Dotenv from "dotenv"
 import {
   input,
   inputSecret,
-  nonEmptySecret,
   nonEmptyString,
 } from "./utils/config"
 import { runMain } from "@effect/node/Runtime"
