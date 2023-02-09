@@ -16,7 +16,7 @@ import { RunnerEnv, RunnerEnvLive } from "./Runner.js"
  *   deploymentId: Schema.string
  * })
  *
- * const { Tag: CommentTracker, Live: LiveCommentTracker } = makeLayer("DeploymentService", metadataSchema)
+ * const { CommentTracker, LiveCommentTracker } = makeLayer("DeploymentService", metadataSchema)
  *
  * const makeDeploymentService = Do($ => {
  *   const tracker = $(Effect.service(CommentTracker))
@@ -41,6 +41,8 @@ export class IssueNotFound {
 }
 
 const metaRegex = /<!-- CommentTracker\((\w+?)\) (\S+) -->/
+
+const jsonParse = Option.liftThrowable(JSON.parse)
 
 const make = <A>(tag: string, schema: Schema<A>) =>
   Do(($): CommentTracker<A> => {
@@ -75,7 +77,7 @@ const make = <A>(tag: string, schema: Schema<A>) =>
 
           const metaJson = Buffer.from(metaRaw, "base64").toString()
           const meta = $(
-            Option.fromThrowable(JSON.parse(metaJson)).flatMapEither(_ =>
+            jsonParse(metaJson).flatMapEither(_ =>
               schema.decode(_, { isUnexpectedAllowed: true }),
             ),
           )
@@ -141,11 +143,11 @@ const make = <A>(tag: string, schema: Schema<A>) =>
   })
 
 export const makeLayer = <A>(tag: string, schema: Schema<A>) => {
-  const serviceTag = Tag<CommentTracker<A>>()
-  const Live = RunnerEnvLive >> make(tag, schema).toLayer(serviceTag)
+  const CommentTracker = Tag<CommentTracker<A>>()
+  const LiveCommentTracker = RunnerEnvLive >> make(tag, schema).toLayer(CommentTracker)
 
   return {
-    Tag: serviceTag,
-    Live,
+    CommentTracker,
+    LiveCommentTracker,
   } as const
 }

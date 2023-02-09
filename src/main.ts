@@ -1,7 +1,12 @@
 import * as Git from "./Git"
 import * as Github from "./Github"
 import * as Dotenv from "dotenv"
-import { nonEmptySecret, nonEmptyString } from "./utils/config"
+import {
+  input,
+  inputSecret,
+  nonEmptySecret,
+  nonEmptyString,
+} from "./utils/config"
 import { runMain } from "@effect/node/Runtime"
 
 // Dotenv for testing in development
@@ -17,22 +22,16 @@ const GitLive = Git.makeLayer({
 })
 
 // Setup the Github API
-const GithubLive = Github.makeLayer(
-  Config.struct({
-    token: nonEmptySecret("github_token"),
-  }).nested("input"),
-)
+const GithubLive = Github.makeLayer({
+  token: inputSecret("github_token"),
+})
 
 // Build the environment for your program
 const EnvLive = GitLive + GithubLive
 
 const program = Do($ => {
   // Extract input variables
-  const { name } = $(
-    Config.struct({
-      name: nonEmptyString("name"),
-    }).nested("input").config,
-  )
+  const name = $(input("name").config)
 
   // Implement program here
   $(Effect.logInfo(`Hello there ${name}!`))
