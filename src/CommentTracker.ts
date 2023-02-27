@@ -1,4 +1,4 @@
-import type { Option } from "@fp-ts/core/Option"
+import type { Option } from "@effect/data/Option"
 import { Github, GithubError } from "./Github.js"
 import { RunnerEnv, RunnerEnvLive } from "./Runner.js"
 
@@ -144,7 +144,8 @@ const make = <A>(tag: string, schema: Schema<A>) =>
 
 export const makeLayer = <A>(tag: string, schema: Schema<A>) => {
   const CommentTracker = Tag<CommentTracker<A>>()
-  const LiveCommentTracker = RunnerEnvLive >> make(tag, schema).toLayer(CommentTracker)
+  const LiveCommentTracker =
+    RunnerEnvLive >> make(tag, schema).toLayer(CommentTracker)
 
   return {
     CommentTracker,

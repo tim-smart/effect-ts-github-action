@@ -2,7 +2,7 @@ import * as OS from "node:os"
 import * as Path from "node:path"
 import { LiveNodeFs, NodeFs } from "@effect/node/Fs"
 import { context } from "@actions/github"
-import type { Option } from "@fp-ts/core/Option"
+import type { Option } from "@effect/data/Option"
 
 export const make = Do($ => {
   const fs = $(NodeFs.access)

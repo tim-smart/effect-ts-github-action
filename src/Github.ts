@@ -1,6 +1,6 @@
 import { getOctokit } from "@actions/github"
 import type { OctokitResponse } from "@octokit/types"
-import type { Option } from "@fp-ts/core/Option"
+import type { Option } from "@effect/data/Option"
 
 export interface GithubOptions {
   token: ConfigSecret
