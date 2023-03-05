@@ -5,7 +5,7 @@ import { RunnerEnv, RunnerEnvLive } from "./Runner.js"
 /**
  * CommentTracker is for upserting comments to an issue or PR on Github.
  *
- * It also supports adding custom metadata from an fp-ts/schema/Schema
+ * It also supports adding custom metadata from an effect/schema/Schema
  *
  * Usage:
  *
