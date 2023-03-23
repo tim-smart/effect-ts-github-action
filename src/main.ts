@@ -1,11 +1,7 @@
 import * as Git from "./Git"
 import * as Github from "./Github"
 import * as Dotenv from "dotenv"
-import {
-  input,
-  inputSecret,
-  nonEmptyString,
-} from "./utils/config"
+import { input, inputSecret, nonEmptyString } from "./utils/config"
 import { runMain } from "@effect/node/Runtime"
 
 // Dotenv for testing in development

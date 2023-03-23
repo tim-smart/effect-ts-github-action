@@ -16,5 +16,6 @@ export const nonEmptySecret = (name: string) =>
       : Either.left(MissingData(Chunk.empty(), "must not be empty"))
   })
 
-  export const input = (name: string) => nonEmptyString(name).nested("input")
-  export const inputSecret = (name: string) => nonEmptySecret(name).nested("input")
+export const input = (name: string) => nonEmptyString(name).nested("input")
+export const inputSecret = (name: string) =>
+  nonEmptySecret(name).nested("input")
