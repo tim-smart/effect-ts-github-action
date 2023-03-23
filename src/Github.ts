@@ -18,14 +18,14 @@ const make = ({ token }: GithubOptions) => {
   type Endpoints = typeof rest
 
   const request = <A>(f: (_: Endpoints) => Promise<A>) =>
-    Effect.tryCatchPromise(f(rest), reason => new GithubError(reason))
+    Effect.attemptCatchPromise(f(rest), reason => new GithubError(reason))
 
   const wrap =
     <A, Args extends any[]>(
       f: (_: Endpoints) => (...args: Args) => Promise<OctokitResponse<A>>,
     ) =>
     (...args: Args) =>
-      Effect.tryCatchPromise(
+      Effect.attemptCatchPromise(
         () => f(rest)(...args),
         reason => new GithubError(reason),
       ).map(_ => _.data)
@@ -34,7 +34,7 @@ const make = ({ token }: GithubOptions) => {
     f: (_: Endpoints, page: number) => Promise<OctokitResponse<A[]>>,
   ) =>
     Stream.paginateChunkEffect(0, page =>
-      Effect.tryCatchPromise(
+      Effect.attemptCatchPromise(
         () => f(rest, page),
         reason => new GithubError(reason),
       ).map(_ => [

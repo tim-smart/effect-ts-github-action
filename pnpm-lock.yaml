@@ -3,43 +3,43 @@ lockfileVersion: 5.4
 specifiers:
   '@actions/core': ^1.10.0
   '@actions/github': ^5.1.1
-  '@effect/data': ^0.3.2
-  '@effect/io': ^0.6.0
-  '@effect/node': https://gist.githubusercontent.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/47e8cf880f3b7016012ebbdb827a93c9372eadb7/effect-node-0.0.7.tgz
-  '@effect/schema': ^0.0.4
-  '@effect/stream': ^0.6.0
+  '@effect/data': ^0.5.0
+  '@effect/io': ^0.10.0
+  '@effect/node': https://gist.githubusercontent.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/602c9728aecff26ef6dd3438ca8bba2632f17eab/effect-node-0.0.7.tgz
+  '@effect/schema': ^0.3.1
+  '@effect/stream': ^0.12.1
   '@octokit/types': ^9.0.0
-  '@tsplus-types/effect__data': 0.3.2-dc37160
-  '@tsplus-types/effect__io': 0.6.0-dc37160
-  '@tsplus-types/effect__schema': 0.0.4-dc37160
-  '@tsplus-types/effect__stream': 0.6.0-dc37160
-  '@types/node': ^18.14.6
+  '@tsplus-types/effect__data': 0.5.0-bf7ce75
+  '@tsplus-types/effect__io': 0.10.0-bf7ce75
+  '@tsplus-types/effect__schema': 0.3.1-bf7ce75
+  '@tsplus-types/effect__stream': 0.12.1-bf7ce75
+  '@types/node': ^18.15.5
   '@vercel/ncc': ^0.36.1
   dotenv: ^16.0.3
-  prettier: ^2.8.4
+  prettier: ^2.8.6
   simple-git: ^3.17.0
   typescript: https://cdn.jsdelivr.net/npm/@tsplus/installer@0.0.171/compiler/typescript.tgz
 
 dependencies:
   '@actions/core': 1.10.0
   '@actions/github': 5.1.1
-  '@effect/data': 0.3.2
-  '@effect/io': 0.6.0
-  '@effect/node': '@gist.githubusercontent.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/47e8cf880f3b7016012ebbdb827a93c9372eadb7/effect-node-0.0.7.tgz'
-  '@effect/schema': 0.0.4
-  '@effect/stream': 0.6.0
+  '@effect/data': 0.5.0
+  '@effect/io': 0.10.0
+  '@effect/node': '@gist.githubusercontent.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/602c9728aecff26ef6dd3438ca8bba2632f17eab/effect-node-0.0.7.tgz'
+  '@effect/schema': 0.3.1
+  '@effect/stream': 0.12.1
   dotenv: 16.0.3
   simple-git: 3.17.0
 
 devDependencies:
   '@octokit/types': 9.0.0
-  '@tsplus-types/effect__data': 0.3.2-dc37160_@effect+data@0.3.2
-  '@tsplus-types/effect__io': 0.6.0-dc37160_@effect+io@0.6.0
-  '@tsplus-types/effect__schema': 0.0.4-dc37160_@effect+schema@0.0.4
-  '@tsplus-types/effect__stream': 0.6.0-dc37160_@effect+stream@0.6.0
-  '@types/node': 18.14.6
+  '@tsplus-types/effect__data': 0.5.0-bf7ce75_@effect+data@0.5.0
+  '@tsplus-types/effect__io': 0.10.0-bf7ce75_@effect+io@0.10.0
+  '@tsplus-types/effect__schema': 0.3.1-bf7ce75_@effect+schema@0.3.1
+  '@tsplus-types/effect__stream': 0.12.1-bf7ce75_@effect+stream@0.12.1
+  '@types/node': 18.15.5
   '@vercel/ncc': 0.36.1
-  prettier: 2.8.4
+  prettier: 2.8.6
   typescript: '@cdn.jsdelivr.net/npm/@tsplus/installer@0.0.171/compiler/typescript.tgz'
 
 packages:
@@ -68,25 +68,26 @@ packages:
       tunnel: 0.0.6
     dev: false
 
-  /@effect/data/0.3.2:
-    resolution: {integrity: sha512-4rdxsQI9mwfBdgbWQ5SjekLEJpxSJLiHLQOgZ6atoPFwKqAo1PsYglf8gbonWvMx4lIR2R2Km7zXwhk/LEgY0Q==}
+  /@effect/data/0.5.0:
+    resolution: {integrity: sha512-9yuEyx19MCt4cCUlqJMgtiDxuAVlm9oA14IS4AtsG7Xip/8uKcmxSfynKfiDuPWJukA2QHR54blUzewqBxupvQ==}
 
-  /@effect/io/0.6.0:
-    resolution: {integrity: sha512-RqEXAt/2Gia2tzLo50rgA/rSuZCyZQjITT1YVHffqUZrG/g7a+cTB3Easm1ki4ehSh1NDyNUD4/E05Fn15cbPg==}
+  /@effect/io/0.10.0:
+    resolution: {integrity: sha512-zNST2PjJlbpzle/zCUpui3Ttp8By8Z9gDfRpy6o//ejgL2CCd0G4VflZ74Hy3L8w/GLCVUXput52DfB5bxEsqA==}
     dependencies:
-      '@effect/data': 0.3.2
+      '@effect/data': 0.5.0
 
-  /@effect/schema/0.0.4:
-    resolution: {integrity: sha512-KOPkGMJgxV+vtkdUs01jg9wQvUcFLQ7JtOR2iFNycGtsP4n+rR9QcPf+oFsjdwROzgOgnkjEehB358Z9bIBZOQ==}
+  /@effect/schema/0.3.1:
+    resolution: {integrity: sha512-tiJwSwDGik5euEkYXL4AEde6Z0Ghu3VSfSsicnLYfTCywS6cpM+u8k3GGUP2VYcJy9BhFs8rpLQ+/QfV8M3izw==}
     dependencies:
-      '@effect/data': 0.3.2
-      fast-check: 3.7.0
+      '@effect/data': 0.5.0
+      '@effect/io': 0.10.0
+      fast-check: 3.7.1
 
-  /@effect/stream/0.6.0:
-    resolution: {integrity: sha512-ApRI4X8tEQr88TsAvaB9/g13sduh3t/1hF8+kkJVNsm4dXkq8+zrHkgsBmgu/wddHmrCk2zGjqcGBbswyTjDmw==}
+  /@effect/stream/0.12.1:
+    resolution: {integrity: sha512-Y5CkZXv1M6EAbuqa1tQxL6qeeDlxRchUZq+XHc7kb/sko9Za+G/WyRqoEWm0VmIcyWh6RCzpEsN6m3izXqIT0w==}
     dependencies:
-      '@effect/data': 0.3.2
-      '@effect/io': 0.6.0
+      '@effect/data': 0.5.0
+      '@effect/io': 0.10.0
 
   /@kwsites/file-exists/1.1.1:
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
@@ -198,40 +199,40 @@ packages:
       '@octokit/openapi-types': 16.0.0
     dev: true
 
-  /@tsplus-types/effect__data/0.3.2-dc37160_@effect+data@0.3.2:
-    resolution: {integrity: sha512-DF5SGXjQvzwSXE1z55js93xyLxF5k6CuGwvrblcCLqwBGDu1RS66j7ZiA1e8dkmTSl/u4BofE04KW6VHbUi3gg==}
+  /@tsplus-types/effect__data/0.5.0-bf7ce75_@effect+data@0.5.0:
+    resolution: {integrity: sha512-uLCfotHgZAbAO1sHGV8epnd7qDM8jo57ll6acJ5MxkvsRmwJaoyiZco3NeNzVshllsnzgEXaD4CXCYrfQDCmgQ==}
     peerDependencies:
-      '@effect/data': 0.3.2
+      '@effect/data': 0.5.0
     dependencies:
-      '@effect/data': 0.3.2
+      '@effect/data': 0.5.0
     dev: true
 
-  /@tsplus-types/effect__io/0.6.0-dc37160_@effect+io@0.6.0:
-    resolution: {integrity: sha512-6xk/1QBtT3F+KsUfABq2lHkqPqudi2yCDdkqwEq+ojA6C5halCgmIATKi7R0Yr0Y6Q+55v9EjFUnhFdZWlDcTg==}
+  /@tsplus-types/effect__io/0.10.0-bf7ce75_@effect+io@0.10.0:
+    resolution: {integrity: sha512-98GEQ+HB0jvWsMJ2K4eoA6yoLM1ilwoWl9+afV4ItmMgsXOzaIeQPAlApg4+SJnHTwzEfS0nHFwRKllZenvolA==}
     peerDependencies:
-      '@effect/io': 0.6.0
+      '@effect/io': 0.10.0
     dependencies:
-      '@effect/io': 0.6.0
+      '@effect/io': 0.10.0
     dev: true
 
-  /@tsplus-types/effect__schema/0.0.4-dc37160_@effect+schema@0.0.4:
-    resolution: {integrity: sha512-ZfEMpTGYgFF2Qtc+aadDcdN/RIYfKRvp2h8TDqyZnHrPiuCbdoryjM5q2siAWP5fsXWEexrBaw+NqMoz0vdNpQ==}
+  /@tsplus-types/effect__schema/0.3.1-bf7ce75_@effect+schema@0.3.1:
+    resolution: {integrity: sha512-Ck+2Xp7XExuoYruglnObgB8i9WsZCWRkVgrbDoKMXx9L6aBFhsbTAztXkrBF1qhYwHiVsfgCTxysObj5alzE0g==}
     peerDependencies:
-      '@effect/schema': 0.0.4
+      '@effect/schema': 0.3.1
     dependencies:
-      '@effect/schema': 0.0.4
+      '@effect/schema': 0.3.1
     dev: true
 
-  /@tsplus-types/effect__stream/0.6.0-dc37160_@effect+stream@0.6.0:
-    resolution: {integrity: sha512-/ukYflNct41vNNLYfvg+t+RkP3EyfT618IIrk/0EqlzQnvXfOhEE7Tn9FMqWb3KG9Bm46zMVRgooOkyUD6L2rQ==}
+  /@tsplus-types/effect__stream/0.12.1-bf7ce75_@effect+stream@0.12.1:
+    resolution: {integrity: sha512-s/+zz87uuslbQ5IgdyzAzwYU3yerVtNgJaJ3hOSjseMP1NmoIGmDaVgMo4JCX6DeL76Gm9OrO+k/M/eQX+I0mA==}
     peerDependencies:
-      '@effect/stream': 0.6.0
+      '@effect/stream': 0.12.1
     dependencies:
-      '@effect/stream': 0.6.0
+      '@effect/stream': 0.12.1
     dev: true
 
-  /@types/node/18.14.6:
-    resolution: {integrity: sha512-93+VvleD3mXwlLI/xASjw0FzKcwzl3OdTCzm1LaRfqgS21gfFtK3zDXM5Op9TeeMsJVOaJ2VRDpT9q4Y3d0AvA==}
+  /@types/node/18.15.5:
+    resolution: {integrity: sha512-Ark2WDjjZO7GmvsyFFf81MXuGTA/d6oP38anyxWOL6EREyBKAxKoFHwBhaZxCfLRLpO8JgVXwqOwSwa7jRcjew==}
     dev: true
 
   /@vercel/ncc/0.36.1:
@@ -264,11 +265,11 @@ packages:
     engines: {node: '>=12'}
     dev: false
 
-  /fast-check/3.7.0:
-    resolution: {integrity: sha512-1QFnXC7UcTlSBk7523W99QbnP6mTrvUjEXLKODjjhh/QJUHAzzBow2POae7hV+Qrqjj4XaU0HbTfwEa8HprS5g==}
+  /fast-check/3.7.1:
+    resolution: {integrity: sha512-d63EsxP1eedA+x94xNxIpTWtBShq95KL6ZSrKTD0Pp1lPASmajAaDHJ71c5ebwZ+vBzlTt3AOalcAnBzL7PQ6Q==}
     engines: {node: '>=8.0.0'}
     dependencies:
-      pure-rand: 6.0.0
+      pure-rand: 6.0.1
 
   /is-plain-object/5.0.0:
     resolution: {integrity: sha512-VRSzKkbMm5jMDoKLbltAkFQ5Qr7VDiTFGXxYFXXowVj387GeGNOCsOH6Msy00SGZ3Fp84b1Naa1psqgcCIEP5Q==}
@@ -297,14 +298,14 @@ packages:
       wrappy: 1.0.2
     dev: false
 
-  /prettier/2.8.4:
-    resolution: {integrity: sha512-vIS4Rlc2FNh0BySk3Wkd6xmwxB0FpOndW5fisM5H8hsZSxU2VWVB5CWIkIjWvrHjIhxk2g3bfMKM87zNTrZddw==}
+  /prettier/2.8.6:
+    resolution: {integrity: sha512-mtuzdiBbHwPEgl7NxWlqOkithPyp4VN93V7VeHVWBF+ad3I5avc0RVDT4oImXQy9H/AqxA2NSQH8pSxHW6FYbQ==}
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true
 
-  /pure-rand/6.0.0:
-    resolution: {integrity: sha512-rLSBxJjP+4DQOgcJAx6RZHT2he2pkhQdSnofG5VWyVl6GRq/K02ISOuOLcsMOrtKDIJb8JN2zm3FFzWNbezdPw==}
+  /pure-rand/6.0.1:
+    resolution: {integrity: sha512-t+x1zEHDjBwkDGY5v5ApnZ/utcd4XYDiJsaQQoptTXgUXX95sDg1elCdJghzicm7n2mbCBJ3uYWr6M22SO19rg==}
 
   /simple-git/3.17.0:
     resolution: {integrity: sha512-JozI/s8jr3nvLd9yn2jzPVHnhVzt7t7QWfcIoDcqRIGN+f1IINGv52xoZti2kkYfoRhhRvzMSNPfogHMp97rlw==}
@@ -357,12 +358,12 @@ packages:
     hasBin: true
     dev: true
 
-  '@gist.githubusercontent.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/47e8cf880f3b7016012ebbdb827a93c9372eadb7/effect-node-0.0.7.tgz':
-    resolution: {tarball: https://gist.githubusercontent.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/47e8cf880f3b7016012ebbdb827a93c9372eadb7/effect-node-0.0.7.tgz}
+  '@gist.githubusercontent.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/602c9728aecff26ef6dd3438ca8bba2632f17eab/effect-node-0.0.7.tgz':
+    resolution: {tarball: https://gist.githubusercontent.com/tim-smart/2249154d563bbbdd603cb09e834361e8/raw/602c9728aecff26ef6dd3438ca8bba2632f17eab/effect-node-0.0.7.tgz}
     name: '@effect/node'
     version: 0.0.7
     dependencies:
-      '@effect/data': 0.3.2
-      '@effect/io': 0.6.0
-      '@effect/stream': 0.6.0
+      '@effect/data': 0.5.0
+      '@effect/io': 0.10.0
+      '@effect/stream': 0.12.1
     dev: false

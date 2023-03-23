@@ -44,7 +44,7 @@ const metaRegex = /<!-- CommentTracker\((\w+?)\) (\S+) -->/
 
 const jsonParse = Option.liftThrowable(JSON.parse)
 
-const make = <A>(tag: string, schema: Schema<A>) =>
+const make = <I extends Json, A>(tag: string, schema: Schema<I, A>) =>
   Do(($): CommentTracker<A> => {
     const env = $(RunnerEnv.access)
     const gh = $(Github.access)
@@ -78,7 +78,7 @@ const make = <A>(tag: string, schema: Schema<A>) =>
           const metaJson = Buffer.from(metaRaw, "base64").toString()
           const meta = $(
             jsonParse(metaJson).flatMapEither(_ =>
-              schema.decode(_, { isUnexpectedAllowed: true }),
+              schema.parseEither(_, { isUnexpectedAllowed: true }),
             ),
           )
 
@@ -88,7 +88,7 @@ const make = <A>(tag: string, schema: Schema<A>) =>
       .flatMap(_ => _.match(() => Stream.empty, Stream.succeed)).runHead
 
     const commentMeta = (meta: A) => {
-      const encoded = schema.encodeOrThrow(meta)
+      const encoded = schema.encode(meta)
       const b64Meta = Buffer.from(JSON.stringify(encoded)).toString("base64")
       return `<!-- CommentTracker(${tag}) ${b64Meta} -->`
     }
@@ -142,7 +142,10 @@ const make = <A>(tag: string, schema: Schema<A>) =>
     return { upsert }
   })
 
-export const makeLayer = <A>(tag: string, schema: Schema<A>) => {
+export const makeLayer = <I extends Json, A>(
+  tag: string,
+  schema: Schema<I, A>,
+) => {
   const CommentTracker = Tag<CommentTracker<A>>()
   const LiveCommentTracker =
     RunnerEnvLive >> make(tag, schema).toLayer(CommentTracker)

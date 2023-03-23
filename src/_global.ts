@@ -58,7 +58,7 @@ import type { Duration } from "@effect/data/Duration"
 /**
  * @tsplus global
  */
-import type { Schema } from "@effect/schema"
+import type { Json, Schema } from "@effect/schema/Schema"
 
 /**
  * @tsplus global
