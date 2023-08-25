@@ -1,21 +1,26 @@
-import { MissingData } from "@effect/io/Config/Error"
+import { Config, ConfigError, ConfigSecret, Either } from "effect"
 
 export const nonEmptyString = (name: string) =>
-  Config.string(name).mapOrFail(_ => {
-    const trimmed = _.trim()
-    return trimmed !== ""
-      ? Either.right(trimmed)
-      : Either.left(MissingData(Chunk.empty(), "must not be empty"))
-  })
+  Config.string(name).pipe(
+    Config.mapOrFail(_ => {
+      const trimmed = _.trim()
+      return trimmed !== ""
+        ? Either.right(trimmed)
+        : Either.left(ConfigError.MissingData([], "must not be empty"))
+    }),
+  )
 
 export const nonEmptySecret = (name: string) =>
-  Config.secret(name).mapOrFail(_ => {
-    const trimmed = ConfigSecret.fromString(_.value.trim())
-    return trimmed.value !== ""
-      ? Either.right(trimmed)
-      : Either.left(MissingData(Chunk.empty(), "must not be empty"))
-  })
+  Config.secret(name).pipe(
+    Config.mapOrFail(_ => {
+      const trimmed = ConfigSecret.fromString(ConfigSecret.value(_).trim())
+      return ConfigSecret.value(trimmed) !== ""
+        ? Either.right(trimmed)
+        : Either.left(ConfigError.MissingData([], "must not be empty"))
+    }),
+  )
 
-export const input = (name: string) => nonEmptyString(name).nested("input")
+export const input = (name: string) =>
+  Config.nested(nonEmptyString(name), "input")
 export const inputSecret = (name: string) =>
-  nonEmptySecret(name).nested("input")
+  Config.nested(nonEmptySecret(name), "input")

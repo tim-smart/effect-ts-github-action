@@ -1,27 +1,33 @@
 import * as OS from "node:os"
 import * as Path from "node:path"
-import { LiveNodeFs, NodeFs } from "@effect/node/Fs"
 import { context } from "@actions/github"
-import type { Option } from "@effect/data/Option"
+import { FileSystem } from "./_common"
+import { Config, Context, Effect, Layer, Option } from "effect"
 
-export const make = Do($ => {
-  const fs = $(NodeFs.access)
-  const runnerTemp = $(Config.string("RUNNER_TEMP").optional.config)
-  const tmpDir = runnerTemp.getOrElse(OS.tmpdir)
+export const make = Effect.gen(function* (_) {
+  const fs = yield* _(FileSystem.FileSystem)
+  const tmpDir = yield* _(
+    Config.string("RUNNER_TEMP"),
+    Config.withDefault(OS.tmpdir()),
+    Effect.config,
+  )
 
   const mkTmpDir = (path: string) => {
     const dir = Path.join(tmpDir, path)
     return fs
-      .rm(dir, { force: true, recursive: true })
-      .zipRight(fs.mkdir(dir))
-      .as(dir)
+      .remove(dir, { recursive: true })
+      .pipe(Effect.zipRight(fs.makeDirectory(dir)), Effect.as(dir))
   }
 
-  const issue = Option.fromNullable(context.issue.number).as(context.issue)
+  const issue = Option.fromNullable(context.issue.number).pipe(
+    Option.as(context.issue),
+  )
 
-  return { tmpDir, mkTmpDir, issue }
+  return { tmpDir, mkTmpDir, issue } as const
 })
 
-export interface RunnerEnv extends Effect.Success<typeof make> {}
-export const RunnerEnv = Tag<RunnerEnv>()
-export const RunnerEnvLive = LiveNodeFs >> make.toLayer(RunnerEnv)
+export interface RunnerEnv extends Effect.Effect.Success<typeof make> {}
+export const RunnerEnv = Context.Tag<RunnerEnv>()
+export const RunnerEnvLive = Layer.effect(RunnerEnv, make).pipe(
+  Layer.use(FileSystem.layer),
+)

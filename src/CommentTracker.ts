@@ -1,6 +1,8 @@
-import type { Option } from "@effect/data/Option"
+import * as ParseResult from "@effect/schema/ParseResult"
+import { Context, Effect, Layer, Option, Stream } from "effect"
 import { Github, GithubError } from "./Github.js"
 import { RunnerEnv, RunnerEnvLive } from "./Runner.js"
+import { Schema } from "./_common.js"
 
 /**
  * CommentTracker is for upserting comments to an issue or PR on Github.
@@ -31,9 +33,13 @@ import { RunnerEnv, RunnerEnvLive } from "./Runner.js"
 export interface CommentTracker<M> {
   readonly upsert: <R, E, A>(
     create: (
-      previousMetadata: Option<M>,
-    ) => Effect<R, E, readonly [body: string, meta: M, a: A]>,
-  ) => Effect<R, E | IssueNotFound | GithubError, A>
+      previousMetadata: Option.Option<M>,
+    ) => Effect.Effect<R, E, readonly [body: string, meta: M, a: A]>,
+  ) => Effect.Effect<
+    R,
+    E | IssueNotFound | GithubError | ParseResult.ParseError,
+    A
+  >
 }
 
 export class IssueNotFound {
@@ -44,17 +50,16 @@ const metaRegex = /<!-- CommentTracker\((\w+?)\) (\S+) -->/
 
 const jsonParse = Option.liftThrowable(JSON.parse)
 
-const make = <I extends Json, A>(tag: string, schema: Schema<I, A>) =>
-  Do(($): CommentTracker<A> => {
-    const env = $(RunnerEnv.access)
-    const gh = $(Github.access)
+const make = <I, A>(tag: string, schema: Schema.Schema<I, A>) =>
+  Effect.gen(function* (_) {
+    const env = yield* _(RunnerEnv)
+    const gh = yield* _(Github)
+    const parse = Schema.parse(schema)
+    const encode = Schema.encode(schema)
 
-    const issueEffect = env.issue.match(
-      Effect.fail(new IssueNotFound()),
-      Effect.succeed,
-    )
+    const issueEffect = Effect.mapError(env.issue, () => new IssueNotFound())
 
-    const issueComments = Stream.fromEffect(issueEffect).flatMap(issue =>
+    const issueComments = Stream.flatMap(issueEffect, issue =>
       gh.stream((_, page) =>
         _.issues.listComments({
           page,
@@ -65,90 +70,95 @@ const make = <I extends Json, A>(tag: string, schema: Schema<I, A>) =>
       ),
     )
 
-    const findComment = issueComments
-      .map(_ =>
-        Do($ => {
-          const [, tagRaw, metaRaw] = $(
-            Option.fromNullable(_.body?.match(metaRegex)),
+    const findComment = issueComments.pipe(
+      Stream.flatMap(_ =>
+        Option.fromNullable(_.body?.match(metaRegex)).pipe(
+          Option.bindTo("match"),
+          Option.let("tagRaw", ({ match }) => match[1]),
+          Option.let("metaRaw", ({ match }) => match[2]),
+          Option.filter(({ tagRaw }) => tagRaw === tag),
+          Option.flatMap(({ metaRaw }) =>
+            jsonParse(Buffer.from(metaRaw, "base64").toString()),
+          ),
+          Effect.flatMap(parse),
+          Effect.map(meta => [_, meta] as const),
+          Stream.catchAll(() => Stream.empty),
+        ),
+      ),
+      Stream.runHead,
+    )
+
+    const commentMeta = (meta: A) =>
+      encode(meta).pipe(
+        Effect.map(encoded => {
+          const b64Meta = Buffer.from(JSON.stringify(encoded)).toString(
+            "base64",
           )
-
-          // Make sure tag matches
-          $(Option.some(tagRaw).filter(_ => _ === tag))
-
-          const metaJson = Buffer.from(metaRaw, "base64").toString()
-          const meta = $(
-            jsonParse(metaJson).flatMapEither(_ =>
-              schema.parseEither(_, { isUnexpectedAllowed: true }),
-            ),
-          )
-
-          return [_, meta] as const
+          return `<!-- CommentTracker(${tag}) ${b64Meta} -->`
         }),
       )
-      .flatMap(_ => _.match(() => Stream.empty, Stream.succeed)).runHead
-
-    const commentMeta = (meta: A) => {
-      const encoded = schema.encode(meta)
-      const b64Meta = Buffer.from(JSON.stringify(encoded)).toString("base64")
-      return `<!-- CommentTracker(${tag}) ${b64Meta} -->`
-    }
 
     const commentBody = (body: string, meta: A) =>
-      `${commentMeta(meta)}\n${body}`
+      Effect.map(commentMeta(meta), meta => `${meta}\n${body}`)
 
     const createComment = (body: string, meta: A) =>
-      issueEffect.flatMap(issue =>
-        gh.request(_ =>
-          _.issues.createComment({
-            owner: issue.owner,
-            repo: issue.repo,
-            issue_number: issue.number,
-            body: commentBody(body, meta),
-          }),
+      Effect.all([issueEffect, commentBody(body, meta)]).pipe(
+        Effect.flatMap(([issue, body]) =>
+          gh.request(_ =>
+            _.issues.createComment({
+              owner: issue.owner,
+              repo: issue.repo,
+              issue_number: issue.number,
+              body,
+            }),
+          ),
         ),
       )
 
     const updateComment = (id: number, body: string, meta: A) =>
-      issueEffect.flatMap(issue =>
-        gh.request(_ =>
-          _.issues.updateComment({
-            owner: issue.owner,
-            repo: issue.repo,
-            comment_id: id,
-            body: commentBody(body, meta),
-          }),
+      Effect.all([issueEffect, commentBody(body, meta)]).pipe(
+        Effect.flatMap(([issue, body]) =>
+          gh.request(_ =>
+            _.issues.updateComment({
+              owner: issue.owner,
+              repo: issue.repo,
+              comment_id: id,
+              body,
+            }),
+          ),
         ),
       )
 
     const upsert = <R, E, T>(
       create: (
-        _: Option<A>,
-      ) => Effect<R, E, readonly [body: string, meta: A, a: T]>,
+        _: Option.Option<A>,
+      ) => Effect.Effect<R, E, readonly [body: string, meta: A, a: T]>,
     ) =>
-      Do($ => {
-        const prev = $(findComment)
-        const [body, meta, _] = $(create(prev.map(([, meta]) => meta)))
+      Effect.gen(function* (_) {
+        const prev = yield* _(findComment)
+        const [body, meta, ret] = yield* _(
+          create(Option.map(prev, ([, meta]) => meta)),
+        )
 
-        return $(
-          prev
-            .match(
-              () => createComment(body, meta).asUnit,
-              ([comment]) => updateComment(comment.id, body, meta).asUnit,
-            )
-            .as(_),
+        return yield* _(
+          Option.match(prev, {
+            onNone: () => Effect.asUnit(createComment(body, meta)),
+            onSome: ([comment]) =>
+              Effect.asUnit(updateComment(comment.id, body, meta)),
+          }),
+          Effect.as(ret),
         )
       })
 
-    return { upsert }
+    return { upsert } satisfies CommentTracker<A>
   })
 
-export const makeLayer = <I extends Json, A>(
-  tag: string,
-  schema: Schema<I, A>,
-) => {
-  const CommentTracker = Tag<CommentTracker<A>>()
-  const LiveCommentTracker =
-    RunnerEnvLive >> make(tag, schema).toLayer(CommentTracker)
+export const makeLayer = <I, A>(tag: string, schema: Schema.Schema<I, A>) => {
+  const CommentTracker = Context.Tag<CommentTracker<A>>()
+  const LiveCommentTracker = Layer.effect(
+    CommentTracker,
+    make(tag, schema),
+  ).pipe(Layer.use(RunnerEnvLive))
 
   return {
     CommentTracker,

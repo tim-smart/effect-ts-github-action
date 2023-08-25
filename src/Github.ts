@@ -1,9 +1,18 @@
 import { getOctokit } from "@actions/github"
 import type { OctokitResponse } from "@octokit/types"
-import type { Option } from "@effect/data/Option"
+import {
+  Chunk,
+  Config,
+  ConfigSecret,
+  Context,
+  Effect,
+  Layer,
+  Option,
+  Stream,
+} from "effect"
 
 export interface GithubOptions {
-  token: ConfigSecret
+  readonly token: ConfigSecret.ConfigSecret
 }
 
 export class GithubError {
@@ -12,46 +21,55 @@ export class GithubError {
 }
 
 const make = ({ token }: GithubOptions) => {
-  const api = getOctokit(token.value)
+  const api = getOctokit(ConfigSecret.value(token))
 
   const rest = api.rest
   type Endpoints = typeof rest
 
   const request = <A>(f: (_: Endpoints) => Promise<A>) =>
-    Effect.attemptCatchPromise(f(rest), reason => new GithubError(reason))
+    Effect.tryPromise({
+      try: () => f(rest),
+      catch: reason => new GithubError(reason),
+    })
 
   const wrap =
     <A, Args extends any[]>(
       f: (_: Endpoints) => (...args: Args) => Promise<OctokitResponse<A>>,
     ) =>
     (...args: Args) =>
-      Effect.attemptCatchPromise(
-        () => f(rest)(...args),
-        reason => new GithubError(reason),
-      ).map(_ => _.data)
+      Effect.map(
+        Effect.tryPromise({
+          try: () => f(rest)(...args),
+          catch: reason => new GithubError(reason),
+        }),
+        _ => _.data,
+      )
 
   const stream = <A>(
     f: (_: Endpoints, page: number) => Promise<OctokitResponse<A[]>>,
   ) =>
     Stream.paginateChunkEffect(0, page =>
-      Effect.attemptCatchPromise(
-        () => f(rest, page),
-        reason => new GithubError(reason),
-      ).map(_ => [
-        Chunk.fromIterable(_.data),
-        maybeNextPage(page, _.headers.link),
-      ]),
+      Effect.tryPromise({
+        try: () => f(rest, page),
+        catch: reason => new GithubError(reason),
+      }).pipe(
+        Effect.map(_ => [
+          Chunk.fromIterable(_.data),
+          maybeNextPage(page, _.headers.link),
+        ]),
+      ),
     )
 
-  return { api, token, request, wrap, stream }
+  return { api, token, request, wrap, stream } as const
 }
 
 export interface Github extends ReturnType<typeof make> {}
-export const Github = Tag<Github>()
-export const makeLayer = (_: Config.Wrap<GithubOptions>) =>
-  Config.unwrap(_).config.map(make).toLayer(Github)
+export const Github = Context.Tag<Github>()
+export const layer = (_: Config.Config.Wrap<GithubOptions>) =>
+  Effect.config(Config.unwrap(_)).pipe(Effect.map(make), Layer.effect(Github))
 
 const maybeNextPage = (page: number, linkHeader?: string) =>
-  Option.fromNullable(linkHeader)
-    .filter(_ => _.includes(`rel=\"next\"`))
-    .as(page + 1)
+  Option.fromNullable(linkHeader).pipe(
+    Option.filter(_ => _.includes(`rel=\"next\"`)),
+    Option.as(page + 1),
+  )

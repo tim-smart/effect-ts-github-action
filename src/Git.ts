@@ -1,3 +1,4 @@
+import { Config, Context, Effect, Layer } from "effect"
 import * as SG from "simple-git"
 
 /**
@@ -22,41 +23,41 @@ export interface GitRepo {
   readonly git: SG.SimpleGit
   readonly run: <A>(
     f: (git: SG.SimpleGit) => Promise<A>,
-  ) => Effect<never, GitError, A>
+  ) => Effect.Effect<never, GitError, A>
 }
-export const GitRepo = Tag<GitRepo>()
+export const GitRepo = Context.Tag<GitRepo>()
 
 const make = ({ simpleGit: opts = {}, userName, userEmail }: GitConfig) => {
   const clone = (url: string, dir: string) =>
-    Do(($): GitRepo => {
-      $(
-        Effect.attemptCatchPromise(
-          () => SG.simpleGit(opts).clone(url, dir),
-          error => new GitError(error as any),
-        ),
+    Effect.gen(function* (_) {
+      yield* _(
+        Effect.tryPromise({
+          try: () => SG.simpleGit(opts).clone(url, dir),
+          catch: error => new GitError(error as any),
+        }),
       )
 
       const git = SG.simpleGit(dir, opts)
 
       const run = <A>(f: (git: SG.SimpleGit) => Promise<A>) =>
-        Effect.attemptCatchPromise(
-          () => f(git),
-          error => new GitError(error as any),
-        )
+        Effect.tryPromise({
+          try: () => f(git),
+          catch: error => new GitError(error as any),
+        })
 
-      $(
+      yield* _(
         run(_ =>
           _.addConfig("user.name", userName).addConfig("user.email", userEmail),
         ),
       )
 
-      return { git, run, path: dir }
+      return GitRepo.of({ git, run, path: dir })
     })
 
-  return { clone }
+  return { clone } as const
 }
 
 export interface Git extends ReturnType<typeof make> {}
-export const Git = Tag<Git>()
-export const makeLayer = (_: Config.Wrap<GitConfig>) =>
-  Config.unwrap(_).config.map(make).toLayer(Git)
+export const Git = Context.Tag<Git>()
+export const layer = (_: Config.Config.Wrap<GitConfig>) =>
+  Effect.config(Config.unwrap(_)).pipe(Effect.map(make), Layer.effect(Git))
