@@ -16,7 +16,11 @@ export const make = Effect.gen(function* (_) {
     const dir = Path.join(tmpDir, path)
     return fs
       .remove(dir, { recursive: true })
-      .pipe(Effect.zipRight(fs.makeDirectory(dir)), Effect.as(dir))
+      .pipe(
+        Effect.ignore,
+        Effect.zipRight(fs.makeDirectory(dir)),
+        Effect.as(dir),
+      )
   }
 
   const issue = Option.fromNullable(context.issue.number).pipe(
