@@ -153,15 +153,14 @@ const make = <I, A>(tag: string, schema: Schema.Schema<I, A>) =>
     return { upsert } satisfies CommentTracker<A>
   })
 
-export const makeLayer = <I, A>(tag: string, schema: Schema.Schema<I, A>) => {
-  const CommentTracker = Context.Tag<CommentTracker<A>>()
-  const LiveCommentTracker = Layer.effect(
-    CommentTracker,
-    make(tag, schema),
-  ).pipe(Layer.use(RunnerEnvLive))
+export const makeLayer = <I, A>(name: string, schema: Schema.Schema<I, A>) => {
+  const tag = Context.Tag<CommentTracker<A>>()
+  const layer = Layer.effect(tag, make(name, schema)).pipe(
+    Layer.use(RunnerEnvLive),
+  )
 
   return {
-    CommentTracker,
-    LiveCommentTracker,
+    tag,
+    layer,
   } as const
 }
