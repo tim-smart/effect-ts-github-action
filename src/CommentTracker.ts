@@ -18,10 +18,10 @@ import { Schema } from "@effect/schema"
  *   deploymentId: Schema.string
  * })
  *
- * const { CommentTracker, LiveCommentTracker } = makeLayer("DeploymentService", metadataSchema)
+ * const DeploymentComment = makeLayer("DeploymentService", metadataSchema)
  *
  * const makeDeploymentService = Do($ => {
- *   const tracker = $(Effect.service(CommentTracker))
+ *   const tracker = $(Effect.service(DeploymentComment.tag))
  *
  *   $(tracker.upsert((previousMetadata) => Do($ => {
  *     // TODO: Maybe do something with previous metadata
