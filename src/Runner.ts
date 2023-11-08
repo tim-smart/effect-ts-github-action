@@ -1,8 +1,8 @@
 import * as OS from "node:os"
 import * as Path from "node:path"
 import { context } from "@actions/github"
-import { FileSystem } from "./_common"
 import { Config, Context, Effect, Layer, Option } from "effect"
+import { FileSystem } from "@effect/platform-node"
 
 export const make = Effect.gen(function* (_) {
   const fs = yield* _(FileSystem.FileSystem)

@@ -2,7 +2,7 @@ import * as ParseResult from "@effect/schema/ParseResult"
 import { Context, Effect, Layer, Option, Stream } from "effect"
 import { Github, GithubError } from "./Github.js"
 import { RunnerEnv, RunnerEnvLive } from "./Runner.js"
-import { Schema } from "./_common.js"
+import { Schema } from "@effect/schema"
 
 /**
  * CommentTracker is for upserting comments to an issue or PR on Github.
