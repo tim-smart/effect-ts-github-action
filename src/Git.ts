@@ -60,4 +60,4 @@ const make = ({ simpleGit: opts = {}, userName, userEmail }: GitConfig) => {
 export interface Git extends ReturnType<typeof make> {}
 export const Git = Context.Tag<Git>()
 export const layer = (_: Config.Config.Wrap<GitConfig>) =>
-  Effect.config(Config.unwrap(_)).pipe(Effect.map(make), Layer.effect(Git))
+  Config.unwrap(_).pipe(Effect.map(make), Layer.effect(Git))

@@ -3,7 +3,7 @@ import type { OctokitResponse } from "@octokit/types"
 import {
   Chunk,
   Config,
-  ConfigSecret,
+  Secret,
   Context,
   Effect,
   Layer,
@@ -12,7 +12,7 @@ import {
 } from "effect"
 
 export interface GithubOptions {
-  readonly token: ConfigSecret.ConfigSecret
+  readonly token: Secret.Secret
 }
 
 export class GithubError {
@@ -21,7 +21,7 @@ export class GithubError {
 }
 
 const make = ({ token }: GithubOptions) => {
-  const api = getOctokit(ConfigSecret.value(token))
+  const api = getOctokit(Secret.value(token))
 
   const rest = api.rest
   type Endpoints = typeof rest
@@ -66,7 +66,7 @@ const make = ({ token }: GithubOptions) => {
 export interface Github extends ReturnType<typeof make> {}
 export const Github = Context.Tag<Github>()
 export const layer = (_: Config.Config.Wrap<GithubOptions>) =>
-  Effect.config(Config.unwrap(_)).pipe(Effect.map(make), Layer.effect(Github))
+  Config.unwrap(_).pipe(Effect.map(make), Layer.effect(Github))
 
 const maybeNextPage = (page: number, linkHeader?: string) =>
   Option.fromNullable(linkHeader).pipe(

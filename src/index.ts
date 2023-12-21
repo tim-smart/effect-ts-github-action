@@ -26,6 +26,6 @@ const GithubLive = Github.layer({
 const EnvLive = Layer.mergeAll(GitLive, GithubLive)
 
 Effect.gen(function* (_) {
-  const name = yield* _(Effect.config(input("name")))
+  const name = yield* _(input("name"))
   yield* _(Effect.logInfo(`Hello there ${name}!`))
-}).pipe(Effect.provide(EnvLive), Effect.tapErrorCause(Effect.logError), runMain)
+}).pipe(Effect.provide(EnvLive), runMain)

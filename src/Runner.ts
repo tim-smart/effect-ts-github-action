@@ -9,7 +9,6 @@ export const make = Effect.gen(function* (_) {
   const tmpDir = yield* _(
     Config.string("RUNNER_TEMP"),
     Config.withDefault(OS.tmpdir()),
-    Effect.config,
   )
 
   const mkTmpDir = (path: string) => {
@@ -33,5 +32,5 @@ export const make = Effect.gen(function* (_) {
 export interface RunnerEnv extends Effect.Effect.Success<typeof make> {}
 export const RunnerEnv = Context.Tag<RunnerEnv>()
 export const RunnerEnvLive = Layer.effect(RunnerEnv, make).pipe(
-  Layer.use(FileSystem.layer),
+  Layer.provide(FileSystem.layer),
 )

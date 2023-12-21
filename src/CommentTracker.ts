@@ -156,7 +156,7 @@ const make = <I, A>(tag: string, schema: Schema.Schema<I, A>) =>
 export const makeLayer = <I, A>(name: string, schema: Schema.Schema<I, A>) => {
   const tag = Context.Tag<CommentTracker<A>>()
   const layer = Layer.effect(tag, make(name, schema)).pipe(
-    Layer.use(RunnerEnvLive),
+    Layer.provide(RunnerEnvLive),
   )
 
   return {
